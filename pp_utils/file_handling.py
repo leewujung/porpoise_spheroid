@@ -46,7 +46,7 @@ TRIAL_FILE_PATHS = {
 }
 
 
-def get_track_filepath(fname_prefix, track_path, print_opt=True):
+def get_track_filepath(fname_prefix, track_path):
     """
     get file path(s) with tracks.
 
@@ -60,18 +60,12 @@ def get_track_filepath(fname_prefix, track_path, print_opt=True):
     track_file_sel = sorted(list(Path(track_path).glob(fname_prefix + "*.csv")))
     
     if track_file_sel:
-        if print_opt:
-            print("* track file(s):")
-            for ff in track_file_sel:
-                print("  - %s" % ff.name)
         return track_file_sel
     else:
-        if print_opt:
-            print("cannot find corresponding track file!")
         return ""
 
 
-def get_priority_cal_obj(track_files, print_opt=True):
+def get_priority_cal_obj(track_files):
     """
     Select the priority calibration object if multiple exist.
 
@@ -86,9 +80,6 @@ def get_priority_cal_obj(track_files, print_opt=True):
         cal_obj_idx = int(np.argwhere(np.array(cal_obj_list) == "cross"))
     else:
         cal_obj_idx = 0
-
-    if print_opt:
-        print("* cal object selected: %s" % cal_obj_list[cal_obj_idx])
 
     return cal_obj_list[cal_obj_idx], cal_obj_idx
 
@@ -190,7 +181,7 @@ def get_trial_info(df_master : pd.DataFrame, data_path: Dict, trial_idx: int) ->
     params["chose_target"] = ts["CHOICE"] == 1
 
     # Select priority cal_obj
-    params["cal_obj"], params["cal_obj_idx"] = get_priority_cal_obj(paths["track"], print_opt=False)
+    params["cal_obj"], params["cal_obj_idx"] = get_priority_cal_obj(paths["track"])
 
     # Get paths track files
     paths["track"] = get_track_filepath(ts["fname_prefix"], data_path["track_path"])
