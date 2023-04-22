@@ -1,0 +1,29 @@
+name: porpoise_spheroid
+channels:
+  - conda-forge
+dependencies:
+  - fastcluster
+  - ipykernel
+  - ipympl
+  - jupyter
+  - matplotlib
+  - nbdime
+  - netcdf4
+  - numpy=1.23.5
+  - opencv
+  - openpyxl
+  - pandas<2
+  - pip
+  - pytest
+  - python=3.9
+  - scikit-learn
+  - scipy
+  - seaborn
+  - xarray
+  - pip:
+      - soundfile
+  # -- linting --
+  - black
+  - flake8
+  - isort
+  - pre-commit
