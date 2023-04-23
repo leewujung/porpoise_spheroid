@@ -2,12 +2,14 @@
 A collection of convenient functions for pulling out files with different types of data.
 """
 
-from typing import Tuple, Dict
-from pathlib import Path
+from typing import Tuple, Union, Dict, List
+from pathlib import Path, PosixPath
 import re
 
 import numpy as np
 import pandas as pd
+
+from .core import DATA_PATH
 
 
 CAL_OBJ_STR = (
@@ -17,20 +19,20 @@ CAL_OBJ_MATCHER = re.compile(CAL_OBJ_STR)
 
 
 TRIAL_FILE_FLAGS = (
+    "has_LED_or_chirp_sync",
+    "can_identify_touch_frame",
     "has_target_file",
     "has_track_file",
     "has_dtag_clicks",
     "has_hydro_clicks_ch0",
     "has_hydro_clicks_ch1",
-    "can_identify_touch_frame",
-    "has_LED_or_chirp_sync",
 )
 TRIAL_PARAMS = (
     "fname_prefix",
-    "cal_obj",  # {"hula_flip" "hula_noflip", "cross"}
-    "idx_touch",  # index of which the animal touches target
     "sync_source",  # {None, "LED", "chirp"}
+    "idx_touch",  # index of which the animal touches target
     "chose_target",  # whether choice is correct, {True, False}
+    "cal_obj",  # {"hula_flip" "hula_noflip", "cross"}
 )
 
 TRIAL_FILE_PATHS = {
@@ -45,7 +47,40 @@ TRIAL_FILE_PATHS = {
 }
 
 
-def get_priority_cal_obj(track_files):
+def df_master_loader(folder=DATA_PATH["main"], filename="analysis_master_info_append_09.csv"):
+    """
+    Read and add/modify info into the master dataframe.
+    """
+    # master dataframe with all info
+    df_master = pd.read_csv(folder / filename, index_col=0)
+    df_master["fname_prefix"] = df_master.apply(
+        lambda x: "%s_s%s_t%s" % ((x["DATE"]), x["SESSION"], x["TRIAL"]), axis=1
+    )
+    df_master["TARGET_ANGLE"] = df_master.apply(
+        lambda x: x["LEFT"] + x["RIGHT"] + str(x["ANGLE"]), axis=1
+    )
+    # # add a column for trial index
+    # df_master["trial_index"] = np.arange(len(df_master))
+
+    # Revise `TOUCH_FRAME` for trial 114 and 116
+    # See 2022/04/04 notes.
+    df_master.loc[
+        (df_master["DATE"] == 20190628)
+        & (df_master["SESSION"] == 3)
+        & (df_master["TRIAL"] == 4),
+        "TOUCH_FRAME",
+    ] = 18959
+    df_master.loc[
+        (df_master["DATE"] == 20190628)
+        & (df_master["SESSION"] == 3)
+        & (df_master["TRIAL"] == 6),
+        "TOUCH_FRAME",
+    ] = 22510
+
+    return df_master
+
+
+def get_priority_cal_obj(track_files: List) -> Tuple[str, int]:
     """
     Select the priority calibration object if multiple exist.
 
@@ -64,7 +99,7 @@ def get_priority_cal_obj(track_files):
     return cal_obj_list[cal_obj_idx], cal_obj_idx
 
 
-def get_cal_obj_and_track_filepath(fname_prefix: str, track_path: str) -> Tuple[str, str]:
+def get_cal_obj_and_track_filepath(fname_prefix: str, track_path: str) -> Tuple[Union[str, None], Union[PosixPath, None]]:
     """
     get file path(s) with tracks.
 
@@ -94,14 +129,14 @@ def get_cal_obj_and_track_filepath(fname_prefix: str, track_path: str) -> Tuple[
     return cal_obj, track_file_wanted
 
 
-def get_target_filepath(fname_prefix, cal_obj, target_path):
+def get_target_filepath(fname_prefix, cal_obj, target_path) -> Union[PosixPath, None]:
     """
     Get file path(s) containing target positions.
     """
     target_file = Path(target_path).joinpath(
-        "%stargets_%s_transformed.csv" % (fname_prefix, cal_obj)
+        "%s_targets_%s_transformed.csv" % (fname_prefix, cal_obj)
     )
-    return target_file if target_file.exist() else None
+    return target_file if target_file.exists() else None
 
 
 def get_hydro_filepath(fname_prefix: str, sync_path: str, flags: Dict) -> Tuple[str, str]:
@@ -115,11 +150,16 @@ def get_hydro_filepath(fname_prefix: str, sync_path: str, flags: Dict) -> Tuple[
 
     if len(df_hydro_ch0) > 0:
         flags["has_hydro_clicks_ch0"] = True  # modify flag in place
-        hydro_file_ch0 = hydro_ch0_file
+    else:
+        flags["has_hydro_clicks_ch0"] = False
+        hydro_ch0_file = None
+
     if len(df_hydro_ch1) > 0:
-        flags["has_hydro_clicks_ch0"] = True  # modify flag in place
-        hydro_file_ch1 = hydro_ch1_file
-    return hydro_file_ch0, hydro_file_ch1
+        flags["has_hydro_clicks_ch1"] = True  # modify flag in place
+    else:
+        flags["has_hydro_clicks_ch1"] = False
+        hydro_ch1_file = None
+    return hydro_ch0_file, hydro_ch1_file
 
 
 def get_dtag_filepath(fname_prefix: str, sync_path: str, flags: Dict):
@@ -159,7 +199,7 @@ def get_trial_info(df_master : pd.DataFrame, data_path: Dict, trial_idx: int) ->
     paths = dict.fromkeys(TRIAL_FILE_PATHS)
 
     # Get series for the trial
-    ts = df_master.iloc[trial_idx, :]
+    ts = df_master.iloc[trial_idx]
     params["fname_prefix"] = ts["fname_prefix"]
 
     # Select click sync set: use LED sync if that exists
@@ -167,10 +207,10 @@ def get_trial_info(df_master : pd.DataFrame, data_path: Dict, trial_idx: int) ->
         flags["has_LED_or_chirp_sync"] = True
         if ts["LED_trial_clicks_synced"]:
             params["sync_source"] = "LED"
-            sync_path = data_path["LED_path"]
+            sync_path = data_path["LED"]
         else:  # use chirp sync results
             params["sync_source"] = "chirp"
-            sync_path = data_path["chirp_path"]
+            sync_path = data_path["chirp"]
     else:
         flags["has_LED_or_chirp_sync"] = False
         print("Clicks not synced!")
@@ -188,7 +228,7 @@ def get_trial_info(df_master : pd.DataFrame, data_path: Dict, trial_idx: int) ->
     params["chose_target"] = ts["CHOICE"] == 1
 
     # Get paths track files
-    params["cal_obj"], paths["track"] = get_cal_obj_and_track_filepath(ts["fname_prefix"], data_path["track_path"])
+    params["cal_obj"], paths["track"] = get_cal_obj_and_track_filepath(ts["fname_prefix"], data_path["track"])
     if paths["track"]:
         flags["has_track_file"] = True
     else:
@@ -197,9 +237,9 @@ def get_trial_info(df_master : pd.DataFrame, data_path: Dict, trial_idx: int) ->
 
     # Get paths to target positions
     paths["target"] = get_target_filepath(
-        ts["fname_prefix"], params["cal_obj"], data_path["target_path"]
+        ts["fname_prefix"], params["cal_obj"], data_path["target"]
     )
-    if len(paths["target"]) != 0:
+    if paths["target"]:
         flags["has_target_file"] = True
     else:
         flags["has_target_file"] = False
@@ -215,7 +255,7 @@ def get_trial_info(df_master : pd.DataFrame, data_path: Dict, trial_idx: int) ->
     paths["hydro_ch0_DTAG"], paths["hydro_ch1_DTAG"] = get_hydro_filepath(
         ts["fname_prefix"], sync_path / "DTAG", flags
     )
-    paths["hydro_ch1_ROSTRUM"], paths["hydro_ch1_ROSTRUM"] = get_hydro_filepath(
+    paths["hydro_ch0_ROSTRUM"], paths["hydro_ch1_ROSTRUM"] = get_hydro_filepath(
         ts["fname_prefix"], sync_path / "ROSTRUM", flags
     )
 

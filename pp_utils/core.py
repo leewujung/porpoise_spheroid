@@ -11,15 +11,15 @@ data_path_main = Path("/Volumes/SSD_2TB/MURI/fb2019_analysis")
 DATA_PATH = {
     "main": data_path_main,
     # paths to hydro clicks synced by LED flash
-    "LED_path": data_path_main / "click_sync_LED/sync_csv/",
+    "LED": data_path_main / "click_sync_LED/sync_csv/",
     # paths to hydro clicks synced by chirp
-    "chirp_path": data_path_main / "click_sync/sync_csv/",
+    "chirp": data_path_main / "click_sync/sync_csv/",
     # paths to calibrated tracks
-    "track_path": data_path_main / "tracks/xypressure_cal_transformed",
+    "track": data_path_main / "tracks/xypressure_cal_transformed",
     # paths to calibrated target positions
-    "target_path": data_path_main / "tracks/targets_cal_transformed",
-    "click_attr_path": data_path_main / "hydrophone_clicks/extracted_clicks_attr_df",
-    "extracted_click_path": data_path_main / "hydrophone_clicks/extracted_clicks",
+    "target": data_path_main / "tracks/targets_cal_transformed",
+    "click_attr": data_path_main / "hydrophone_clicks/extracted_clicks_attr_df",
+    "extracted_click": data_path_main / "hydrophone_clicks/extracted_clicks",
 }
 
 
