@@ -28,7 +28,6 @@ TRIAL_FILE_FLAGS = (
 TRIAL_PARAMS = (
     "fname_prefix",
     "cal_obj",  # {"hula_flip" "hula_noflip", "cross"}
-    "cal_obj_idx",  # index to select the right track_file
     "idx_touch",  # index of which the animal touches target
     "sync_source",  # {None, "LED", "chirp"}
     "chose_target",  # whether choice is correct, {True, False}
@@ -44,25 +43,6 @@ TRIAL_FILE_PATHS = {
     "hydro_ch0_ROSTRUM",
     "hydro_ch1_ROSTRUM",
 }
-
-
-def get_track_filepath(fname_prefix, track_path):
-    """
-    get file path(s) with tracks.
-
-    Parameters
-    ----------
-    fname_prefix : str
-        file name prefix
-    track_path : str
-        path to transformed xypressure files
-    """
-    track_file_sel = sorted(list(Path(track_path).glob(fname_prefix + "*.csv")))
-    
-    if track_file_sel:
-        return track_file_sel
-    else:
-        return ""
 
 
 def get_priority_cal_obj(track_files):
@@ -84,18 +64,44 @@ def get_priority_cal_obj(track_files):
     return cal_obj_list[cal_obj_idx], cal_obj_idx
 
 
-def get_target_filepath(fname_prefix, cal_obj_list, target_path):
+def get_cal_obj_and_track_filepath(fname_prefix: str, track_path: str) -> Tuple[str, str]:
+    """
+    get file path(s) with tracks.
+
+    Parameters
+    ----------
+    fname_prefix : str
+        file name prefix
+    track_path : str
+        path to transformed xypressure files
+
+    Returns
+    -------
+    cal_obj : str
+        priority cal object
+    track_file_wanted : str
+        track file path corresponding tyo the priority cal object
+    """
+    track_file_sel = sorted(list(Path(track_path).glob(fname_prefix + "*.csv")))
+
+    if track_file_sel:
+        cal_obj, cal_obj_idx = get_priority_cal_obj(track_file_sel)
+        track_file_wanted = track_file_sel[cal_obj_idx]
+    else:
+        cal_obj = None
+        track_file_wanted = None
+
+    return cal_obj, track_file_wanted
+
+
+def get_target_filepath(fname_prefix, cal_obj, target_path):
     """
     Get file path(s) containing target positions.
     """
-    target_file = []
-    for cal_obj in cal_obj_list:
-        fpath = Path(target_path).joinpath(
-                "%stargets_%s_transformed.csv" % (fname_prefix, cal_obj)
-            )
-        if fpath.exists():
-            target_file.append(fpath)
-    return target_file            
+    target_file = Path(target_path).joinpath(
+        "%stargets_%s_transformed.csv" % (fname_prefix, cal_obj)
+    )
+    return target_file if target_file.exist() else None
 
 
 def get_hydro_filepath(fname_prefix: str, sync_path: str, flags: Dict) -> Tuple[str, str]:
@@ -108,10 +114,10 @@ def get_hydro_filepath(fname_prefix: str, sync_path: str, flags: Dict) -> Tuple[
     df_hydro_ch1 = pd.read_csv(hydro_ch1_file, index_col=0)
 
     if len(df_hydro_ch0) > 0:
-        flags["has_hydro_clicks_ch0"] = True  # modify in place
+        flags["has_hydro_clicks_ch0"] = True  # modify flag in place
         hydro_file_ch0 = hydro_ch0_file
     if len(df_hydro_ch1) > 0:
-        flags["has_hydro_clicks_ch0"] = True  # modify in place
+        flags["has_hydro_clicks_ch0"] = True  # modify flag in place
         hydro_file_ch1 = hydro_ch1_file
     return hydro_file_ch0, hydro_file_ch1
 
@@ -121,7 +127,7 @@ def get_dtag_filepath(fname_prefix: str, sync_path: str, flags: Dict):
     Get file path(s) with detected dtag clicks and modify flags related to dtag clicks in place.
     """
     dtag_file = sync_path / ("%s_dtag.csv" % fname_prefix)
-    flags["has_dtag_clicks"] = True  # modify in place
+    flags["has_dtag_clicks"] = True if dtag_file.exists() else False  # modify flag in place
     return dtag_file
 
 
@@ -175,16 +181,14 @@ def get_trial_info(df_master : pd.DataFrame, data_path: Dict, trial_idx: int) ->
         flags["can_identify_touch_frame"] = True
         params["idx_touch"] = idx_touch.astype(int)  # convert to int since it is an index
     else:
+        flags["can_identify_touch_frame"] = False
         print("Cannot identify touch frame in this video!")
 
     # Record animal choice
     params["chose_target"] = ts["CHOICE"] == 1
 
-    # Select priority cal_obj
-    params["cal_obj"], params["cal_obj_idx"] = get_priority_cal_obj(paths["track"])
-
     # Get paths track files
-    paths["track"] = get_track_filepath(ts["fname_prefix"], data_path["track_path"])
+    params["cal_obj"], paths["track"] = get_cal_obj_and_track_filepath(ts["fname_prefix"], data_path["track_path"])
     if paths["track"]:
         flags["has_track_file"] = True
     else:
@@ -193,12 +197,13 @@ def get_trial_info(df_master : pd.DataFrame, data_path: Dict, trial_idx: int) ->
 
     # Get paths to target positions
     paths["target"] = get_target_filepath(
-        ts["fname_prefix"], [params["cal_obj"]], data_path["target_path"]
+        ts["fname_prefix"], params["cal_obj"], data_path["target_path"]
     )
     if len(paths["target"]) != 0:
         flags["has_target_file"] = True
     else:
-        print("No target file, skipping this trial...")
+        flags["has_target_file"] = False
+        print("No target file!")
 
     # Note for below:
     #  Within the functions flags["has_hydro_clicks_ch0/1"] and flags["has_dtag_clicks"]

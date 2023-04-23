@@ -22,10 +22,9 @@ class TrialProcessor:
         self.get_all_trial_dfs
 
         # Print trial info
+        self._print_file_paths()
         self._print_scenario()
         self._print_choice()
-
-
 
     def get_all_trial_dfs(self, track_label="DTAG"):
         """
