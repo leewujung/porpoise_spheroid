@@ -2,7 +2,7 @@ from pp_utils.core import DATA_PATH
 from pp_utils.file_handling import get_trial_info, df_master_loader, assemble_target_df
 
 
-def test_get_trial_info(trial_100_flags, trial_100_params, trial_100_paths):
+def test_get_trial_info(t100_flags, t100_params, t100_paths):
 
     df_master = df_master_loader()
     trial_idx = 100
@@ -11,9 +11,9 @@ def test_get_trial_info(trial_100_flags, trial_100_params, trial_100_paths):
         df_master=df_master, data_path=DATA_PATH, trial_idx=trial_idx
     )
 
-    assert flags == trial_100_flags
-    assert params == trial_100_params
-    assert paths == trial_100_paths
+    assert flags == t100_flags
+    assert params == t100_params
+    assert paths == t100_paths
 
 
 def test_assemble_target_df():

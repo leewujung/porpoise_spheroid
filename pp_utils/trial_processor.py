@@ -1,9 +1,11 @@
-from typing import Dict
+from typing import Union, Dict
+from pathlib import Path
+
+import pickle
+import pandas as pd
 
 from .core import DATA_PATH
 from .file_handling import get_trial_info, assemble_target_df
-
-import pandas as pd
 
 
 class TrialProcessor:
@@ -62,3 +64,21 @@ class TrialProcessor:
     def _print_choice(self):
         print("* choice: %d" % self.params["chose_target"])
 
+    def save_trial(self, save_path: Union[str, Path]):
+        """
+        Save content of the TrialProcessor object for later use.
+
+        Parameters
+        ----------
+        save_path : str or Path
+            path to save the object to
+        """
+        fname = (
+            Path(save_path) / f"t{self.trial_idx:03d}_{self.trial_series['fname_prefix']}.pickle"
+        )
+        print(f"Saving object to: {fname.name}")
+
+        with open(fname, "wb") as file_out:
+            pickle.dump(self, file_out)
+
+        return fname

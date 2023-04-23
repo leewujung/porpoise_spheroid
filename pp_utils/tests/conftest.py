@@ -4,7 +4,7 @@ from pp_utils.core import DATA_PATH
 
 
 @pytest.fixture
-def trial_100_flags():
+def t100_flags():
     return {
         "has_LED_or_chirp_sync": True,
         "can_identify_touch_frame": True,
@@ -16,7 +16,7 @@ def trial_100_flags():
     }
 
 @pytest.fixture
-def trial_100_params():
+def t100_params():
     return {
         "fname_prefix": "20190628_s2_t2",
         "sync_source": "chirp",  # {None, "LED", "chirp"}
@@ -26,7 +26,7 @@ def trial_100_params():
     }
 
 @pytest.fixture
-def trial_100_paths():
+def t100_paths():
     return {
         "target": DATA_PATH["target"] / "20190628_s2_t2_targets_hula_flip_transformed.csv",
         "track": DATA_PATH["track"] / "20190628_s2_t2_GOPR1476_xypressure_hula_flip_transformed.csv",
