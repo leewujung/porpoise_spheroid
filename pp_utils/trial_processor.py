@@ -10,7 +10,9 @@ from .core import RAW_PATH, DATA_PATH, ANGLE_MAP, HYDRO_PARAMS
 from .file_handling import get_trial_info, assemble_target_df, get_fs_video
 from . import track_features as tf
 from . import hydro_clicks as hc
+from .seawater import calc_absorption
 from . import misc
+
 
 
 class TrialProcessor:
@@ -310,3 +312,51 @@ class TrialProcessor:
                     perc_before_pk=self.hydro_params["perc_before_pk"],
                     fs_hydro=self.fs_hydro,
                 )
+
+    def add_RL_ASL_pointEL(
+        self,
+        frequency=130e3,
+        temperature=16,
+        salinity=28,
+        pressure=1,
+        pH=8,
+        formula_source="FG",
+    ):
+        """
+        Add click apparent source level (ASL) to hydro channels.
+
+        The default values of environmental parameters are set to
+        match the absorption 0.04 dB m^-1 at 130 kHz specified in
+        Malinka et al. 2021 JEB paper.
+        """
+        if not self.df_hydro_ch0 or not self.df_hydro_ch1:
+            # No detection on hydro channels
+            print("No hydro click detected on hydrophone channels! Skip trial...")
+        else:
+            # Add info on both hydro channels
+            for df in [self.df_hydro_ch0, self.df_hydro_ch1]:
+
+                # Get transmission loss
+                absorption_1way_1m = calc_absorption(
+                    frequency=frequency,
+                    temperature=temperature,
+                    salinity=salinity,
+                    pressure=pressure,
+                    pH=pH,
+                    formula_source=formula_source,
+                )
+                df["absorption_1way"] = absorption_1way_1m * df["dist_to_hydro"]
+                df["spreading_1way"] = 20 * np.log10(df["dist_to_hydro"])
+
+                # Receive level
+                df["RL"] = (
+                    20 * np.log10(df["p2p"])
+                    - self.hydro_params["hydro_sens"]
+                    - self.hydro_params["recording_gain"]
+                )
+
+                # Apparent source level
+                df["ASL"] = df["RL"] + df["absorption_1way"] + df["spreading_1way"]
+
+                # point scatterer echo level
+                df["pointEL"] = df["RL"] - df["absorption_1way"] - df["spreading_1way"]
