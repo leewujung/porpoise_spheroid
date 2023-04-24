@@ -5,7 +5,7 @@ import pickle
 import pandas as pd
 import soundfile as sf
 
-from .core import RAW_PATH, DATA_PATH
+from .core import RAW_PATH, DATA_PATH, ANGLE_MAP
 from .file_handling import get_trial_info, assemble_target_df, get_fs_video
 from . import track_features as tf
 from . import misc
@@ -45,9 +45,6 @@ class TrialProcessor:
         self._print_choice()
 
         # Other init
-        self.fs_hydro = None
-        self.fs_dtag = None
-        self.fs_video = None
         self.touch_time_corrected = None
 
 
@@ -56,15 +53,27 @@ class TrialProcessor:
         Obtain all dataframes for this trial.
         """
         # Get dataframes from stored paths and track label selection
-        self.df_track = pd.read_csv(self.paths["track"], index_col=0)
-        self.df_dtag = pd.read_csv(self.paths[f"dtag_{self.track_label}"], index_col=0)
-        self.df_hydro_ch0 = pd.read_csv(self.paths[f"hydro_ch0_{self.track_label}"], index_col=0)
-        self.df_hydro_ch1 = pd.read_csv(self.paths[f"hydro_ch1_{self.track_label}"], index_col=0)
+        self.df_track = (
+            pd.read_csv(self.paths["track"], index_col=0) if self.paths["track"] else None
+        )
+        self.df_dtag = (
+            pd.read_csv(self.paths[f"dtag_{self.track_label}"], index_col=0)
+            if self.paths[f"dtag_{self.track_label}"] else None
+        )
+        self.df_hydro_ch0 = (
+            pd.read_csv(self.paths[f"hydro_ch0_{self.track_label}"], index_col=0)
+            if self.paths[f"hydro_ch0_{self.track_label}"] else None
+        )
+        self.df_hydro_ch1 = (
+            pd.read_csv(self.paths[f"hydro_ch1_{self.track_label}"], index_col=0)
+            if self.paths[f"hydro_ch1_{self.track_label}"] else None
+        )
 
         # Assemble target dataframe
         target_pos_comb = self.trial_series["TARGET_ANGLE"][:2]  # "TC" or "CT"
-        self.df_targets = assemble_target_df(
-            self.paths["target"], self.params["cal_obj"], target_pos_comb
+        self.df_targets = (
+            assemble_target_df(self.paths["target"], self.params["cal_obj"], target_pos_comb)
+            if self.paths["target"] else None
         )
 
     def _print_file_paths(self):
@@ -200,3 +209,65 @@ class TrialProcessor:
             df_track, df_targets, "clutter", cal_obj,
         )
         self.df_track["absolute_heading"] = tf.get_absolute_heading(df_track)
+
+    def add_hydro_info(self):
+        """
+        Add hydrophone-derived info to df_hydro_ch0 or df_hydro_ch1.
+        """
+        if not self.df_hydro_ch0 or not self.df_hydro_ch1:
+            # No detection on hydro channels
+            print("No hydro click detected on hydrophone channels! Skip trial...")
+        else:
+            # Add info for both channels
+            for df, obj_type in zip([self.df_hydro_ch0, self.df_hydro_ch1], ["target", "clutter"]):
+                # Interpolate track to hydro dfs
+                df["DTAG_X"], df["DTAG_Y"] = tf.interpolate_track_xy(
+                    df_in=self.df_track, df_out=df, track_label="DTAG"
+                )
+                df["ROSTRUM_X"], df["ROSTRUM_Y"] = tf.interpolate_track_xy(
+                    df_in=self.df_track, df_out=df, track_label="ROSTRUM"
+                )
+
+                # Get distance to hydrophone
+                df["dist_to_hydro"] = tf.get_dist_to_object(
+                    df_track=df,
+                    df_targets=self.df_targets,
+                    obj_type=obj_type,
+                    cal_obj=self.trial_paths["cal_obj"],
+                    track_label="DTAG",
+                )
+
+                # Add column for before touch indicator
+                df["before_touch"] = misc.get_before_touch_column(
+                    df=df, time_touch=self.touch_time_corrected
+                )
+
+                # Compute ICI
+                df["ICI"] = df["time_corrected"].diff()
+
+                # Compute inspection angle (based on DTAG)
+                df["angle_yaxis_DTAG"] = tf.get_angle_from_yaxis(
+                    df_hydro=df,
+                    df_targets=self.df_targets,
+                    track_label="DTAG",
+                    obj_type=obj_type,
+                    cal_obj=self.trial_paths["cal_obj"],
+                )
+
+                # Compute ensonification angle
+                df["enso_angle"] = df.apply(
+                    tf.get_ensonification_angle,
+                    axis=1,
+                    args=(
+                        ANGLE_MAP[self.df_master.iloc[self.trial_idx]["ANGLE"]],
+                        "angle_yaxis_DTAG",
+                    ),
+                )
+
+                # Compute echo reception angle by animal
+                df["angle_heading_to_hydro"] = tf.get_angle_heading_to_object(
+                    df_track=df,
+                    df_targets=self.df_targets,
+                    obj_type=obj_type,
+                    cal_obj=self.trial_paths["cal_obj"],
+                )

@@ -4,6 +4,8 @@ Core processing params and data paths
 
 from pathlib import Path
 
+import numpy as np
+
 
 # Path to raw data
 RAW_PATH = Path("/Volumes/SSD_2TB/MURI/fb2019_data")
@@ -48,4 +50,6 @@ HYDRO_PARAMS = {
 }
 
 
+# Mapping of angle code with actual angle from Y-axis
+ANGLE_MAP = dict(zip(np.arange(4) + 1, np.arange(4) * 45))
 

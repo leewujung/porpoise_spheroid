@@ -1,4 +1,5 @@
 import numpy as np
+import scipy.interpolate as interpolate
 
 
 def interp_smooth_track(df_track, nan_gap=10, std=3):
@@ -24,6 +25,28 @@ def interp_smooth_track(df_track, nan_gap=10, std=3):
         .rolling(nan_gap, win_type="gaussian", center=True)
         .mean(std=std)
     )
+
+
+def interpolate_track_xy(df_in, df_out, track_label):
+    """
+    Interpolate track X,Y values.
+
+    >>> df_dtag["ROSTRUM_X"], df_dtag["ROSTRUM_Y"] = interpolate_track_xy(
+            df_in=df_track, df_out=df_dtag, track_label="ROSTRUM"
+        )
+    """
+    if len(df_out) == 0:  # if no entry in the df to be interpolated to
+        return None, None
+    else:
+        fx = interpolate.interp1d(
+            df_in["time_corrected"], df_in[track_label + "_X"], fill_value="extrapolate"
+        )
+        fy = interpolate.interp1d(
+            df_in["time_corrected"], df_in[track_label + "_Y"], fill_value="extrapolate"
+        )
+        out_x = fx(df_out["time_corrected"])
+        out_y = fy(df_out["time_corrected"])
+        return out_x, out_y
 
 
 def get_dist_to_object(df_track, df_targets, obj_type, cal_obj, track_label):
@@ -159,6 +182,71 @@ def get_absolute_heading(df_track):
     angle_to_origin = get_signed_angle(vec_heading, vec_minus_x)
 
     return unwrap_angle(angle_to_origin)  # unwrap angle
+
+
+def get_angle_from_yaxis(df_hydro, df_targets, track_label, obj_type, cal_obj):
+    """
+    Compute angle between y-axis (the line connecting target and clutter,
+    pointing upward) and a vector from the object to the animal position
+    while clicking.
+
+    The animal position in df_hydro is either the DTAG or ROSTRUM position
+    interpolated outside of this function based on the right cal_obj.
+
+    Parameters
+    ----------
+    df_hydro : pd.Dataframe
+        a pandas dataframe containing hydrophone detected clicks
+    df_target : pd.Dataframe
+        a pandas dataframe containing target position info
+    track_label : str {"DTAG", "ROSTRUM"}
+        track marker
+    obj_type : str {"target", "clutter"}
+        type of object to calculate distance from
+    cal_obj : str {"cross", "hula_flip", "hula_noflip"}
+        type of calibration object
+
+    Returns
+    -------
+    Inspection angles to the target or clutter object [degrees]
+    """
+    # Get positions
+    animal_pos = df_hydro[[f"{track_label}_X", f"{track_label}_Y"]].values
+    obj_pos = df_targets[
+        ["%s_%s_pos_x" % (obj_type, cal_obj), "%s_%s_pos_y" % (obj_type, cal_obj)]
+    ].values
+
+    # Compute angles
+    vec = animal_pos - obj_pos
+    angle = np.angle(vec[:, 0] + 1j * vec[:, 1])
+
+    return unwrap_angle(angle) / np.pi * 180 + 90
+
+
+def get_ensonification_angle(x, angle_expt, angle_yaxis_name="angle_yaxis_DTAG"):
+    """
+    Get ensonification angle from the target/clutter perspective.
+
+    The ensonification angle is computed from the vector from the center
+    of the target pointing to the hydrophone wire, to the vector from
+    the center of the target pointing to the animal position.
+
+    This function is meant to be used with pandas.apply
+    >>> df_hydro_ch0["enso_angle"] = df_hydro_ch0.apply(
+        get_ensonification_angle,  axis=1,
+        args=(ANGLE_MAP[df_master.iloc[trial_idx]["ANGLE"]], "angle_yaxis_DTAG")
+    )
+
+    Parameters
+    ----------
+    x : pd.Series
+    angle_yaxis_name : str {"angle_yaxis_DTAG", "angle_yaxis_ROSTRUM"}
+        name of column containing angle from Y-axis to animal
+    angle_expt : int or float
+        experimental angle condition, 0-45-90-135 deg
+    """
+    enso_angle = x[angle_yaxis_name] + angle_expt
+    return enso_angle
 
 
 def get_speed(df_track, track_label):
