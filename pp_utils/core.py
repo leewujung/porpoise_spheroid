@@ -5,6 +5,10 @@ Core processing params and data paths
 from pathlib import Path
 
 
+# Path to raw data
+RAW_PATH = Path("/Volumes/SSD_2TB/MURI/fb2019_data")
+
+
 # Paths to processed data
 DATA_PATH = {}
 data_path_main = Path("/Volumes/SSD_2TB/MURI/fb2019_analysis")

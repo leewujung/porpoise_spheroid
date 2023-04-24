@@ -1,4 +1,5 @@
 import pickle
+import numpy as np
 import pandas as pd
 
 from pp_utils.file_handling import df_master_loader
@@ -45,3 +46,16 @@ def test_save_tp(t100_flags, t100_params, t100_paths):
 
     # Remove pickle file
     save_full_path.unlink()
+
+
+def test_get_sampling_rate():
+
+    df_master = df_master_loader()
+    trial_idx = 100
+
+    tp = TrialProcessor(df_master, trial_idx)
+
+    assert np.isclose(tp.fs_video, 29.97)
+    assert tp.fs_dtag == 576000
+    assert tp.fs_hydro == 500000
+    

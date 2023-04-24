@@ -8,6 +8,7 @@ import re
 
 import numpy as np
 import pandas as pd
+import cv2
 
 from .core import DATA_PATH
 
@@ -310,3 +311,7 @@ def assemble_target_df(target_file: str, cal_obj: str, target_pos_comb: str) -> 
     return df_t
 
 
+def get_fs_video(vid_file):
+    cap = cv2.VideoCapture(vid_file)
+    fs_video = cap.get(cv2.CAP_PROP_FPS)
+    return fs_video

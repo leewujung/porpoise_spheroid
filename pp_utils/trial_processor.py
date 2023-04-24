@@ -3,19 +3,27 @@ from pathlib import Path
 
 import pickle
 import pandas as pd
+import soundfile as sf
 
-from .core import DATA_PATH
-from .file_handling import get_trial_info, assemble_target_df
+from .core import RAW_PATH, DATA_PATH
+from .file_handling import get_trial_info, assemble_target_df, get_fs_video
+# from . import track_features as tf
 
 
 class TrialProcessor:
 
     def __init__(
-        self, df_master: pd.DataFrame, trial_idx: int, data_path: Dict = DATA_PATH, track_label: str = "DTAG"
+        self,
+        df_master: pd.DataFrame,
+        trial_idx: int,
+        data_path: Dict = DATA_PATH,
+        raw_path: Path = RAW_PATH,
+        track_label: str = "DTAG",
     ):
         
         self.trial_idx = trial_idx
         self.track_label = track_label
+        self.raw_path = raw_path
         self.data_paths = data_path
         self.trial_series = df_master.iloc[trial_idx, :]
 
@@ -26,6 +34,9 @@ class TrialProcessor:
 
         # Get all trial dataframes
         self.get_all_trial_dfs()
+
+        # Get sampling rates
+        self.get_sampling_rates()
 
         # Print trial info
         self._print_file_paths()
@@ -82,3 +93,63 @@ class TrialProcessor:
             pickle.dump(self, file_out)
 
         return fname
+
+    def get_sampling_rates(self, verbose=False):
+        """
+        Get sampling rate for all recording systems.
+
+        Parameters
+        ----------
+        s : pandas.Series
+            pandas series of a particular trial
+        data_path : str or Path
+            path to data folder
+        verbose : bool
+            whether or not to print sampling rate for all systems
+
+        Returns
+        -------
+        fs_video, fs_dtag, fs_hydro
+        """
+        hydro_raw_path = self.raw_path / f"{self.trial_series['DATE']}/session{self.trial_series['SESSION']:d}/target"
+        hydro_raw_file = hydro_raw_path / self.trial_series["hydro_filename"]
+        dtag_raw_file = self.raw_path / self.trial_series["dtag_wav_file"]
+        vid_raw_file = self.raw_path / self.trial_series["gopro_video"]
+
+        _, self.fs_hydro = sf.read(hydro_raw_file, 1)
+        _, self.fs_dtag = sf.read(dtag_raw_file, 1)
+        self.fs_video = get_fs_video(str(vid_raw_file))
+
+        # print sampling rate
+        if verbose:
+            print("Hydrophone was sampled at %d Hz" % self.fs_hydro)
+            print("DTAG was sampled at %d Hz" % self.fs_dtag)
+            print("Video was sampled at %f Hz" % self.fs_video)
+
+    # def process_track(self):
+    #     """
+    #     Interp, smooth, and add synced timing info to track.
+    #     """
+    #     if self.df_track is None:
+    #         print("Calibrated track does not exist!")
+    #     else:
+    #         df_track = self.df_track.copy()
+
+    #         # Fill in NaN and smooth track
+    #         df_track = tf.interp_smooth_track(df_track)
+
+    #         df_track["time"] = df_track.index / self.fs_video
+    #         frame_start_time = (
+    #             self.df_master.loc[
+    #                 self.df_master["fname_prefix"] == self.trial_paths["fname_prefix"],
+    #                 ["FRAME_NUM_START"],
+    #             ].values.squeeze()
+    #             / self.fs_video
+    #         )
+    #         df_track["time_corrected"] = df_track["time"] + frame_start_time
+
+    #         # Save outputs
+    #         self.touch_time_corrected = df_track.iloc[self.trial_paths["idx_touch"]][
+    #             "time_corrected"
+    #         ]
+    #         self.df_track = df_track
