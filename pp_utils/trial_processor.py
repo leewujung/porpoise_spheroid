@@ -2,12 +2,14 @@ from typing import Union, Dict
 from pathlib import Path
 
 import pickle
+import numpy as np
 import pandas as pd
 import soundfile as sf
 
-from .core import RAW_PATH, DATA_PATH, ANGLE_MAP
+from .core import RAW_PATH, DATA_PATH, ANGLE_MAP, HYDRO_PARAMS
 from .file_handling import get_trial_info, assemble_target_df, get_fs_video
 from . import track_features as tf
+from . import hydro_clicks as hc
 from . import misc
 
 
@@ -20,6 +22,7 @@ class TrialProcessor:
         data_path: Dict = DATA_PATH,
         raw_path: Path = RAW_PATH,
         track_label: str = "DTAG",
+        hydro_params: Dict = HYDRO_PARAMS,
     ):
         
         self.trial_idx = trial_idx
@@ -27,6 +30,7 @@ class TrialProcessor:
         self.raw_path = raw_path
         self.data_paths = data_path
         self.trial_series = df_master.iloc[trial_idx, :]
+        self.hydro_params = hydro_params
 
         # Get all trial flags, params, and paths
         self.flags, self.params, self.paths = get_trial_info(
@@ -178,7 +182,7 @@ class TrialProcessor:
         """
         df_track = self.df_track.copy()
         df_targets = self.df_targets.copy()
-        cal_obj = self.trial_paths["cal_obj"]
+        cal_obj = self.params["cal_obj"]
 
         # Add touch frame info
         self.df_track["before_touch"] = misc.get_before_touch_column(
@@ -233,7 +237,7 @@ class TrialProcessor:
                     df_track=df,
                     df_targets=self.df_targets,
                     obj_type=obj_type,
-                    cal_obj=self.trial_paths["cal_obj"],
+                    cal_obj=self.params["cal_obj"],
                     track_label="DTAG",
                 )
 
@@ -251,17 +255,14 @@ class TrialProcessor:
                     df_targets=self.df_targets,
                     track_label="DTAG",
                     obj_type=obj_type,
-                    cal_obj=self.trial_paths["cal_obj"],
+                    cal_obj=self.params["cal_obj"],
                 )
 
                 # Compute ensonification angle
                 df["enso_angle"] = df.apply(
                     tf.get_ensonification_angle,
                     axis=1,
-                    args=(
-                        ANGLE_MAP[self.df_master.iloc[self.trial_idx]["ANGLE"]],
-                        "angle_yaxis_DTAG",
-                    ),
+                    args=(ANGLE_MAP[self.trial_series["ANGLE"]], "angle_yaxis_DTAG"),
                 )
 
                 # Compute echo reception angle by animal
@@ -269,5 +270,43 @@ class TrialProcessor:
                     df_track=df,
                     df_targets=self.df_targets,
                     obj_type=obj_type,
-                    cal_obj=self.trial_paths["cal_obj"],
+                    cal_obj=self.params["cal_obj"],
+                )
+
+    def add_SNR_p2p(self):
+        """
+        Add click SNR and p2p voltage to both hydro channels.
+        """
+        if not self.df_hydro_ch0 or not self.df_hydro_ch1:
+            # No detection on hydro channels
+            print("No hydro click detected on hydrophone channels! Skip trial...")
+        else:
+            # Add SNR and p2p info on both hydro channels
+            for ch, df in zip([0, 1], [self.df_hydro_ch0, self.df_hydro_ch1]):
+
+                # Load click matrix
+                fname_prefix = self.params["fname_prefix"]
+                clk_fname = "%s_extracted_clicks_ch%d.npy" % (fname_prefix, ch)
+                cm = np.load(self.paths["extracted_click_path"] / clk_fname)
+
+                # Add SNR
+                clk_var = hc.get_clk_variance(
+                    clk_mtx=cm,
+                    clk_sel_len_sec=self.hydro_params["clk_sel_len_sec"],
+                    perc_before_pk=self.hydro_params["perc_before_pk"],
+                    fs_hydro=self.fs_hydro,
+                )
+                bkg_var = hc.get_bkg_variance(
+                    clk_mtx=cm,
+                    bkg_len_sec=self.hydro_params["bkg_len_sec"],
+                    fs_hydro=self.fs_hydro,
+                )
+                df["SNR"] = 10 * np.log10(clk_var) - 10 * np.log10(bkg_var)
+
+                # Add p2p voltage
+                df["p2p"] = hc.get_clk_p2p(
+                    clk_mtx=cm,
+                    clk_sel_len_sec=self.hydro_params["clk_sel_len_sec"],
+                    perc_before_pk=self.hydro_params["perc_before_pk"],
+                    fs_hydro=self.fs_hydro,
                 )

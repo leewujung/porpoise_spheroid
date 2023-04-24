@@ -28,11 +28,11 @@ DATA_PATH = {
 }
 
 
-# ICI params
-ICI_PARAMS = {
-    "buzz_reg_switch": 13e-3,  # ICI threshold between buzz and regular clicks
-    "num_buzz_for_onset": 30,  # minimum number of clicks to qualify as buzz onset
-}
+# # ICI params
+# ICI_PARAMS = {
+#     "buzz_reg_switch": 13e-3,  # ICI threshold between buzz and regular clicks
+#     "num_buzz_for_onset": 30,  # minimum number of clicks to qualify as buzz onset
+# }
 
 
 # # Decision params
