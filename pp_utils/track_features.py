@@ -49,23 +49,22 @@ def interpolate_track_xy(df_in, df_out, track_label):
         return out_x, out_y
 
 
-def get_dist_to_object(df_track, df_targets, obj_type, cal_obj, track_label):
+def get_dist_to_object(df, df_targets, obj_type, cal_obj, track_label):
     """
-    Compute distance between the selected track_label to the selected object
-    along the track.
+    Compute distance between the positions contained in a dataframe to the selected object.
 
     Parameters
     ----------
-    df_track : pd.Dataframe
-        a pandas dataframe containing track info
-    df_target : pd.Dataframe
+    df : pd.Dataframe
+        a pandas dataframe containing position info
+    df_targets : pd.Dataframe
         a pandas dataframe containing target position info
     obj_type : str
         type of object to calculate distance from: 'target' or 'clutter'
     cal_obj : str
         type of calibration object: 'cross', 'hula_flip', or 'hula_noflip'
     track_label : str
-        label of body part of porpoise
+        use position from which body part of porpoise
 
     Returns
     -------
@@ -75,11 +74,11 @@ def get_dist_to_object(df_track, df_targets, obj_type, cal_obj, track_label):
         np.array(
             [
                 (
-                    df_track[track_label + "_X"].values
+                    df[track_label + "_X"].values
                     - df_targets["%s_%s_pos_x" % (obj_type, cal_obj)].values
                 ),
                 (
-                    df_track[track_label + "_Y"].values
+                    df[track_label + "_Y"].values
                     - df_targets["%s_%s_pos_y" % (obj_type, cal_obj)].values
                 ),
             ]
@@ -107,7 +106,7 @@ def unwrap_angle(angle):
     return angle
 
 
-def get_angle_heading_to_object(df_track, df_targets, obj_type, cal_obj):
+def get_angle_heading_to_object(df, df_targets, obj_type, cal_obj):
     """
     Compute the angle between heading and the vector from the DTAG marker
     to the selected object.
@@ -116,8 +115,8 @@ def get_angle_heading_to_object(df_track, df_targets, obj_type, cal_obj):
 
     Parameters
     ----------
-    df_track : pd.Dataframe
-        a pandas dataframe containing track info
+    df : pd.Dataframe
+        a pandas dataframe containing position info
     df_target : pd.Dataframe
         a pandas dataframe containing target position info
     obj_type : str
@@ -135,14 +134,14 @@ def get_angle_heading_to_object(df_track, df_targets, obj_type, cal_obj):
         df_targets[
             ["%s_%s_pos_x" % (obj_type, cal_obj), "%s_%s_pos_y" % (obj_type, cal_obj)]
         ].values
-        - df_track[["DTAG_X", "DTAG_Y"]].values
+        - df[["DTAG_X", "DTAG_Y"]].values
     )
     vec_obj = vec_obj / np.expand_dims(np.linalg.norm(vec_obj, axis=1), axis=1)
 
     # heading vec
     vec_heading = (
-        df_track[["ROSTRUM_X", "ROSTRUM_Y"]].values
-        - df_track[["DTAG_X", "DTAG_Y"]].values
+        df[["ROSTRUM_X", "ROSTRUM_Y"]].values
+        - df[["DTAG_X", "DTAG_Y"]].values
     )
 
     # angles to object
@@ -184,7 +183,7 @@ def get_absolute_heading(df_track):
     return unwrap_angle(angle_to_origin)  # unwrap angle
 
 
-def get_angle_from_yaxis(df_hydro, df_targets, track_label, obj_type, cal_obj):
+def get_angle_from_yaxis(df_hydro, df_targets, obj_type, cal_obj, track_label):
     """
     Compute angle between y-axis (the line connecting target and clutter,
     pointing upward) and a vector from the object to the animal position

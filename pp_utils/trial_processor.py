@@ -200,7 +200,7 @@ class TrialProcessor:
         """
         Add hydrophone-derived info to df_hydro_ch0 or df_hydro_ch1.
         """
-        if not self.df_hydro_ch0 or not self.df_hydro_ch1:
+        if self.df_hydro_ch0 is None or self.df_hydro_ch1 is None:
             # No detection on hydro channels
             print("No hydro click detected on hydrophone channels! Skip trial...")
         else:
@@ -216,23 +216,12 @@ class TrialProcessor:
 
                 # Get distance to hydrophone
                 df["dist_to_hydro"] = tf.get_dist_to_object(
-                    df_track=df,
-                    df_targets=self.df_targets,
-                    obj_type=obj_type,
-                    cal_obj=self.params["cal_obj"],
-                    track_label="DTAG",
+                    df, self.df_targets, obj_type, self.params["cal_obj"], track_label="DTAG",
                 )
 
-                # Compute ICI
-                df["ICI"] = df["time_corrected"].diff()
-
-                # Compute inspection angle (based on DTAG)
+                # Compute inspection angle (based on DTAG position)
                 df["angle_yaxis_DTAG"] = tf.get_angle_from_yaxis(
-                    df_hydro=df,
-                    df_targets=self.df_targets,
-                    track_label="DTAG",
-                    obj_type=obj_type,
-                    cal_obj=self.params["cal_obj"],
+                    df, self.df_targets, obj_type, self.params["cal_obj"], track_label="DTAG",
                 )
 
                 # Compute ensonification angle
@@ -244,17 +233,18 @@ class TrialProcessor:
 
                 # Compute echo reception angle by animal
                 df["angle_heading_to_hydro"] = tf.get_angle_heading_to_object(
-                    df_track=df,
-                    df_targets=self.df_targets,
-                    obj_type=obj_type,
-                    cal_obj=self.params["cal_obj"],
+                    df, self.df_targets, obj_type, self.params["cal_obj"],
                 )
+
+                # Compute ICI
+                df["ICI"] = df["time_corrected"].diff()
+
 
     def add_SNR_p2p(self):
         """
         Add click SNR and p2p voltage to both hydro channels.
         """
-        if not self.df_hydro_ch0 or not self.df_hydro_ch1:
+        if self.df_hydro_ch0 is None or self.df_hydro_ch1 is None:
             # No detection on hydro channels
             print("No hydro click detected on hydrophone channels! Skip trial...")
         else:
@@ -304,7 +294,7 @@ class TrialProcessor:
         match the absorption 0.04 dB m^-1 at 130 kHz specified in
         Malinka et al. 2021 JEB paper.
         """
-        if not self.df_hydro_ch0 or not self.df_hydro_ch1:
+        if self.df_hydro_ch0 is None or self.df_hydro_ch1 is None:
             # No detection on hydro channels
             print("No hydro click detected on hydrophone channels! Skip trial...")
         else:

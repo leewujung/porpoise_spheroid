@@ -70,7 +70,7 @@ def test_track_processing_features(test_data_path, test_raw_path):
     # Process track
     df_track_original = tp.df_track.copy()
     tp.process_track()
-    # Attribute added
+    # Attribute was added
     assert tp.touch_time_corrected is not None
     # New columns were added
     for attr in ["time", "time_corrected"]:
@@ -93,3 +93,22 @@ def test_track_processing_features(test_data_path, test_raw_path):
             "absolute_heading",
         ]:
             assert attr in tp.df_track
+
+
+def test_add_hydro_info(test_data_path, test_raw_path):
+
+    df_master = df_master_loader(folder=test_data_path["main"])
+    trial_idx = 100
+
+    tp = TrialProcessor(df_master, trial_idx, data_path=test_data_path, raw_path=test_raw_path)
+    tp.process_track()  # this adds the "time_corrected" column to df_track required for interpolate_track_xy
+
+    # Add hydro info
+    tp.add_hydro_info()
+    # New columns were added
+    for attr in [
+        "DTAG_X", "DTAG_Y", "ROSTRUM_X", "ROSTRUM_Y", "dist_to_hydro",
+        "angle_yaxis_DTAG", "enso_angle", "angle_heading_to_hydro", "ICI",
+    ]:
+        assert attr in tp.df_hydro_ch0
+        assert attr in tp.df_hydro_ch1
