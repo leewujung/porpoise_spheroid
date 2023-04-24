@@ -156,60 +156,45 @@ class TrialProcessor:
         if self.df_track is None:
             print("Calibrated track does not exist!")
         else:
-            df_track = self.df_track.copy()
-
             # Fill in NaN and smooth track
-            df_track = tf.interp_smooth_track(df_track)
+            self.df_track = tf.interp_smooth_track(self.df_track)
 
             # Get times for track
-            df_track["time"] = df_track.index / self.fs_video
-            frame_start_time = (
-                self.df_master.loc[
-                    self.df_master["fname_prefix"] == self.params["fname_prefix"],
-                    ["FRAME_NUM_START"],
-                ].values.squeeze()
-                / self.fs_video
-            )
-            df_track["time_corrected"] = df_track["time"] + frame_start_time
+            self.df_track["time"] = self.df_track.index / self.fs_video
+            frame_start_time = self.trial_series["FRAME_NUM_START"] / self.fs_video
+            self.df_track["time_corrected"] = self.df_track["time"] + frame_start_time
 
             # Save touch_time_corrected
-            self.touch_time_corrected = df_track.iloc[self.params["idx_touch"]][
-                "time_corrected"
-            ]
-            self.df_track = df_track
+            self.touch_time_corrected = self.df_track.iloc[self.params["idx_touch"]]["time_corrected"]
         
     def add_track_features(self):
         """
         Add all track features except for DTAG-related info.
         """
-        df_track = self.df_track.copy()
-        df_targets = self.df_targets.copy()
-        cal_obj = self.params["cal_obj"]
-
         for track_label in ["DTAG", "ROSTRUM"]:
             # Add distance measure
-            df_track[f"{track_label}_dist_to_target"] = tf.get_dist_to_object(
-                df_track, df_targets, "target", cal_obj, track_label,
+            self.df_track[f"{track_label}_dist_to_target"] = tf.get_dist_to_object(
+                self.df_track, self.df_targets, "target", self.params["cal_obj"], track_label,
             )
-            df_track[f"{track_label}_dist_to_clutter"] = tf.get_dist_to_object(
-                df_track, df_targets, "clutter", cal_obj, track_label,
+            self.df_track[f"{track_label}_dist_to_clutter"] = tf.get_dist_to_object(
+                self.df_track, self.df_targets, "clutter", self.params["cal_obj"], track_label,
             )
             # Add elliptical distance
-            df_track[f"{track_label}_dist_elliptical"] = (
-                df_track[f"{track_label}_dist_to_target"]
-                + df_track[f"{track_label}_dist_to_clutter"]
+            self.df_track[f"{track_label}_dist_elliptical"] = (
+                self.df_track[f"{track_label}_dist_to_target"]
+                + self.df_track[f"{track_label}_dist_to_clutter"]
             )
             # Add speed
-            df_track[f"{track_label}_speed"] = tf.get_speed(df_track, track_label)
+            self.df_track[f"{track_label}_speed"] = tf.get_speed(self.df_track, track_label)
 
         # Add heading info
         self.df_track["angle_heading_to_target"] = tf.get_angle_heading_to_object(
-            df_track, df_targets, "target", cal_obj,
+            self.df_track, self.df_targets, "target", self.params["cal_obj"],
         )
         self.df_track["angle_heading_to_clutter"] = tf.get_angle_heading_to_object(
-            df_track, df_targets, "clutter", cal_obj,
+            self.df_track, self.df_targets, "clutter", self.params["cal_obj"],
         )
-        self.df_track["absolute_heading"] = tf.get_absolute_heading(df_track)
+        self.df_track["absolute_heading"] = tf.get_absolute_heading(self.df_track)
 
     def add_hydro_info(self):
         """

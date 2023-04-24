@@ -59,3 +59,37 @@ def test_get_sampling_rate(test_data_path, test_raw_path):
     assert tp.fs_dtag == 576000
     assert tp.fs_hydro == 500000
     
+
+def test_track_processing_features(test_data_path, test_raw_path):
+
+    df_master = df_master_loader(folder=test_data_path["main"])
+    trial_idx = 100
+
+    tp = TrialProcessor(df_master, trial_idx, data_path=test_data_path, raw_path=test_raw_path)
+
+    # Process track
+    df_track_original = tp.df_track.copy()
+    tp.process_track()
+    # Attribute added
+    assert tp.touch_time_corrected is not None
+    # New columns were added
+    for attr in ["time", "time_corrected"]:
+        assert attr in tp.df_track
+    # Tracks were modified
+    for attr in df_track_original.columns:
+        assert not tp.df_track[attr].equals(df_track_original[attr])
+
+    # Add track features
+    tp.add_track_features()
+    # New columns were added
+    for track_label in ["DTAG", "ROSTRUM"]:
+        for attr in [
+            f"{track_label}_dist_to_target",
+            f"{track_label}_dist_to_clutter",
+            f"{track_label}_dist_elliptical",
+            f"{track_label}_speed",
+            "angle_heading_to_target",
+            "angle_heading_to_clutter",
+            "absolute_heading",
+        ]:
+            assert attr in tp.df_track
