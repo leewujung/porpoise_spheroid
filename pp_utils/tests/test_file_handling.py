@@ -1,14 +1,13 @@
-from pp_utils.core import DATA_PATH
 from pp_utils.file_handling import get_trial_info, df_master_loader, assemble_target_df
 
 
-def test_get_trial_info(t100_flags, t100_params, t100_paths):
+def test_get_trial_info(t100_flags, t100_params, t100_paths, test_data_path):
 
-    df_master = df_master_loader()
+    df_master = df_master_loader(folder=test_data_path["main"])
     trial_idx = 100
 
     flags, params, paths = get_trial_info(
-        df_master=df_master, data_path=DATA_PATH, trial_idx=trial_idx
+        df_master=df_master, data_path=test_data_path, trial_idx=trial_idx
     )
 
     assert flags == t100_flags
@@ -16,9 +15,9 @@ def test_get_trial_info(t100_flags, t100_params, t100_paths):
     assert paths == t100_paths
 
 
-def test_assemble_target_df():
+def test_assemble_target_df(test_data_path):
     # trial_idx 100
-    target_file = DATA_PATH["target"] / "20190628_s2_t2_targets_hula_flip_transformed.csv"
+    target_file = test_data_path["target"] / "20190628_s2_t2_targets_hula_flip_transformed.csv"
     cal_obj = "hula_flip"
     target_pos_comb = "TC"
 

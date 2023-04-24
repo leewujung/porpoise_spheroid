@@ -10,7 +10,6 @@ RAW_PATH = Path("/Volumes/SSD_2TB/MURI/fb2019_data")
 
 
 # Paths to processed data
-DATA_PATH = {}
 data_path_main = Path("/Volumes/SSD_2TB/MURI/fb2019_analysis")
 DATA_PATH = {
     "main": data_path_main,

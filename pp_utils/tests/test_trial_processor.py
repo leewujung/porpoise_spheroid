@@ -6,12 +6,12 @@ from pp_utils.file_handling import df_master_loader
 from pp_utils.trial_processor import TrialProcessor
 
 
-def test_trial_processor(t100_flags, t100_params, t100_paths):
+def test_trial_processor(t100_flags, t100_params, t100_paths, test_data_path, test_raw_path):
 
-    df_master = df_master_loader()
+    df_master = df_master_loader(folder=test_data_path["main"])
     trial_idx = 100
 
-    tp = TrialProcessor(df_master, trial_idx)
+    tp = TrialProcessor(df_master, trial_idx, data_path=test_data_path, raw_path=test_raw_path)
 
     assert tp.flags == t100_flags
     assert tp.params == t100_params
@@ -21,13 +21,13 @@ def test_trial_processor(t100_flags, t100_params, t100_paths):
         assert isinstance(getattr(tp, df_name), pd.DataFrame)
 
 
-def test_save_tp(t100_flags, t100_params, t100_paths):
+def test_save_tp(t100_flags, t100_params, t100_paths, test_data_path, test_raw_path):
 
-    df_master = df_master_loader()
+    df_master = df_master_loader(folder=test_data_path["main"])
     trial_idx = 100
     save_path = "/Users/wujung/Downloads"
 
-    tp = TrialProcessor(df_master, trial_idx)
+    tp = TrialProcessor(df_master, trial_idx, data_path=test_data_path, raw_path=test_raw_path)
 
     # Pickle tp object
     save_full_path = tp.save_trial(save_path)
@@ -48,12 +48,12 @@ def test_save_tp(t100_flags, t100_params, t100_paths):
     save_full_path.unlink()
 
 
-def test_get_sampling_rate():
+def test_get_sampling_rate(test_data_path, test_raw_path):
 
-    df_master = df_master_loader()
+    df_master = df_master_loader(folder=test_data_path["main"])
     trial_idx = 100
 
-    tp = TrialProcessor(df_master, trial_idx)
+    tp = TrialProcessor(df_master, trial_idx, data_path=test_data_path, raw_path=test_raw_path)
 
     assert np.isclose(tp.fs_video, 29.97)
     assert tp.fs_dtag == 576000
