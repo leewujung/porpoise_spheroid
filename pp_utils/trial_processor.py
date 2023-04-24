@@ -7,7 +7,8 @@ import soundfile as sf
 
 from .core import RAW_PATH, DATA_PATH
 from .file_handling import get_trial_info, assemble_target_df, get_fs_video
-# from . import track_features as tf
+from . import track_features as tf
+from . import misc
 
 
 class TrialProcessor:
@@ -42,6 +43,13 @@ class TrialProcessor:
         self._print_file_paths()
         self._print_scenario()
         self._print_choice()
+
+        # Other init
+        self.fs_hydro = None
+        self.fs_dtag = None
+        self.fs_video = None
+        self.touch_time_corrected = None
+
 
     def get_all_trial_dfs(self):
         """
@@ -126,30 +134,69 @@ class TrialProcessor:
             print("DTAG was sampled at %d Hz" % self.fs_dtag)
             print("Video was sampled at %f Hz" % self.fs_video)
 
-    # def process_track(self):
-    #     """
-    #     Interp, smooth, and add synced timing info to track.
-    #     """
-    #     if self.df_track is None:
-    #         print("Calibrated track does not exist!")
-    #     else:
-    #         df_track = self.df_track.copy()
+    def process_track(self):
+        """
+        Interp, smooth, and add synced timing info to track.
+        """
+        if self.df_track is None:
+            print("Calibrated track does not exist!")
+        else:
+            df_track = self.df_track.copy()
 
-    #         # Fill in NaN and smooth track
-    #         df_track = tf.interp_smooth_track(df_track)
+            # Fill in NaN and smooth track
+            df_track = tf.interp_smooth_track(df_track)
 
-    #         df_track["time"] = df_track.index / self.fs_video
-    #         frame_start_time = (
-    #             self.df_master.loc[
-    #                 self.df_master["fname_prefix"] == self.trial_paths["fname_prefix"],
-    #                 ["FRAME_NUM_START"],
-    #             ].values.squeeze()
-    #             / self.fs_video
-    #         )
-    #         df_track["time_corrected"] = df_track["time"] + frame_start_time
+            # Get times for track
+            df_track["time"] = df_track.index / self.fs_video
+            frame_start_time = (
+                self.df_master.loc[
+                    self.df_master["fname_prefix"] == self.params["fname_prefix"],
+                    ["FRAME_NUM_START"],
+                ].values.squeeze()
+                / self.fs_video
+            )
+            df_track["time_corrected"] = df_track["time"] + frame_start_time
 
-    #         # Save outputs
-    #         self.touch_time_corrected = df_track.iloc[self.trial_paths["idx_touch"]][
-    #             "time_corrected"
-    #         ]
-    #         self.df_track = df_track
+            # Save touch_time_corrected
+            self.touch_time_corrected = df_track.iloc[self.params["idx_touch"]][
+                "time_corrected"
+            ]
+            self.df_track = df_track
+        
+    def add_track_features(self):
+        """
+        Add all track features except for DTAG-related info.
+        """
+        df_track = self.df_track.copy()
+        df_targets = self.df_targets.copy()
+        cal_obj = self.trial_paths["cal_obj"]
+
+        # Add touch frame info
+        self.df_track["before_touch"] = misc.get_before_touch_column(
+            df_track, self.params["idx_touch"]
+        )
+
+        for track_label in ["DTAG", "ROSTRUM"]:
+            # Add distance measure
+            df_track[f"{track_label}_dist_to_target"] = tf.get_dist_to_object(
+                df_track, df_targets, "target", cal_obj, track_label,
+            )
+            df_track[f"{track_label}_dist_to_clutter"] = tf.get_dist_to_object(
+                df_track, df_targets, "clutter", cal_obj, track_label,
+            )
+            # Add elliptical distance
+            df_track[f"{track_label}_dist_elliptical"] = (
+                df_track[f"{track_label}_dist_to_target"]
+                + df_track[f"{track_label}_dist_to_clutter"]
+            )
+            # Add speed
+            df_track[f"{track_label}_speed"] = tf.get_speed(df_track, track_label)
+
+        # Add heading info
+        self.df_track["angle_heading_to_target"] = tf.get_angle_heading_to_object(
+            df_track, df_targets, "target", cal_obj,
+        )
+        self.df_track["angle_heading_to_clutter"] = tf.get_angle_heading_to_object(
+            df_track, df_targets, "clutter", cal_obj,
+        )
+        self.df_track["absolute_heading"] = tf.get_absolute_heading(df_track)
