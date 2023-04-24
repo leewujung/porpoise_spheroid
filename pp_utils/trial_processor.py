@@ -186,11 +186,6 @@ class TrialProcessor:
         df_targets = self.df_targets.copy()
         cal_obj = self.params["cal_obj"]
 
-        # Add touch frame info
-        self.df_track["before_touch"] = misc.get_before_touch_column(
-            df_track, self.params["idx_touch"]
-        )
-
         for track_label in ["DTAG", "ROSTRUM"]:
             # Add distance measure
             df_track[f"{track_label}_dist_to_target"] = tf.get_dist_to_object(
@@ -241,11 +236,6 @@ class TrialProcessor:
                     obj_type=obj_type,
                     cal_obj=self.params["cal_obj"],
                     track_label="DTAG",
-                )
-
-                # Add column for before touch indicator
-                df["before_touch"] = misc.get_before_touch_column(
-                    df=df, time_touch=self.touch_time_corrected
                 )
 
                 # Compute ICI
@@ -360,3 +350,19 @@ class TrialProcessor:
 
                 # point scatterer echo level
                 df["pointEL"] = df["RL"] - df["absorption_1way"] - df["spreading_1way"]
+
+    def add_before_touch_to_all_dfs(self):
+        """
+        Add before_touch column to df if not already exist.
+        """
+        # Add "before_touch" column to track df
+        if "before_touch" not in self.df_track:
+            self.df_track["before_touch"] = misc.get_before_touch_column(
+                df=self.df_track, idx_touch=self.trial_paths["idx_touch"]
+            )
+        # Add "before_touch" column to dtag and hydro dfs
+        for df in [self.df_dtag, self.df_hydro_ch0, self.df_hydro_ch1]:
+            if "before_touch" not in df:
+                df["before_touch"] = misc.get_before_touch_column(
+                    df=df, time_touch=self.touch_time_corrected
+                )
