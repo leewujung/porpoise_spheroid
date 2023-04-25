@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import soundfile as sf
 
-from .core import RAW_PATH, DATA_PATH, ANGLE_MAP, HYDRO_PARAMS, ENV_PARAMS
+from .core import RAW_PATH, DATA_PATH, ANGLE_MAP, HYDRO_PARAMS, ENV_PARAMS, SCAN_PARAMS
 from .file_handling import get_trial_info, assemble_target_df, get_fs_video
 from . import track_features as tf
 from . import hydro_clicks as hc
@@ -22,18 +22,22 @@ class TrialProcessor:
         self,
         df_master: pd.DataFrame,
         trial_idx: int,
-        data_path: Dict = DATA_PATH,
-        raw_path: Path = RAW_PATH,
+        data_path: Dict = None,
+        raw_path: Path = None,
         track_label: str = "DTAG",
-        hydro_params: Dict = HYDRO_PARAMS,
+        hydro_params: Dict = None,
+        env_params: Dict = None,
+        scan_params: Dict = None,
     ):
         
         self.trial_idx = trial_idx
         self.track_label = track_label
-        self.raw_path = raw_path
-        self.data_paths = data_path
+        self.raw_path = RAW_PATH if raw_path is None else raw_path
+        self.data_paths = DATA_PATH if data_path is None else data_path
         self.trial_series = df_master.iloc[trial_idx, :]
-        self.hydro_params = hydro_params
+        self.hydro_params = HYDRO_PARAMS if hydro_params is None else hydro_params
+        self.env_params = ENV_PARAMS if env_params is None else env_params
+        self.scan_params = SCAN_PARAMS if scan_params is None else scan_params
 
         # Get all trial flags, params, and paths
         self.flags, self.params, self.paths = get_trial_info(
@@ -289,7 +293,7 @@ class TrialProcessor:
                     fs_hydro=self.fs_hydro,
                 )
 
-    def add_RL_ASL_pointEL(self, env_params: Dict = ENV_PARAMS):
+    def add_RL_ASL_pointEL(self):
         """
         Add click apparent source level (ASL) to hydro channels.
 
@@ -303,12 +307,12 @@ class TrialProcessor:
 
                 # Get transmission loss
                 absorption_1way_1m = calc_absorption(
-                    frequency=env_params["frequency"],
-                    temperature=env_params["temperature"],
-                    salinity=env_params["salinity"],
-                    pressure=env_params["pressure"],
-                    pH=env_params["pH"],
-                    formula_source=env_params["absorption_formula_source"],
+                    frequency=self.env_params["frequency"],
+                    temperature=self.env_params["temperature"],
+                    salinity=self.env_params["salinity"],
+                    pressure=self.env_params["pressure"],
+                    pH=self.env_params["pH"],
+                    formula_source=self.env_params["absorption_formula_source"],
                 )
                 df["absorption_1way"] = absorption_1way_1m * df["dist_to_hydro"]
                 df["spreading_1way"] = 20 * np.log10(df["dist_to_hydro"])
@@ -388,36 +392,20 @@ class TrialProcessor:
         else:
             return None
 
-    def get_hydro_scan_num(
-        self,
-        th_RL: Union[int, float] = 140,
-        RL_tolerance: Union[int, float] = 5,
-        th_num_clk: int = 5,
-        th_RL_diff: Union[int, float] = 5,
-        max_num_click_has_RL_diff: int = 3,
-    ):
+    def get_hydro_scan_num(self):
         """
         Count the number of hydrophone scans using filtered clicks.
 
-        Parameters
-        ----------
-        th_RL
-            receive level (RL) threshold for clicks to consider
-        RL_tolerance
-            RL tolerance, below which do not switch the assigned scan channel
-            from the previous click
-        th_num_clk
-            minimum number of clicks to be considered a streak (stride of clicks)
-        th_RL_diff
-            RL difference to accept as true scan (beam alternating between targets)
-        max_num_click_has_RL_diff
-            Max number of overlapping to be consider a true scan
+        Set the following dfs:
+        - self.df_click_all
+        - self.df_click_scan
+        - self.df_scan
         """
         # Match clicks and assign scanned channel to each click
-        df_h0 = hc.select_scan_clicks(self.df_hydro_ch0, th_RL=th_RL)
-        df_h1 = hc.select_scan_clicks(self.df_hydro_ch1, th_RL=th_RL)
+        df_h0 = hc.select_scan_clicks(self.df_hydro_ch0, th_RL=self.scan_params["th_RL"])
+        df_h1 = hc.select_scan_clicks(self.df_hydro_ch1, th_RL=self.scan_params["th_RL"])
         df_h_all = hc.match_clicks(df_h0, df_h1)
-        df_h_all = hc.assign_scan(df_h_all, RL_tolerance=RL_tolerance)
+        df_h_all = hc.assign_scan(df_h_all, RL_tolerance=self.scan_params["RL_tolerance"])
         selector_matched = ~df_h_all["the_other_ch_index"].isna()  # have matched channel
 
         # Sanity check
@@ -443,7 +431,7 @@ class TrialProcessor:
         # Get streaks (strides of consecutive clicks, which are the scans)
         df_h_all = hc.get_streaks(df_h_all)  # get streaks the first time
         df_h_all = hc.clean_streaks(  # remove streaks with only few clicks
-            df_h_all, th_num_clk=th_num_clk
+            df_h_all, th_num_clk=self.scan_params["th_num_clk"]
         )
         df_h_all = hc.get_streaks(df_h_all)  # get streaks again
 
@@ -452,8 +440,8 @@ class TrialProcessor:
         #  - True: only one target ensonified
         scan_validity = df_h_all.groupby("streak_id").apply(
             hc.is_true_scan,
-            th_RL_diff=th_RL_diff,
-            max_num_click_has_RL_diff=max_num_click_has_RL_diff,
+            th_RL_diff=self.scan_params["true_scan_th_RL_diff"],
+            max_num_click_has_RL_diff=self.scan_params["true_scan_max_num_click_has_RL_diff"],
         )
 
         # Assemble scan number dataframe:

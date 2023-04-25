@@ -64,3 +64,15 @@ ENV_PARAMS = {
     "pH": 8,
     "absorption_formula_source": "FG",
 }
+
+
+# Scan params
+SCAN_PARAMS = {
+    "th_RL": 140,  # receive level (RL) threshold for clicks to consider
+    "RL_tolerance": 5,  # RL tolerance, below which do not switch the assigned scan channel
+                        # from the previous click
+    "th_num_clk": 5,  # minimum number of clicks to be considered a streak (stride of clicks)
+    "true_scan_th_RL_diff": 5,  # RL difference to accept as true scan
+                                # (beam alternating between targets)
+    "true_scan_max_num_click_has_RL_diff": 3,  # max num of overlapping to be consider a true scan
+}
