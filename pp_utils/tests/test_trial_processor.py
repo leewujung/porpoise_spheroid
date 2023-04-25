@@ -4,6 +4,7 @@ import pandas as pd
 
 from pp_utils.file_handling import df_master_loader
 from pp_utils.trial_processor import TrialProcessor
+from pp_utils.core import HYDRO_PARAMS, SCAN_PARAMS, ENV_PARAMS
 
 
 def test_trial_processor(t100_flags, t100_params, t100_paths, test_data_path, test_raw_path):
@@ -115,14 +116,14 @@ def test_add_hydro_features(test_data_path, test_raw_path):
         assert attr in tp.df_hydro_ch1
 
     # Add SNR and p2p
-    tp.add_SNR_p2p()
+    tp.add_SNR_p2p(hydro_params=HYDRO_PARAMS)
     # New columns were added
     for attr in ["SNR", "p2p"]:
         assert attr in tp.df_hydro_ch0
         assert attr in tp.df_hydro_ch1
 
     # Add RL, ASL, and pointEL
-    tp.add_RL_ASL_pointEL()
+    tp.add_RL_ASL_pointEL(env_params=ENV_PARAMS, hydro_params=HYDRO_PARAMS)
     # New columns were added
     for attr in ["RL", "ASL", "pointEL"]:
         assert attr in tp.df_hydro_ch0
@@ -165,3 +166,32 @@ def test_get_desired_track_portion(test_data_path, test_raw_path):
         dist_max=("DTAG_dist_elliptical", 12), dist_min=("ROSTRUM_dist_to_target", 0.1)
     )
     assert df_track_extract is None
+
+
+def test_hydro_scan(test_data_path, test_raw_path):
+
+    df_master = df_master_loader(folder=test_data_path["main"])
+    trial_idx = 100
+
+    tp = TrialProcessor(df_master, trial_idx, data_path=test_data_path, raw_path=test_raw_path)
+    tp.get_timing()  # this adds the "time_corrected" column to df_track required for interpolate_track_xy
+    tp.add_track_features()
+    tp.add_hydro_features()
+    tp.add_SNR_p2p(hydro_params=HYDRO_PARAMS)
+    tp.add_RL_ASL_pointEL(hydro_params=HYDRO_PARAMS, env_params=ENV_PARAMS)
+    tp.add_before_touch_to_all_dfs()
+
+    tp.get_hydro_scan_num(th_RL=140, scan_params=SCAN_PARAMS)
+    # Check 3 dfs should not be None
+    assert tp.df_click_all is not None
+    assert tp.df_click_scan is not None
+    assert tp.df_scan is not None
+    # Check length of dfs
+    assert len(tp.df_click_all) == 914
+    assert len(tp.df_click_scan) == 909
+    assert len(tp.df_scan) == 11
+
+    df_scan_ch0 = tp.sort_df_scan_to_channel(ch=0)
+    df_scan_ch1 = tp.sort_df_scan_to_channel(ch=1)
+    assert len(df_scan_ch0) == 6
+    assert len(df_scan_ch1) == 6
