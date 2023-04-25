@@ -67,17 +67,15 @@ def test_add_track_features(test_data_path, test_raw_path):
 
     tp = TrialProcessor(df_master, trial_idx, data_path=test_data_path, raw_path=test_raw_path)
 
-    # Process track
     df_track_original = tp.df_track.copy()
-    tp.process_track()
+
+    # Get timing from track
+    tp.get_timing()
     # Attribute was added
     assert tp.touch_time_corrected is not None
     # New columns were added
     for attr in ["time", "time_corrected"]:
         assert attr in tp.df_track
-    # Tracks were modified
-    for attr in df_track_original.columns:
-        assert not tp.df_track[attr].equals(df_track_original[attr])
 
     # Add track features
     tp.add_track_features()
@@ -93,6 +91,9 @@ def test_add_track_features(test_data_path, test_raw_path):
             "absolute_heading",
         ]:
             assert attr in tp.df_track
+    # Track modified
+    for attr in df_track_original.columns:
+        assert not tp.df_track[attr].equals(df_track_original[attr])
 
 
 def test_add_hydro_features(test_data_path, test_raw_path):
@@ -101,7 +102,7 @@ def test_add_hydro_features(test_data_path, test_raw_path):
     trial_idx = 100
 
     tp = TrialProcessor(df_master, trial_idx, data_path=test_data_path, raw_path=test_raw_path)
-    tp.process_track()  # this adds the "time_corrected" column to df_track required for interpolate_track_xy
+    tp.get_timing()  # this adds the "time_corrected" column to df_track required for interpolate_track_xy
 
     # Add hydro info
     tp.add_hydro_features()
@@ -134,7 +135,7 @@ def test_add_before_touch_to_all_dfs(test_data_path, test_raw_path):
     trial_idx = 100
 
     tp = TrialProcessor(df_master, trial_idx, data_path=test_data_path, raw_path=test_raw_path)
-    tp.process_track()  # this adds the "time_corrected" column to df_track required for interpolate_track_xy
+    tp.get_timing()  # this adds the "time_corrected" column to df_track required for interpolate_track_xy
 
     # Add "before_touch" column
     tp.add_before_touch_to_all_dfs()
