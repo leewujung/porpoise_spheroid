@@ -1,4 +1,4 @@
-from typing import Union, Dict
+from typing import Union, Tuple, Dict
 from pathlib import Path
 
 import pickle
@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import soundfile as sf
 
-from .core import RAW_PATH, DATA_PATH, MISC_PARAMS, ANGLE_MAP, HYDRO_PARAMS, ENV_PARAMS, SCAN_PARAMS
+from .core import RAW_PATH, DATA_PATH, ANGLE_MAP
 from .file_handling import get_trial_info, assemble_target_df, get_fs_video
 from . import track_features as tf
 from . import hydro_clicks as hc
@@ -25,10 +25,6 @@ class TrialProcessor:
         data_path: Dict = None,
         raw_path: Path = None,
         track_label: str = "DTAG",
-        hydro_params: Dict = None,
-        env_params: Dict = None,
-        scan_params: Dict = None,
-        misc_params: Dict = None,
     ):
         
         self.trial_idx = trial_idx
@@ -36,10 +32,6 @@ class TrialProcessor:
         self.raw_path = RAW_PATH if raw_path is None else raw_path
         self.data_paths = DATA_PATH if data_path is None else data_path
         self.trial_series = df_master.iloc[trial_idx, :]
-        self.hydro_params = HYDRO_PARAMS if hydro_params is None else hydro_params
-        self.env_params = ENV_PARAMS if env_params is None else env_params
-        self.scan_params = SCAN_PARAMS if scan_params is None else scan_params
-        self.misc_params = MISC_PARAMS if misc_params is None else misc_params
 
         # Get all trial flags, params, and paths
         self.flags, self.params, self.paths = get_trial_info(
@@ -259,7 +251,7 @@ class TrialProcessor:
                 df["ICI"] = df["time_corrected"].diff()
 
 
-    def add_SNR_p2p(self):
+    def add_SNR_p2p(self, hydro_params: Dict):
         """
         Add click SNR and p2p voltage to both hydro channels.
         """
@@ -276,13 +268,13 @@ class TrialProcessor:
                 # Add SNR
                 clk_var = hc.get_clk_variance(
                     clk_mtx=cm,
-                    clk_sel_len_sec=self.hydro_params["clk_sel_len_sec"],
-                    perc_before_pk=self.hydro_params["perc_before_pk"],
+                    clk_sel_len_sec=hydro_params["clk_sel_len_sec"],
+                    perc_before_pk=hydro_params["perc_before_pk"],
                     fs_hydro=self.fs_hydro,
                 )
                 bkg_var = hc.get_bkg_variance(
                     clk_mtx=cm,
-                    bkg_len_sec=self.hydro_params["bkg_len_sec"],
+                    bkg_len_sec=hydro_params["bkg_len_sec"],
                     fs_hydro=self.fs_hydro,
                 )
                 df["SNR"] = 10 * np.log10(clk_var) - 10 * np.log10(bkg_var)
@@ -290,15 +282,14 @@ class TrialProcessor:
                 # Add p2p voltage
                 df["p2p"] = hc.get_clk_p2p(
                     clk_mtx=cm,
-                    clk_sel_len_sec=self.hydro_params["clk_sel_len_sec"],
-                    perc_before_pk=self.hydro_params["perc_before_pk"],
+                    clk_sel_len_sec=hydro_params["clk_sel_len_sec"],
+                    perc_before_pk=hydro_params["perc_before_pk"],
                     fs_hydro=self.fs_hydro,
                 )
 
-    def add_RL_ASL_pointEL(self):
+    def add_RL_ASL_pointEL(self, env_params: Dict, hydro_params: Dict):
         """
         Add click apparent source level (ASL) to hydro channels.
-
         """
         if self.df_hydro_ch0 is None or self.df_hydro_ch1 is None:
             # No detection on hydro channels
@@ -309,12 +300,12 @@ class TrialProcessor:
 
                 # Get transmission loss
                 absorption_1way_1m = calc_absorption(
-                    frequency=self.env_params["frequency"],
-                    temperature=self.env_params["temperature"],
-                    salinity=self.env_params["salinity"],
-                    pressure=self.env_params["pressure"],
-                    pH=self.env_params["pH"],
-                    formula_source=self.env_params["absorption_formula_source"],
+                    frequency=env_params["frequency"],
+                    temperature=env_params["temperature"],
+                    salinity=env_params["salinity"],
+                    pressure=env_params["pressure"],
+                    pH=env_params["pH"],
+                    formula_source=env_params["absorption_formula_source"],
                 )
                 df["absorption_1way"] = absorption_1way_1m * df["dist_to_hydro"]
                 df["spreading_1way"] = 20 * np.log10(df["dist_to_hydro"])
@@ -322,8 +313,8 @@ class TrialProcessor:
                 # Receive level
                 df["RL"] = (
                     20 * np.log10(df["p2p"])
-                    - self.hydro_params["hydro_sens"]
-                    - self.hydro_params["recording_gain"]
+                    - hydro_params["hydro_sens"]
+                    - hydro_params["recording_gain"]
                 )
 
                 # Apparent source level
@@ -348,11 +339,7 @@ class TrialProcessor:
                     df=df, time_touch=self.touch_time_corrected
                 )
 
-    def get_desired_track_portion(
-        self,
-        dist_max=("DTAG_dist_elliptical", 12),
-        dist_min=("ROSTRUM_dist_to_target", 0.1),
-    ):
+    def get_desired_track_portion(self, dist_max: Tuple[str, float], dist_min: Tuple[str, float]):
         """
         Get a desired track portion based on distance criteria.
         """
@@ -394,7 +381,7 @@ class TrialProcessor:
         else:
             return None
 
-    def get_hydro_scan_num(self):
+    def get_hydro_scan_num(self, th_RL: float, scan_params: Dict):
         """
         Count the number of hydrophone scans using filtered clicks.
 
@@ -404,10 +391,10 @@ class TrialProcessor:
         - self.df_scan
         """
         # Match clicks and assign scanned channel to each click
-        df_h0 = hc.select_scan_clicks(self.df_hydro_ch0, th_RL=self.misc_params["th_RL"])
-        df_h1 = hc.select_scan_clicks(self.df_hydro_ch1, th_RL=self.misc_params["th_RL"])
+        df_h0 = hc.select_scan_clicks(self.df_hydro_ch0, th_RL=th_RL)
+        df_h1 = hc.select_scan_clicks(self.df_hydro_ch1, th_RL=th_RL)
         df_h_all = hc.match_clicks(df_h0, df_h1)
-        df_h_all = hc.assign_scan(df_h_all, RL_tolerance=self.scan_params["RL_tolerance"])
+        df_h_all = hc.assign_scan(df_h_all, RL_tolerance=scan_params["RL_tolerance"])
         selector_matched = ~df_h_all["the_other_ch_index"].isna()  # have matched channel
 
         # Sanity check
@@ -433,7 +420,7 @@ class TrialProcessor:
         # Get streaks (strides of consecutive clicks, which are the scans)
         df_h_all = hc.get_streaks(df_h_all)  # get streaks the first time
         df_h_all = hc.clean_streaks(  # remove streaks with only few clicks
-            df_h_all, th_num_clk=self.scan_params["th_num_clk"]
+            df_h_all, th_num_clk=scan_params["th_num_clk"]
         )
         df_h_all = hc.get_streaks(df_h_all)  # get streaks again
 
@@ -442,8 +429,8 @@ class TrialProcessor:
         #  - True: only one target ensonified
         scan_validity = df_h_all.groupby("streak_id").apply(
             hc.is_true_scan,
-            th_RL_diff=self.scan_params["true_scan_th_RL_diff"],
-            max_num_click_has_RL_diff=self.scan_params["true_scan_max_num_click_has_RL_diff"],
+            th_RL_diff=scan_params["true_scan_th_RL_diff"],
+            max_num_click_has_RL_diff=scan_params["true_scan_max_num_click_has_RL_diff"],
         )
 
         # Assemble scan number dataframe:
@@ -487,7 +474,7 @@ class TrialProcessor:
         last_streak = self.df_click_scan["streak_id"] == self.df_scan.index.max() - 1
         return self.df_click_scan[last_streak].iloc[-1]
 
-    def get_dtag_buzz_onset(self):
+    def get_dtag_buzz_onset(self, buzz_reg_switch: float, num_buzz_for_onset: int):
         """
         Identify buzz onset using Dtag click detections.
 
@@ -508,17 +495,17 @@ class TrialProcessor:
             (df_dtag.iloc[-1]["time_corrected"] - df_dtag["time_corrected"]) < 5
         ]
 
-        df_dtag_for_buzz = df_dtag[df_dtag["ICI"] < self.misc_params["buzz_reg_switch"]].copy()
+        df_dtag_for_buzz = df_dtag[df_dtag["ICI"] < buzz_reg_switch].copy()
 
-        df_dtag_for_buzz = hc.add_buzz_streak(df_dtag_for_buzz, th_ICI=self.misc_params["buzz_reg_switch"])
+        df_dtag_for_buzz = hc.add_buzz_streak(df_dtag_for_buzz, th_ICI=buzz_reg_switch)
         df_dtag_for_buzz = hc.get_streaks(df_dtag_for_buzz, col_name="streak")
         df_dtag_for_buzz = hc.clean_streaks(
-            df_dtag_for_buzz, th_num_clk=self.misc_params["num_buzz_for_onset"], type="ICI"
+            df_dtag_for_buzz, th_num_clk=num_buzz_for_onset, type="ICI"
         )
 
         return df_dtag_for_buzz.iloc[0]
 
-    def get_hydro_buzz_onset(self):
+    def get_hydro_buzz_onset(self, buzz_reg_switch: float, num_buzz_for_onset: int):
         """
         Identify buzz onset using hydrophone click detections.
 
@@ -535,26 +522,24 @@ class TrialProcessor:
         ].copy()
 
         # only want clicks at the end of trial
-        df_hydro_for_buzz = hc.add_buzz_streak(df_hydro_for_buzz, th_ICI=self.misc_params["buzz_reg_switch"])
+        df_hydro_for_buzz = hc.add_buzz_streak(df_hydro_for_buzz, th_ICI=buzz_reg_switch)
         df_hydro_for_buzz = hc.get_streaks(df_hydro_for_buzz, col_name="streak")
         df_hydro_for_buzz = hc.clean_streaks(
-            df_hydro_for_buzz, th_num_clk=self.misc_params["num_buzz_for_onset"], type="ICI"
+            df_hydro_for_buzz, th_num_clk=num_buzz_for_onset, type="ICI"
         )
 
         return df_hydro_for_buzz.iloc[0]
 
-    def get_inspection_angle_in_view(
-        self,
-        time_stop: float,
-    ):
+    def get_inspection_angle_in_view(self, time_stop: float, th_RL: float, time_binning_delta: float):
         """
         Get inspection angles when porpoise was in camera view.
 
         Parameters
         ----------
         time_stop
-            end of time to count inspection angle in time_corrected
-            e.g., decision time
+            end of time to count inspection angle in time_corrected, e.g., decision time
+        time_binning_delta
+            binning interval for clicks in seconds, default to 50 ms
 
         Returns
         -------
@@ -572,19 +557,15 @@ class TrialProcessor:
 
         # Filter hydro clicks
         df_h0 = filter_clicks(
-            self.df_hydro_ch0.copy(), th_RL=self.misc_params["th_RL"], time_stop=time_stop
+            self.df_hydro_ch0.copy(), th_RL=th_RL, time_stop=time_stop
         )
         df_h1 = filter_clicks(
-            self.df_hydro_ch1.copy(), th_RL=self.misc_params['th_RL'], time_stop=time_stop
+            self.df_hydro_ch1.copy(), th_RL=th_RL, time_stop=time_stop
         )
 
         # Binning by time interval and get median of each bin
-        tc_bins_h0 = ia.get_time_corrected_bins(
-            df_h=df_h0, bin_delta=self.misc_params['time_binning_delta']
-        )
-        tc_bins_h1 = ia.get_time_corrected_bins(
-            df_h=df_h1, bin_delta=self.misc_params["time_binning_delta"]
-        )
+        tc_bins_h0 = ia.get_time_corrected_bins(df_h=df_h0, bin_delta=time_binning_delta)
+        tc_bins_h1 = ia.get_time_corrected_bins(df_h=df_h1, bin_delta=time_binning_delta)
         angle_h0 = ia.groupby_ops(df_h0, "enso_angle", tc_bins_h0, "median").values.squeeze()
         angle_h1 = ia.groupby_ops(df_h1, "enso_angle", tc_bins_h1, "median").values.squeeze()
 
