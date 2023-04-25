@@ -195,3 +195,57 @@ def test_hydro_scan(test_data_path, test_raw_path):
     df_scan_ch1 = tp.sort_df_scan_to_channel(ch=1)
     assert len(df_scan_ch0) == 6
     assert len(df_scan_ch1) == 6
+
+
+def test_get_dtag_buzz_onset(test_data_path, test_raw_path):
+
+    df_master = df_master_loader(folder=test_data_path["main"])
+    trial_idx = 100
+
+    tp = TrialProcessor(df_master, trial_idx, data_path=test_data_path, raw_path=test_raw_path)
+    tp.get_timing()  # this adds the "time_corrected" column to df_track required for interpolate_track_xy
+    tp.add_before_touch_to_all_dfs()
+
+    # tp.get_dtag_buzz_onset needs "before_touch" column
+    buzz_reg_switch = 13e-3
+    num_buzz_for_onset = 30
+    buzz_onset_time = tp.get_dtag_buzz_onset(buzz_reg_switch, num_buzz_for_onset)
+
+    assert isinstance(buzz_onset_time, pd.Series)
+    assert np.isclose(buzz_onset_time["time_corrected"], 792.181)
+    assert buzz_onset_time["sample_loc"] == 9800441
+    df_dtag = tp.df_dtag.copy()
+    df_dtag["ICI"] = df_dtag["time_corrected"].diff()
+    df_dtag = df_dtag[df_dtag["before_touch"]]
+    assert np.all(
+        df_dtag[df_dtag["sample_loc"] > 9800441]["ICI"][:num_buzz_for_onset+10].values
+        < buzz_reg_switch
+    )
+
+
+def test_get_hydro_buzz_onset(test_data_path, test_raw_path):
+
+    df_master = df_master_loader(folder=test_data_path["main"])
+    trial_idx = 100
+
+    tp = TrialProcessor(df_master, trial_idx, data_path=test_data_path, raw_path=test_raw_path)
+    tp.get_timing()  # this adds the "time_corrected" column to df_track required for interpolate_track_xy
+    tp.add_before_touch_to_all_dfs()
+
+    # tp.get_hydro_buzz_onset needs tp.df_click_scan
+    tp.add_hydro_features()
+    tp.add_SNR_p2p(hydro_params=HYDRO_PARAMS)
+    tp.add_RL_ASL_pointEL(hydro_params=HYDRO_PARAMS, env_params=ENV_PARAMS)
+    tp.get_hydro_scan_num(th_RL=140, scan_params=SCAN_PARAMS)
+    
+    buzz_reg_switch = 13e-3
+    num_buzz_for_onset = 30
+    buzz_onset_time = tp.get_hydro_buzz_onset(buzz_reg_switch, num_buzz_for_onset)
+
+    assert isinstance(buzz_onset_time, pd.Series)
+    assert np.isclose(buzz_onset_time["time_corrected"], 792.182)
+    assert buzz_onset_time["sample_loc"] == 7892284
+    assert np.all(
+        tp.df_click_scan[tp.df_click_scan["sample_loc"] > 7892284]["ICI"][:num_buzz_for_onset+10]
+        < buzz_reg_switch
+    )
