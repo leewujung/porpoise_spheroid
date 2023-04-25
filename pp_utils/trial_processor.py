@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import soundfile as sf
 
-from .core import RAW_PATH, DATA_PATH, ANGLE_MAP, HYDRO_PARAMS, ENV_PARAMS, SCAN_PARAMS
+from .core import RAW_PATH, DATA_PATH, MISC_PARAMS, ANGLE_MAP, HYDRO_PARAMS, ENV_PARAMS, SCAN_PARAMS
 from .file_handling import get_trial_info, assemble_target_df, get_fs_video
 from . import track_features as tf
 from . import hydro_clicks as hc
@@ -28,6 +28,7 @@ class TrialProcessor:
         hydro_params: Dict = None,
         env_params: Dict = None,
         scan_params: Dict = None,
+        misc_params: Dict = None,
     ):
         
         self.trial_idx = trial_idx
@@ -38,6 +39,7 @@ class TrialProcessor:
         self.hydro_params = HYDRO_PARAMS if hydro_params is None else hydro_params
         self.env_params = ENV_PARAMS if env_params is None else env_params
         self.scan_params = SCAN_PARAMS if scan_params is None else scan_params
+        self.misc_params = MISC_PARAMS if misc_params is None else misc_params
 
         # Get all trial flags, params, and paths
         self.flags, self.params, self.paths = get_trial_info(
@@ -402,8 +404,8 @@ class TrialProcessor:
         - self.df_scan
         """
         # Match clicks and assign scanned channel to each click
-        df_h0 = hc.select_scan_clicks(self.df_hydro_ch0, th_RL=self.scan_params["th_RL"])
-        df_h1 = hc.select_scan_clicks(self.df_hydro_ch1, th_RL=self.scan_params["th_RL"])
+        df_h0 = hc.select_scan_clicks(self.df_hydro_ch0, th_RL=self.misc_params["th_RL"])
+        df_h1 = hc.select_scan_clicks(self.df_hydro_ch1, th_RL=self.misc_params["th_RL"])
         df_h_all = hc.match_clicks(df_h0, df_h1)
         df_h_all = hc.assign_scan(df_h_all, RL_tolerance=self.scan_params["RL_tolerance"])
         selector_matched = ~df_h_all["the_other_ch_index"].isna()  # have matched channel
@@ -485,19 +487,12 @@ class TrialProcessor:
         last_streak = self.df_click_scan["streak_id"] == self.df_scan.index.max() - 1
         return self.df_click_scan[last_streak].iloc[-1]
 
-    def get_dtag_buzz_onset(self, th_num_buzz=30, th_ICI=13e-3):
+    def get_dtag_buzz_onset(self):
         """
         Identify buzz onset using Dtag click detections.
 
         There has to be `>= th_num_buzz` number of consecutive clicks with ICI<th_ICI
         for a given streak to be consider onset of buzz.
-
-        Parameters
-        ----------
-        th_num_buzz
-            minimum number of clicks to quality as a buzz-like section
-        th_ICI
-            ICI threshold between regular clicks and buzzes
 
         Returns
         -------
@@ -513,29 +508,22 @@ class TrialProcessor:
             (df_dtag.iloc[-1]["time_corrected"] - df_dtag["time_corrected"]) < 5
         ]
 
-        df_dtag_for_buzz = df_dtag[df_dtag["ICI"] < th_ICI].copy()
+        df_dtag_for_buzz = df_dtag[df_dtag["ICI"] < self.misc_params["buzz_reg_switch"]].copy()
 
-        df_dtag_for_buzz = hc.add_buzz_streak(df_dtag_for_buzz, th_ICI=th_ICI)
+        df_dtag_for_buzz = hc.add_buzz_streak(df_dtag_for_buzz, th_ICI=self.misc_params["buzz_reg_switch"])
         df_dtag_for_buzz = hc.get_streaks(df_dtag_for_buzz, col_name="streak")
         df_dtag_for_buzz = hc.clean_streaks(
-            df_dtag_for_buzz, th_num_clk=th_num_buzz, type="ICI"
+            df_dtag_for_buzz, th_num_clk=self.misc_params["num_buzz_for_onset"], type="ICI"
         )
 
         return df_dtag_for_buzz.iloc[0]
 
-    def get_hydro_buzz_onset(self, th_num_buzz=30, th_ICI=13e-3):
+    def get_hydro_buzz_onset(self):
         """
         Identify buzz onset using hydrophone click detections.
 
         There has to be `>= th_num_buzz` number of consecutive clicks with ICI<th_ICI
         for a given streak to be consider onset of buzz.
-
-        Parameters
-        ----------
-        th_num_buzz
-            minimum number of clicks to quality as a buzz-like section
-        th_ICI
-            ICI threshold between regular clicks and buzzes
 
         Returns
         -------
@@ -547,10 +535,10 @@ class TrialProcessor:
         ].copy()
 
         # only want clicks at the end of trial
-        df_hydro_for_buzz = hc.add_buzz_streak(df_hydro_for_buzz, th_ICI=th_ICI)
+        df_hydro_for_buzz = hc.add_buzz_streak(df_hydro_for_buzz, th_ICI=self.misc_params["buzz_reg_switch"])
         df_hydro_for_buzz = hc.get_streaks(df_hydro_for_buzz, col_name="streak")
         df_hydro_for_buzz = hc.clean_streaks(
-            df_hydro_for_buzz, th_num_clk=th_num_buzz, type="ICI"
+            df_hydro_for_buzz, th_num_clk=self.misc_params["num_buzz_for_onset"], type="ICI"
         )
 
         return df_hydro_for_buzz.iloc[0]
@@ -558,27 +546,15 @@ class TrialProcessor:
     def get_inspection_angle_in_view(
         self,
         time_stop: float,
-        th_RL: Union[int, float] = 140,
-        time_binning_delta: float = 50e-3,
     ):
-
         """
-        Get range of inspection angle when porpoise was in camera view.
+        Get inspection angles when porpoise was in camera view.
 
         Parameters
         ----------
         time_stop
             end of time to count inspection angle in time_corrected
             e.g., decision time
-        th_RL
-            receive level (RL) threshold for clicks to consider
-            default to 140 dB
-        time_binning_delta
-            binning interval for clicks in seconds
-            default to 50 ms
-        angle_bins
-            bins for ensonification angle
-            default to np.arange(0, 365, 2.5)
 
         Returns
         -------
@@ -596,18 +572,18 @@ class TrialProcessor:
 
         # Filter hydro clicks
         df_h0 = filter_clicks(
-            self.df_hydro_ch0.copy(), th_RL=th_RL, time_stop=time_stop
+            self.df_hydro_ch0.copy(), th_RL=self.misc_params["th_RL"], time_stop=time_stop
         )
         df_h1 = filter_clicks(
-            self.df_hydro_ch1.copy(), th_RL=th_RL, time_stop=time_stop
+            self.df_hydro_ch1.copy(), th_RL=self.misc_params['th_RL'], time_stop=time_stop
         )
 
         # Binning by time interval and get median of each bin
         tc_bins_h0 = ia.get_time_corrected_bins(
-            df_h=df_h0, bin_delta=time_binning_delta
+            df_h=df_h0, bin_delta=self.misc_params['time_binning_delta']
         )
         tc_bins_h1 = ia.get_time_corrected_bins(
-            df_h=df_h1, bin_delta=time_binning_delta
+            df_h=df_h1, bin_delta=self.misc_params["time_binning_delta"]
         )
         angle_h0 = ia.groupby_ops(df_h0, "enso_angle", tc_bins_h0, "median").values.squeeze()
         angle_h1 = ia.groupby_ops(df_h1, "enso_angle", tc_bins_h1, "median").values.squeeze()

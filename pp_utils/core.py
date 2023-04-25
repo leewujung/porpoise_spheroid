@@ -23,20 +23,18 @@ DATA_PATH = {
     "track": data_path_main / "tracks/xypressure_cal_transformed",
     # paths to calibrated target positions
     "target": data_path_main / "tracks/targets_cal_transformed",
+    # paths to extracted hydrophone clicks
     "extracted_clicks": data_path_main / "hydrophone_clicks/extracted_clicks",
 }
 
 
-# # ICI params
-# ICI_PARAMS = {
-#     "buzz_reg_switch": 13e-3,  # ICI threshold between buzz and regular clicks
-#     "num_buzz_for_onset": 30,  # minimum number of clicks to qualify as buzz onset
-# }
-
-
-# # Decision params
-# DECISION_PARAMS = {}
-# DECISION_PARAMS["hydro_ASL_th"] = th_ASL
+# Misc processing params
+MISC_PARAMS = {    
+    "th_RL": 140,  # receive level (RL) threshold for clicks to consider
+    "time_binning_delta": 50e-3,  # binning interval for clicks in seconds
+    "buzz_reg_switch": 13e-3,  # ICI threshold between buzz and regular clicks
+    "num_buzz_for_onset": 30,  # minimum number of clicks to qualify as buzz onset
+}
 
 
 # Hydrophone click processing params
@@ -68,11 +66,12 @@ ENV_PARAMS = {
 
 # Scan params
 SCAN_PARAMS = {
-    "th_RL": 140,  # receive level (RL) threshold for clicks to consider
-    "RL_tolerance": 5,  # RL tolerance, below which do not switch the assigned scan channel
-                        # from the previous click
-    "th_num_clk": 5,  # minimum number of clicks to be considered a streak (stride of clicks)
-    "true_scan_th_RL_diff": 5,  # RL difference to accept as true scan
-                                # (beam alternating between targets)
-    "true_scan_max_num_click_has_RL_diff": 3,  # max num of overlapping to be consider a true scan
+    # RL tolerance, below which do not switch the assigned scan channel from the previous click
+    "RL_tolerance": 5,
+    # minimum number of clicks to be considered a streak (stride of clicks)
+    "th_num_clk": 5,
+    # RL difference to accept as true scan (beam alternating between targets)
+    "true_scan_th_RL_diff": 5,
+    # max num of overlapping to be consider a true scan
+    "true_scan_max_num_click_has_RL_diff": 3,
 }
