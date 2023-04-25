@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import soundfile as sf
 
-from .core import RAW_PATH, DATA_PATH, ANGLE_MAP, HYDRO_PARAMS
+from .core import RAW_PATH, DATA_PATH, ANGLE_MAP, HYDRO_PARAMS, ENV_PARAMS
 from .file_handling import get_trial_info, assemble_target_df, get_fs_video
 from . import track_features as tf
 from . import hydro_clicks as hc
@@ -289,21 +289,10 @@ class TrialProcessor:
                     fs_hydro=self.fs_hydro,
                 )
 
-    def add_RL_ASL_pointEL(
-        self,
-        frequency=130e3,
-        temperature=16,
-        salinity=28,
-        pressure=1,
-        pH=8,
-        formula_source="FG",
-    ):
+    def add_RL_ASL_pointEL(self, env_params: Dict = ENV_PARAMS):
         """
         Add click apparent source level (ASL) to hydro channels.
 
-        The default values of environmental parameters are set to
-        match the absorption 0.04 dB m^-1 at 130 kHz specified in
-        Malinka et al. 2021 JEB paper.
         """
         if self.df_hydro_ch0 is None or self.df_hydro_ch1 is None:
             # No detection on hydro channels
@@ -314,12 +303,12 @@ class TrialProcessor:
 
                 # Get transmission loss
                 absorption_1way_1m = calc_absorption(
-                    frequency=frequency,
-                    temperature=temperature,
-                    salinity=salinity,
-                    pressure=pressure,
-                    pH=pH,
-                    formula_source=formula_source,
+                    frequency=env_params["frequency"],
+                    temperature=env_params["temperature"],
+                    salinity=env_params["salinity"],
+                    pressure=env_params["pressure"],
+                    pH=env_params["pH"],
+                    formula_source=env_params["absorption_formula_source"],
                 )
                 df["absorption_1way"] = absorption_1way_1m * df["dist_to_hydro"]
                 df["spreading_1way"] = 20 * np.log10(df["dist_to_hydro"])

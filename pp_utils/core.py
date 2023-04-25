@@ -52,3 +52,15 @@ HYDRO_PARAMS = {
 # Mapping of angle code with actual angle from Y-axis
 ANGLE_MAP = dict(zip(np.arange(4) + 1, np.arange(4) * 45))
 
+
+# Environmental params for sound absorption
+# These parameters are set to match the absorption 0.04 dB m^-1 at 130 kHz
+# specified in Malinka et al. 2021 JEB paper.
+ENV_PARAMS = {
+    "frequency": 130e3,
+    "temperature": 16,
+    "salinity": 28,
+    "pressure": 1,
+    "pH": 8,
+    "absorption_formula_source": "FG",
+}
