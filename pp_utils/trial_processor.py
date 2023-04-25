@@ -196,7 +196,7 @@ class TrialProcessor:
         )
         self.df_track["absolute_heading"] = tf.get_absolute_heading(self.df_track)
 
-    def add_hydro_info(self):
+    def add_hydro_features(self):
         """
         Add hydrophone-derived info to df_hydro_ch0 or df_hydro_ch1.
         """
@@ -331,7 +331,7 @@ class TrialProcessor:
         # Add "before_touch" column to track df
         if "before_touch" not in self.df_track:
             self.df_track["before_touch"] = misc.get_before_touch_column(
-                df=self.df_track, idx_touch=self.trial_paths["idx_touch"]
+                df=self.df_track, idx_touch=self.params["idx_touch"]
             )
         # Add "before_touch" column to dtag and hydro dfs
         for df in [self.df_dtag, self.df_hydro_ch0, self.df_hydro_ch1]:

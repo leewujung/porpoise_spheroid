@@ -60,7 +60,7 @@ def test_get_sampling_rate(test_data_path, test_raw_path):
     assert tp.fs_hydro == 500000
     
 
-def test_track_processing_features(test_data_path, test_raw_path):
+def test_add_track_features(test_data_path, test_raw_path):
 
     df_master = df_master_loader(folder=test_data_path["main"])
     trial_idx = 100
@@ -95,7 +95,7 @@ def test_track_processing_features(test_data_path, test_raw_path):
             assert attr in tp.df_track
 
 
-def test_add_hydro_info(test_data_path, test_raw_path):
+def test_add_hydro_features(test_data_path, test_raw_path):
 
     df_master = df_master_loader(folder=test_data_path["main"])
     trial_idx = 100
@@ -104,7 +104,7 @@ def test_add_hydro_info(test_data_path, test_raw_path):
     tp.process_track()  # this adds the "time_corrected" column to df_track required for interpolate_track_xy
 
     # Add hydro info
-    tp.add_hydro_info()
+    tp.add_hydro_features()
     # New columns were added
     for attr in [
         "DTAG_X", "DTAG_Y", "ROSTRUM_X", "ROSTRUM_Y", "dist_to_hydro",
@@ -120,12 +120,23 @@ def test_add_hydro_info(test_data_path, test_raw_path):
         assert attr in tp.df_hydro_ch0
         assert attr in tp.df_hydro_ch1
 
+    # Add RL, ASL, and pointEL
+    tp.add_RL_ASL_pointEL()
+    # New columns were added
+    for attr in ["RL", "ASL", "pointEL"]:
+        assert attr in tp.df_hydro_ch0
+        assert attr in tp.df_hydro_ch1
 
-# def test_add_SNR_p2p(test_data_path, test_raw_path):
 
-#     df_master = df_master_loader(folder=test_data_path["main"])
-#     trial_idx = 100
+def test_add_before_touch_to_all_dfs(test_data_path, test_raw_path):
 
-#     tp = TrialProcessor(df_master, trial_idx, data_path=test_data_path, raw_path=test_raw_path)
-    # tp.process_track()  # this adds the "time_corrected" column to df_track required for interpolate_track_xy
+    df_master = df_master_loader(folder=test_data_path["main"])
+    trial_idx = 100
 
+    tp = TrialProcessor(df_master, trial_idx, data_path=test_data_path, raw_path=test_raw_path)
+    tp.process_track()  # this adds the "time_corrected" column to df_track required for interpolate_track_xy
+
+    # Add "before_touch" column
+    tp.add_before_touch_to_all_dfs()
+    for df_name in ["df_track", "df_dtag", "df_hydro_ch0", "df_hydro_ch1"]:
+        assert "before_touch" in getattr(tp, df_name)
