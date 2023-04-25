@@ -141,3 +141,27 @@ def test_add_before_touch_to_all_dfs(test_data_path, test_raw_path):
     tp.add_before_touch_to_all_dfs()
     for df_name in ["df_track", "df_dtag", "df_hydro_ch0", "df_hydro_ch1"]:
         assert "before_touch" in getattr(tp, df_name)
+
+
+def test_get_desired_track_portion(test_data_path, test_raw_path):
+
+    df_master = df_master_loader(folder=test_data_path["main"])
+    trial_idx = 100
+
+    tp = TrialProcessor(df_master, trial_idx, data_path=test_data_path, raw_path=test_raw_path)
+    tp.add_track_features()
+    tp.get_timing()  # this adds the "time_corrected" column to df_track required for interpolate_track_xy
+    tp.add_before_touch_to_all_dfs()
+
+    # if track fits dist max/min criteria, check extract portion values
+    df_track_extract = tp.get_desired_track_portion(
+        dist_max=("DTAG_dist_elliptical", 8), dist_min=("ROSTRUM_dist_to_target", 1.1)
+    )
+    assert df_track_extract["DTAG_dist_elliptical"].max() < 8
+    assert df_track_extract["ROSTRUM_dist_to_target"].min() > 1.1
+
+    # if tracak does NOT fit dist max/min criteria, should return None
+    df_track_extract = tp.get_desired_track_portion(
+        dist_max=("DTAG_dist_elliptical", 12), dist_min=("ROSTRUM_dist_to_target", 0.1)
+    )
+    assert df_track_extract is None
