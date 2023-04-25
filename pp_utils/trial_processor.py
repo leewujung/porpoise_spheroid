@@ -252,9 +252,7 @@ class TrialProcessor:
             for ch, df in zip([0, 1], [self.df_hydro_ch0, self.df_hydro_ch1]):
 
                 # Load click matrix
-                fname_prefix = self.params["fname_prefix"]
-                clk_fname = "%s_extracted_clicks_ch%d.npy" % (fname_prefix, ch)
-                cm = np.load(self.paths["extracted_click_path"] / clk_fname)
+                cm = np.load(self.paths[f"extracted_click_ch{ch}"])
 
                 # Add SNR
                 clk_var = hc.get_clk_variance(

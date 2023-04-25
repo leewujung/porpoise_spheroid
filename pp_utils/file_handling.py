@@ -27,6 +27,8 @@ TRIAL_FILE_FLAGS = (
     "has_dtag_clicks",
     "has_hydro_clicks_ch0",
     "has_hydro_clicks_ch1",
+    "has_extracted_clicks_ch0",
+    "has_extracted_clicks_ch1",
 )
 TRIAL_PARAMS = (
     "fname_prefix",
@@ -45,6 +47,8 @@ TRIAL_FILE_PATHS = {
     "hydro_ch1_DTAG",
     "hydro_ch0_ROSTRUM",
     "hydro_ch1_ROSTRUM",
+    "extracted_click_ch0",
+    "extracted_click_ch1",
 }
 
 
@@ -163,13 +167,36 @@ def get_hydro_filepath(fname_prefix: str, sync_path: str, flags: Dict) -> Tuple[
     return hydro_ch0_file, hydro_ch1_file
 
 
-def get_dtag_filepath(fname_prefix: str, sync_path: str, flags: Dict):
+def get_dtag_filepath(fname_prefix: str, sync_path: Path, flags: Dict):
     """
-    Get file path(s) with detected dtag clicks and modify flags related to dtag clicks in place.
+    Get file path with detected dtag clicks and modify flags related to dtag clicks in place.
     """
     dtag_file = sync_path / ("%s_dtag.csv" % fname_prefix)
     flags["has_dtag_clicks"] = True if dtag_file.exists() else False  # modify flag in place
     return dtag_file
+
+
+def get_extracted_clk_filepath(fname_prefix: str, clk_path: Path, flags: Dict):
+    """
+    Get file path to extracted hydro clicks.
+    """
+    clk_file_ch0 = clk_path / f"{fname_prefix}_extracted_clicks_ch0.npy"
+    clk_file_ch1 = clk_path / f"{fname_prefix}_extracted_clicks_ch1.npy"
+
+    if clk_file_ch0.exists():
+        flags[f"has_extracted_clicks_ch0"] = True  # modify flag in place
+    else:
+        flags[f"has_extracted_clicks_ch0"] = False
+        clk_file_ch0 = None
+
+    if clk_file_ch1.exists():
+        flags[f"has_extracted_clicks_ch1"] = True  # modify flag in place
+    else:
+        flags[f"has_extracted_clicks_ch1"] = False
+        clk_file_ch0 = None
+
+    return clk_file_ch0, clk_file_ch1
+
 
 
 def get_trial_info(df_master : pd.DataFrame, data_path: Dict, trial_idx: int) -> Tuple[Dict, Dict, Dict]:
@@ -263,6 +290,11 @@ def get_trial_info(df_master : pd.DataFrame, data_path: Dict, trial_idx: int) ->
     # Get paths to dtag detected clicks
     paths["dtag_DTAG"] = get_dtag_filepath(ts["fname_prefix"], sync_path / "DTAG", flags)
     paths["dtag_ROSTRUM"] = get_dtag_filepath(ts["fname_prefix"], sync_path / "ROSTRUM", flags)
+
+    # Set paths to hydrophone extracted clicks
+    paths["extracted_click_ch0"], paths["extracted_click_ch1"] = get_extracted_clk_filepath(
+        ts["fname_prefix"], data_path["extracted_clicks"], flags
+    )
 
     return flags, params, paths
 

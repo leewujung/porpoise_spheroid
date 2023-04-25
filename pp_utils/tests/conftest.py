@@ -15,8 +15,8 @@ def test_data_path():
         "track": data_path_main / "tracks/xypressure_cal_transformed",
         # paths to calibrated target positions
         "target": data_path_main / "tracks/targets_cal_transformed",
-        "click_attr": data_path_main / "hydrophone_clicks/extracted_clicks_attr_df",
-        "extracted_click": data_path_main / "hydrophone_clicks/extracted_clicks",
+        # paths to extracted hydrophone clicks
+        "extracted_clicks": data_path_main / "hydrophone_clicks/extracted_clicks",
     }
 
 @pytest.fixture
@@ -33,6 +33,8 @@ def t100_flags():
         "has_dtag_clicks": True,
         "has_hydro_clicks_ch0": True,
         "has_hydro_clicks_ch1": True,
+        "has_extracted_clicks_ch0": True,
+        "has_extracted_clicks_ch1": True,
     }
 
 @pytest.fixture
@@ -56,4 +58,6 @@ def t100_paths(test_data_path):
         "hydro_ch1_DTAG": test_data_path["chirp"] / "DTAG/20190628_s2_t2_hydro_ch1.csv",
         "hydro_ch0_ROSTRUM": test_data_path["chirp"] / "ROSTRUM/20190628_s2_t2_hydro_ch0.csv",
         "hydro_ch1_ROSTRUM": test_data_path["chirp"] / "ROSTRUM/20190628_s2_t2_hydro_ch1.csv",
+        "extracted_click_ch0": test_data_path["extracted_clicks"] / "20190628_s2_t2_extracted_clicks_ch0.npy",
+        "extracted_click_ch1": test_data_path["extracted_clicks"] / "20190628_s2_t2_extracted_clicks_ch1.npy",
     }

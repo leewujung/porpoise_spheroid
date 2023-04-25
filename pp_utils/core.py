@@ -23,8 +23,7 @@ DATA_PATH = {
     "track": data_path_main / "tracks/xypressure_cal_transformed",
     # paths to calibrated target positions
     "target": data_path_main / "tracks/targets_cal_transformed",
-    "click_attr": data_path_main / "hydrophone_clicks/extracted_clicks_attr_df",
-    "extracted_click": data_path_main / "hydrophone_clicks/extracted_clicks",
+    "extracted_clicks": data_path_main / "hydrophone_clicks/extracted_clicks",
 }
 
 

@@ -112,3 +112,20 @@ def test_add_hydro_info(test_data_path, test_raw_path):
     ]:
         assert attr in tp.df_hydro_ch0
         assert attr in tp.df_hydro_ch1
+
+    # Add SNR and p2p
+    tp.add_SNR_p2p()
+    # New columns were added
+    for attr in ["SNR", "p2p"]:
+        assert attr in tp.df_hydro_ch0
+        assert attr in tp.df_hydro_ch1
+
+
+# def test_add_SNR_p2p(test_data_path, test_raw_path):
+
+#     df_master = df_master_loader(folder=test_data_path["main"])
+#     trial_idx = 100
+
+#     tp = TrialProcessor(df_master, trial_idx, data_path=test_data_path, raw_path=test_raw_path)
+    # tp.process_track()  # this adds the "time_corrected" column to df_track required for interpolate_track_xy
+
