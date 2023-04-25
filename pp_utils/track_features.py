@@ -269,3 +269,44 @@ def get_speed(df_track, track_label):
         )
         / df_track["time_corrected"].diff()
     )
+
+
+def get_track_index_based_on_dist(
+    df_track, dist_name_min, dist_name_max, dist_th_min=None, dist_th_max=None
+):
+    """
+    Retrieving the start and end indices of the desired portion of track.
+
+    Parameters
+    ----------
+    df_track : pd.DataFrame
+        dataframe with track and various distance measures before touch time
+    dist_name_max : str
+        distance measure used to select track portion based on max dist threshold
+    dist_name_min : str
+        distance measure used to select track portion based on min dist threshold
+    dist_th_min : float
+        minimum threshold of distance
+        if dist_th_min=None returning the last valid frame
+    dist_th_max : float
+        maximum threshold of distance
+        if dist_th_max=None returning the first valid frame
+
+    Returns
+    -------
+    idx_dist_max, idx_dist_min
+        Indices to retrieve the portion of df_track for the specified trial_name
+    """
+    # First index satisfying the max dist threshold
+    if dist_th_max is None:
+        idx_dist_max = df_track[dist_name_max].first_valid_index()
+    else:
+        idx_dist_max = df_track[df_track[dist_name_max] <= dist_th_max].index[0]
+
+    # Last index not satisfying the min dist threshold
+    if dist_th_min is None:
+        idx_dist_min = df_track[dist_name_min].last_valid_index()
+    else:
+        idx_dist_min = df_track[df_track[dist_name_min] > dist_th_min].index[-1]
+
+    return idx_dist_min, idx_dist_max

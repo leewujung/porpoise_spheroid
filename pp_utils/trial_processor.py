@@ -10,6 +10,7 @@ from .core import RAW_PATH, DATA_PATH, ANGLE_MAP, HYDRO_PARAMS
 from .file_handling import get_trial_info, assemble_target_df, get_fs_video
 from . import track_features as tf
 from . import hydro_clicks as hc
+from . import inspection_angle as ia
 from .seawater import calc_absorption
 from . import misc
 
@@ -55,6 +56,12 @@ class TrialProcessor:
 
         # Other init
         self.touch_time_corrected = None
+        self.df_click_all = None  # all selected clicks from both hydro channels
+        self.df_click_scan = None  # clicks retained after scan determination
+        self.df_scan = None  # scan number
+        self.last_scan_start = None  # start time of last scan
+        self.last_scan_end = None  # end time of last scan
+
 
 
     def get_all_trial_dfs(self):
@@ -345,3 +352,360 @@ class TrialProcessor:
                 df["before_touch"] = misc.get_before_touch_column(
                     df=df, time_touch=self.touch_time_corrected
                 )
+
+    def get_desired_track_portion(
+        self,
+        dist_max=("DTAG_dist_elliptical", 12),
+        dist_min=("ROSTRUM_dist_to_target", 0.1),
+    ):
+        """
+        Get a desired track portion based on distance criteria.
+        """
+        # Check if trying to find the portion makes sense
+        df_track = self.df_track[self.df_track["before_touch"]].copy()
+        idx_first = df_track["angle_heading_to_target"].first_valid_index()
+        idx_last = df_track["angle_heading_to_target"].last_valid_index()
+
+        # Criteria
+        min_ok = (
+            True
+            if dist_min[1] is None
+            else df_track.loc[idx_last, "ROSTRUM_dist_to_target"] < dist_min[1]
+        )
+        max_ok = (
+            True
+            if dist_max[1] is None
+            else df_track.loc[idx_first, "DTAG_dist_elliptical"] >= dist_max[1]
+        )
+
+        if (
+            # Skip if missing some markers comletely
+            idx_first is not None
+            and idx_last is not None
+            # Skip if doesn't meet the selection criteria
+            and min_ok
+            and max_ok
+        ):
+            idx_dist_min, idx_dist_max = tf.get_track_index_based_on_dist(
+                df_track,
+                dist_name_max=dist_max[0],
+                dist_name_min=dist_min[0],
+                dist_th_max=dist_max[1],
+                dist_th_min=dist_min[1],
+            )
+            # pandas slicing include BOTH the start and the stop
+            # https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.loc.html#pandas-dataframe-loc  # noqa
+            return self.df_track.loc[idx_dist_max:idx_dist_min]
+        else:
+            return None
+
+    def get_hydro_scan_num(
+        self,
+        th_RL: Union[int, float] = 140,
+        RL_tolerance: Union[int, float] = 5,
+        th_num_clk: int = 5,
+        th_RL_diff: Union[int, float] = 5,
+        max_num_click_has_RL_diff: int = 3,
+    ):
+        """
+        Count the number of hydrophone scans using filtered clicks.
+
+        Parameters
+        ----------
+        th_RL
+            receive level (RL) threshold for clicks to consider
+        RL_tolerance
+            RL tolerance, below which do not switch the assigned scan channel
+            from the previous click
+        th_num_clk
+            minimum number of clicks to be considered a streak (stride of clicks)
+        th_RL_diff
+            RL difference to accept as true scan (beam alternating between targets)
+        max_num_click_has_RL_diff
+            Max number of overlapping to be consider a true scan
+        """
+        # Match clicks and assign scanned channel to each click
+        df_h0 = hc.select_scan_clicks(self.df_hydro_ch0, th_RL=th_RL)
+        df_h1 = hc.select_scan_clicks(self.df_hydro_ch1, th_RL=th_RL)
+        df_h_all = hc.match_clicks(df_h0, df_h1)
+        df_h_all = hc.assign_scan(df_h_all, RL_tolerance=RL_tolerance)
+        selector_matched = ~df_h_all["the_other_ch_index"].isna()  # have matched channel
+
+        # Sanity check
+        selector_ch0 = df_h_all["CH"] == 0  # ch0
+        selector_ch1 = df_h_all["CH"] == 1  # ch1
+        if not len(df_h_all[selector_ch0 & selector_matched]) == len(
+            df_h_all[selector_ch1 & selector_matched]
+        ):
+            raise ValueError("Number of clicks in ch0 and ch1 do not match!")
+
+        # Set up RL difference across channels
+        diff_matched = (
+            df_h_all[selector_ch0 & selector_matched]["RL"].values
+            - df_h_all[selector_ch1 & selector_matched]["RL"].values
+        )
+        df_h_all["RL_diff"] = np.nan
+        df_h_all.loc[selector_ch0 & selector_matched, "RL_diff"] = diff_matched
+        df_h_all.loc[selector_ch1 & selector_matched, "RL_diff"] = diff_matched
+
+        # Store ALL selected clicks from both channels with attached info
+        self.df_click_all = df_h_all.copy()
+
+        # Get streaks (strides of consecutive clicks, which are the scans)
+        df_h_all = hc.get_streaks(df_h_all)  # get streaks the first time
+        df_h_all = hc.clean_streaks(  # remove streaks with only few clicks
+            df_h_all, th_num_clk=th_num_clk
+        )
+        df_h_all = hc.get_streaks(df_h_all)  # get streaks again
+
+        # Scan validity:
+        #  - False: both targets ensonified
+        #  - True: only one target ensonified
+        scan_validity = df_h_all.groupby("streak_id").apply(
+            hc.is_true_scan,
+            th_RL_diff=th_RL_diff,
+            max_num_click_has_RL_diff=max_num_click_has_RL_diff,
+        )
+
+        # Assemble scan number dataframe:
+        #   - index is scan number (1-based)
+        #   - include column for whether it is a true scan (valid=True/False)
+        df_scan = df_h_all[df_h_all["start_of_streak"]][["scan_ch", "time_corrected"]]
+        df_scan["valid"] = scan_validity.values
+        df_scan.index = np.arange(len(df_scan)) + 1
+        self.df_scan = df_scan.copy()
+
+        # Store subset of selected clicks used to determine scans
+        self.df_click_scan = df_h_all.copy()
+
+        # TODO: don't have to keep both df_click_all and df_click_scan
+        #  if we can fill in streak_id of the previous streak rather than deleting
+        #  the with unwanted streak_id under _clean_streaks
+
+    def sort_df_scan_to_channel(self, ch):
+        """
+        Sort scans to each channel.
+        
+        df_scan["valid"] = True are scan only to 1 channel
+        df_scan["valid"] = False are scan toward both channels
+        """
+        df_scan = self.df_scan
+        return pd.concat((
+            df_scan[~df_scan["valid"]],
+            df_scan[df_scan["valid"] & (df_scan["scan_ch"] == ch)]
+        ))
+
+    def decision_hydro_click_from_scan(self):
+        """
+        Get last click from the last scan to the non-selected target.
+
+        Can use info with this click for decision time or range to target, based on scans.
+
+        Returns
+        -------
+        A pandas series containing info for the decision click based on hydrophone data and scans.
+        """
+        last_streak = self.df_click_scan["streak_id"] == self.df_scan.index.max() - 1
+        return self.df_click_scan[last_streak].iloc[-1]
+
+    def get_dtag_buzz_onset(self, th_num_buzz=30, th_ICI=13e-3):
+        """
+        Identify buzz onset using Dtag click detections.
+
+        There has to be `>= th_num_buzz` number of consecutive clicks with ICI<th_ICI
+        for a given streak to be consider onset of buzz.
+
+        Parameters
+        ----------
+        th_num_buzz
+            minimum number of clicks to quality as a buzz-like section
+        th_ICI
+            ICI threshold between regular clicks and buzzes
+
+        Returns
+        -------
+        A pandas series containing info for the buzz onset click based on dtag data.
+        """
+        # get dataframe to manipulate
+        df_dtag = self.df_dtag.copy()
+        df_dtag["ICI"] = df_dtag["time_corrected"].diff()
+        df_dtag = df_dtag[df_dtag["before_touch"]]
+
+        # only want clicks at the end of trial
+        df_dtag = df_dtag.loc[
+            (df_dtag.iloc[-1]["time_corrected"] - df_dtag["time_corrected"]) < 5
+        ]
+
+        df_dtag_for_buzz = df_dtag[df_dtag["ICI"] < th_ICI].copy()
+
+        df_dtag_for_buzz = hc.add_buzz_streak(df_dtag_for_buzz, th_ICI=th_ICI)
+        df_dtag_for_buzz = hc.get_streaks(df_dtag_for_buzz, col_name="streak")
+        df_dtag_for_buzz = hc.clean_streaks(
+            df_dtag_for_buzz, th_num_clk=th_num_buzz, type="ICI"
+        )
+
+        return df_dtag_for_buzz.iloc[0]
+
+    def get_hydro_buzz_onset(self, th_num_buzz=30, th_ICI=13e-3):
+        """
+        Identify buzz onset using hydrophone click detections.
+
+        There has to be `>= th_num_buzz` number of consecutive clicks with ICI<th_ICI
+        for a given streak to be consider onset of buzz.
+
+        Parameters
+        ----------
+        th_num_buzz
+            minimum number of clicks to quality as a buzz-like section
+        th_ICI
+            ICI threshold between regular clicks and buzzes
+
+        Returns
+        -------
+        A pandas series containing info for the buzz onset click based on hydrophone data.
+        """
+        # only want clicks at the last 2 click streaks
+        df_hydro_for_buzz = self.df_click_scan[
+            self.df_click_scan["streak_id"].isin(self.df_scan.index[-2:])
+        ].copy()
+
+        # only want clicks at the end of trial
+        df_hydro_for_buzz = hc.add_buzz_streak(df_hydro_for_buzz, th_ICI=th_ICI)
+        df_hydro_for_buzz = hc.get_streaks(df_hydro_for_buzz, col_name="streak")
+        df_hydro_for_buzz = hc.clean_streaks(
+            df_hydro_for_buzz, th_num_clk=th_num_buzz, type="ICI"
+        )
+
+        return df_hydro_for_buzz.iloc[0]
+
+    def get_inspection_angle_in_view(
+        self,
+        time_stop: float,
+        th_RL: Union[int, float] = 140,
+        time_binning_delta: float = 50e-3,
+    ):
+
+        """
+        Get range of inspection angle when porpoise was in camera view.
+
+        Parameters
+        ----------
+        time_stop
+            end of time to count inspection angle in time_corrected
+            e.g., decision time
+        th_RL
+            receive level (RL) threshold for clicks to consider
+            default to 140 dB
+        time_binning_delta
+            binning interval for clicks in seconds
+            default to 50 ms
+        angle_bins
+            bins for ensonification angle
+            default to np.arange(0, 365, 2.5)
+
+        Returns
+        -------
+        angle_h0, angle_h1
+            two numpy arrays holding the inspection angle for channel 0 and 1.
+            angle_h0/h1 can be empty if labeled track is too short and do not
+            overlap with the times where clicks are detected in ch0/ch1.
+        """
+
+        def filter_clicks(df_h, th_RL, time_stop):
+            """
+            Filter clicks based on start/stop time and receive level.
+            """
+            return df_h[(df_h["time_corrected"] < time_stop) & (df_h["RL"] > th_RL)]
+
+        # Filter hydro clicks
+        df_h0 = filter_clicks(
+            self.df_hydro_ch0.copy(), th_RL=th_RL, time_stop=time_stop
+        )
+        df_h1 = filter_clicks(
+            self.df_hydro_ch1.copy(), th_RL=th_RL, time_stop=time_stop
+        )
+
+        # Binning by time interval and get median of each bin
+        tc_bins_h0 = ia.get_time_corrected_bins(
+            df_h=df_h0, bin_delta=time_binning_delta
+        )
+        tc_bins_h1 = ia.get_time_corrected_bins(
+            df_h=df_h1, bin_delta=time_binning_delta
+        )
+        angle_h0 = ia.groupby_ops(df_h0, "enso_angle", tc_bins_h0, "median").values.squeeze()
+        angle_h1 = ia.groupby_ops(df_h1, "enso_angle", tc_bins_h1, "median").values.squeeze()
+
+        return angle_h0, angle_h1
+
+    def get_timing_last_scan_of_nonselect(self):
+        """
+        Get timing info of the last scan toward the non-selected target.
+
+        Returns
+        -------
+        Start and end time of the last scan before decision.
+        """
+
+        def find_cut(th_click_gap):
+            """
+            th_click_gap
+                used to ensure click trains broken up into multiple pieces are merged together
+            """
+            ICI = last_scan_nonchosen["time_corrected"].diff()
+            return last_scan_nonchosen[ICI > th_click_gap]["time_corrected"].values
+
+        last_streak = self.df_click_scan["streak_id"] == self.df_scan.index.max() - 1
+        last_scan_nonchosen = self.df_click_scan[last_streak]
+
+        inspect_end = last_scan_nonchosen["time_corrected"].iloc[-1]
+
+        cut_time = find_cut(th_click_gap=0.11)
+        if len(cut_time) == 0:  # no gap in scan
+            inspect_start = last_scan_nonchosen["time_corrected"].iloc[0]
+        else:
+            inspect_start = cut_time
+        if cut_time.size >= 1:
+            if self.tp.trial_idx == 197:
+                inspect_start = inspect_start[0]
+            else:
+                inspect_start = inspect_start[-1]
+
+        # Store start and end time of last scan before decision
+        self.last_scan_start = inspect_start
+        self.last_scan_end = inspect_end
+
+    def duration_last_scan_of_nonselect(self):
+        """
+        Get duration of the last scan toward the non-selected target.
+
+        Returns
+        -------
+        Duration (in seconds) of the last scan toward the non-selected target.
+        """
+        # If timing info not available, run function to get info
+        if self.last_scan_start is None and self.last_scan_end is None:
+            self.get_timing_last_scan_of_nonselect()
+
+        return self.last_scan_end - self.last_scan_start
+
+    def angle_span_last_scan_of_nonselect(self):
+        """
+        Get span of inspection angle during the last scan toward the non-selected target.
+
+        Returns
+        -------
+        Span of inspection angle of the last scan toward the non-selected target.
+        """
+        # If timing info not available, run function to get info
+        if self.last_scan_start is None and self.last_scan_end is None:
+            self.get_timing_last_scan_of_nonselect()
+
+        # Get last scan clicks in the assigned scanned channel
+        last_scan_clicks_in_ch = self.df_click_scan[
+            (self.df_click_scan["time_corrected"] >= self.last_scan_start)
+            & (self.df_click_scan["time_corrected"] <= self.last_scan_end)
+            & (self.df_click_scan["CH"] == self.df_click_scan["scan_ch"])
+        ]
+        enso_angle_consider = last_scan_clicks_in_ch["enso_angle"]
+
+        return enso_angle_consider.max() - enso_angle_consider.min()
