@@ -241,6 +241,7 @@ def get_trial_info(df_master : pd.DataFrame, data_path: Dict, trial_idx: int) ->
             sync_path = data_path["chirp"]
     else:
         flags["has_LED_or_chirp_sync"] = False
+        sync_path = None
         print("Clicks not synced!")
 
     # Get frame index when the animal touches the chosen object
@@ -279,22 +280,26 @@ def get_trial_info(df_master : pd.DataFrame, data_path: Dict, trial_idx: int) ->
     #  Since the function is called twice, the flags will be overwritten the 2nd time.
     #  This is ok because the files come from the same source so file existence is consistent
 
-    # Get paths to hydro detected clicks
-    paths["hydro_ch0_DTAG"], paths["hydro_ch1_DTAG"] = get_hydro_filepath(
-        ts["fname_prefix"], sync_path / "DTAG", flags
-    )
-    paths["hydro_ch0_ROSTRUM"], paths["hydro_ch1_ROSTRUM"] = get_hydro_filepath(
-        ts["fname_prefix"], sync_path / "ROSTRUM", flags
-    )
+    if sync_path is None:
+        for flag_name in ["has_hydro_clicks_ch0", "has_hydro_clicks_ch1", "has_dtag_clicks"]:
+            flags[flag_name] = False
+    else:
+        # Get paths to hydro detected clicks
+        paths["hydro_ch0_DTAG"], paths["hydro_ch1_DTAG"] = get_hydro_filepath(
+            ts["fname_prefix"], sync_path / "DTAG", flags
+        )
+        paths["hydro_ch0_ROSTRUM"], paths["hydro_ch1_ROSTRUM"] = get_hydro_filepath(
+            ts["fname_prefix"], sync_path / "ROSTRUM", flags
+        )
 
-    # Get paths to dtag detected clicks
-    paths["dtag_DTAG"] = get_dtag_filepath(ts["fname_prefix"], sync_path / "DTAG", flags)
-    paths["dtag_ROSTRUM"] = get_dtag_filepath(ts["fname_prefix"], sync_path / "ROSTRUM", flags)
+        # Get paths to dtag detected clicks
+        paths["dtag_DTAG"] = get_dtag_filepath(ts["fname_prefix"], sync_path / "DTAG", flags)
+        paths["dtag_ROSTRUM"] = get_dtag_filepath(ts["fname_prefix"], sync_path / "ROSTRUM", flags)
 
-    # Set paths to hydrophone extracted clicks
-    paths["extracted_click_ch0"], paths["extracted_click_ch1"] = get_extracted_clk_filepath(
-        ts["fname_prefix"], data_path["extracted_clicks"], flags
-    )
+        # Set paths to hydrophone extracted clicks
+        paths["extracted_click_ch0"], paths["extracted_click_ch1"] = get_extracted_clk_filepath(
+            ts["fname_prefix"], data_path["extracted_clicks"], flags
+        )
 
     return flags, params, paths
 

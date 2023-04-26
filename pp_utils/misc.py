@@ -1,4 +1,6 @@
+import numpy as np
 import pandas as pd
+from scipy.interpolate import interp1d
 
 
 def get_before_touch_column(df, idx_touch=None, time_touch=None):
@@ -45,3 +47,9 @@ def get_before_touch_column(df, idx_touch=None, time_touch=None):
         df_tmp = df.copy()  # avoid modify in place
         df_tmp["before_touch"] = df_tmp["time_corrected"] <= time_touch
     return df_tmp["before_touch"]
+
+
+def interp_xy(t, df_tr):
+    fx = interp1d(x=df_tr["time_corrected"], y=df_tr["DTAG_X"])
+    fy = interp1d(x=df_tr["time_corrected"], y=df_tr["DTAG_Y"])
+    return np.hstack((fx(t), fy(t)))

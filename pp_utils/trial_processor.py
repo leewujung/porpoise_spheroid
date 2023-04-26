@@ -26,17 +26,34 @@ class TrialProcessor:
         raw_path: Path = None,
         track_label: str = "DTAG",
     ):
-        
+        # Init from inputs
         self.trial_idx = trial_idx
         self.track_label = track_label
         self.raw_path = RAW_PATH if raw_path is None else raw_path
         self.data_paths = DATA_PATH if data_path is None else data_path
         self.trial_series = df_master.iloc[trial_idx, :]
 
+        # Other init
+        self.touch_time_corrected = None
+        self.df_click_all = None  # all selected clicks from both hydro channels
+        self.df_click_scan = None  # clicks retained after scan determination
+        self.df_scan = None  # scan number
+        self.last_scan_start = None  # start time of last scan
+        self.last_scan_end = None  # end time of last scan
+
+        print("")
+        print(f"------ trial {self.trial_idx} ------------")
+        print(self.trial_series["fname_prefix"])
+
         # Get all trial flags, params, and paths
         self.flags, self.params, self.paths = get_trial_info(
             df_master, self.data_paths, self.trial_idx
         )
+        if np.all([flag is True for flag in self.flags.values()]):
+            self.trial_usable = True
+        else:
+            self.trial_usable = False
+            print("Some data missing in this trial, skipping...")
 
         # Get all trial dataframes
         self.get_all_trial_dfs()
@@ -51,15 +68,6 @@ class TrialProcessor:
         self._print_file_paths()
         self._print_scenario()
         self._print_choice()
-
-        # Other init
-        self.touch_time_corrected = None
-        self.df_click_all = None  # all selected clicks from both hydro channels
-        self.df_click_scan = None  # clicks retained after scan determination
-        self.df_scan = None  # scan number
-        self.last_scan_start = None  # start time of last scan
-        self.last_scan_end = None  # end time of last scan
-
 
 
     def get_all_trial_dfs(self):
