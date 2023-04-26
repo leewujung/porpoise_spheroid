@@ -90,9 +90,10 @@ def test_add_track_features(test_data_path, test_raw_path):
             "absolute_heading",
         ]:
             assert attr in tp.df_track
-    # Track modified
+
+    # Track not modified: track interp_smooth_track is now in TrialProcessor.__init__()
     for attr in df_track_original.columns:
-        assert not tp.df_track[attr].equals(df_track_original[attr])
+        assert tp.df_track[attr].equals(df_track_original[attr])
 
 
 def test_add_hydro_features(test_data_path, test_raw_path):
@@ -295,4 +296,4 @@ def test_last_scan(test_data_path, test_raw_path):
     assert duration_last_scan == tp.last_scan_end - tp.last_scan_start
 
     angle_span_last_scan = tp.angle_span_last_scan_of_nonselect()
-    assert np.isclose(angle_span_last_scan, 8.811212)
+    assert np.isclose(angle_span_last_scan, 8.812449)

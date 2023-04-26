@@ -62,6 +62,9 @@ class TrialProcessor:
             # Get sampling rates
             self.get_sampling_rates()
 
+            # Fill in NaN and smooth track
+            self.df_track = tf.interp_smooth_track(self.df_track)
+
             # Get timing for time_corrected on track and touch_time_corrected
             self.get_timing()
 
@@ -188,9 +191,6 @@ class TrialProcessor:
         if self.df_track is None:
             print("Calibrated track does not exist!")
         else:
-            # Fill in NaN and smooth track
-            self.df_track = tf.interp_smooth_track(self.df_track)
-
             for track_label in ["DTAG", "ROSTRUM"]:
                 # Add distance measure
                 self.df_track[f"{track_label}_dist_to_target"] = tf.get_dist_to_object(
