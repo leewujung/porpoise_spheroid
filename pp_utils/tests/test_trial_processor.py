@@ -168,7 +168,7 @@ def test_get_desired_track_portion(test_data_path, test_raw_path):
     assert df_track_extract is None
 
 
-def test_hydro_scan(test_data_path, test_raw_path):
+def test_hydro_scan_decision(test_data_path, test_raw_path):
 
     df_master = df_master_loader(folder=test_data_path["main"])
     trial_idx = 100
@@ -195,6 +195,10 @@ def test_hydro_scan(test_data_path, test_raw_path):
     df_scan_ch1 = tp.sort_df_scan_to_channel(ch=1)
     assert len(df_scan_ch0) == 6
     assert len(df_scan_ch1) == 6
+
+    decision_click = tp.decision_hydro_click_from_scan()
+    assert isinstance(decision_click, pd.Series)
+    assert np.isclose(decision_click["time_corrected"], 791.236871)
 
 
 def test_get_dtag_buzz_onset(test_data_path, test_raw_path):
@@ -249,3 +253,54 @@ def test_get_hydro_buzz_onset(test_data_path, test_raw_path):
         tp.df_click_scan[tp.df_click_scan["sample_loc"] > 7892284]["ICI"][:num_buzz_for_onset+10]
         < buzz_reg_switch
     )
+
+
+def test_get_inspection_angle_in_view(test_data_path, test_raw_path):
+
+    df_master = df_master_loader(folder=test_data_path["main"])
+    trial_idx = 100
+
+    tp = TrialProcessor(df_master, trial_idx, data_path=test_data_path, raw_path=test_raw_path)
+    tp.get_timing()  # this adds the "time_corrected" column to df_track required for interpolate_track_xy
+
+    #  RL is needed for selecting clicks in tp.get_inspection_angle_in_view
+    tp.add_hydro_features()
+    tp.add_SNR_p2p(hydro_params=HYDRO_PARAMS)
+    tp.add_RL_ASL_pointEL(hydro_params=HYDRO_PARAMS, env_params=ENV_PARAMS)
+
+    # stop_time = 791.236871 from test_hydro_scan_decision
+    angle_ch0, angle_ch1 = tp.get_inspection_angle_in_view(
+        time_stop=791.236871, th_RL=140, time_binning_delta=50e-3
+    )
+
+    assert isinstance(angle_ch0, np.ndarray)
+    assert isinstance(angle_ch1, np.ndarray)
+    assert len(angle_ch0) == 50
+    assert len(angle_ch1) == 62
+
+
+def test_last_scan(test_data_path, test_raw_path):
+
+    df_master = df_master_loader(folder=test_data_path["main"])
+    trial_idx = 100
+
+    tp = TrialProcessor(df_master, trial_idx, data_path=test_data_path, raw_path=test_raw_path)
+    tp.get_timing()  # this adds the "time_corrected" column to df_track required for interpolate_track_xy
+
+    # tp.df_click_scan is needed for last scan calculations
+    tp.add_track_features()
+    tp.add_hydro_features()
+    tp.add_SNR_p2p(hydro_params=HYDRO_PARAMS)
+    tp.add_RL_ASL_pointEL(hydro_params=HYDRO_PARAMS, env_params=ENV_PARAMS)
+    tp.add_before_touch_to_all_dfs()
+    tp.get_hydro_scan_num(th_RL=140, scan_params=SCAN_PARAMS)
+
+    tp.get_timing_last_scan_of_nonselect()
+    assert tp.last_scan_start is not None
+    assert tp.last_scan_end is not None
+
+    duration_last_scan = tp.duration_last_scan_of_nonselect()
+    assert duration_last_scan == tp.last_scan_end - tp.last_scan_start
+
+    angle_span_last_scan = tp.angle_span_last_scan_of_nonselect()
+    assert np.isclose(angle_span_last_scan, 8.811212)

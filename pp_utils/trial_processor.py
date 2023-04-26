@@ -599,7 +599,7 @@ class TrialProcessor:
         else:
             inspect_start = cut_time
         if cut_time.size >= 1:
-            if self.tp.trial_idx == 197:
+            if self.trial_idx == 197:
                 inspect_start = inspect_start[0]
             else:
                 inspect_start = inspect_start[-1]
