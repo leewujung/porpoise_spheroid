@@ -357,6 +357,13 @@ class TrialProcessor:
         idx_first = df_track["angle_heading_to_target"].first_valid_index()
         idx_last = df_track["angle_heading_to_target"].last_valid_index()
 
+        # Check if idx_first/last exists,
+        # since this requires valid angle_heading_to_target values,
+        # which requires both DTAG and ROSTRUM marker to be present
+        # e.g., trial 152 20190702_s1_t1 missing Zinc cream so has no valid values
+        if idx_first is None or idx_last is None:
+            return None
+
         # Criteria
         min_ok = (
             True
@@ -369,14 +376,8 @@ class TrialProcessor:
             else df_track.loc[idx_first, "DTAG_dist_elliptical"] >= dist_max[1]
         )
 
-        if (
-            # Skip if missing some markers comletely
-            idx_first is not None
-            and idx_last is not None
-            # Skip if doesn't meet the selection criteria
-            and min_ok
-            and max_ok
-        ):
+        # Skip if doesn't meet the selection criteria
+        if min_ok and max_ok:
             idx_dist_min, idx_dist_max = tf.get_track_index_based_on_dist(
                 df_track,
                 dist_name_max=dist_max[0],
