@@ -49,25 +49,26 @@ class TrialProcessor:
         self.flags, self.params, self.paths = get_trial_info(
             df_master, self.data_paths, self.trial_idx
         )
-        if np.all([flag is True for flag in self.flags.values()]):
-            self.trial_usable = True
-        else:
+        if not np.all([flag is True for flag in self.flags.values()]):
+            # If not all files exist, set trial to be unusable
             self.trial_usable = False
             print("Some data missing in this trial, skipping...")
+        else:
+            self.trial_usable = True
 
-        # Get all trial dataframes
-        self.get_all_trial_dfs()
+            # Get all trial dataframes
+            self.get_all_trial_dfs()
 
-        # Get sampling rates
-        self.get_sampling_rates()
+            # Get sampling rates
+            self.get_sampling_rates()
 
-        # Get timing for time_corrected on track and touch_time_corrected
-        self.get_timing()
+            # Get timing for time_corrected on track and touch_time_corrected
+            self.get_timing()
 
-        # Print trial info
-        self._print_file_paths()
-        self._print_scenario()
-        self._print_choice()
+            # Print trial info
+            self._print_file_paths()
+            self._print_scenario()
+            self._print_choice()
 
 
     def get_all_trial_dfs(self):
