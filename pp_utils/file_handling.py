@@ -122,7 +122,8 @@ def get_cal_obj_and_track_filepath(fname_prefix: str, track_path: str) -> Tuple[
     track_file_wanted : str
         track file path corresponding tyo the priority cal object
     """
-    track_file_sel = sorted(list(Path(track_path).glob(fname_prefix + "*.csv")))
+    # the "_" added is to prevent matching t10_*.csv when it should be t1_*csv
+    track_file_sel = sorted(list(Path(track_path).glob(fname_prefix + "_*.csv")))
 
     if track_file_sel:
         cal_obj, cal_obj_idx = get_priority_cal_obj(track_file_sel)

@@ -260,6 +260,8 @@ def test_get_inspection_angle_in_view(test_data_path, test_raw_path):
     tp.add_RL_ASL_pointEL(hydro_params=HYDRO_PARAMS, env_params=ENV_PARAMS)
 
     # stop_time = 791.236871 from test_hydro_scan_decision
+    # note here since tp.add_track_features is not used,
+    # the results are different from the full processing pipe
     angle_ch0, angle_ch1 = tp.get_inspection_angle_in_view(
         time_stop=791.236871, th_RL=140, time_binning_delta=50e-3
     )
