@@ -15,6 +15,7 @@ dependencies:
   - pandas<2
   - pip
   - pytest
+  - pytables
   - python=3.9
   - scikit-learn
   - scipy
