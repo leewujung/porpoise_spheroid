@@ -1,0 +1,3 @@
+python calibrator.py -n cross -eo -dlt -pf *cross_xypts.csv -ed data/calibration_points/cross -d data/dimensions/cross.csv -o data/extrinsic_calibration/
+
+(add -s to save)

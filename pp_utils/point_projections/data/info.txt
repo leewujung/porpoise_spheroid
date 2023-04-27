@@ -1,0 +1,2 @@
+transformation_to_origin*.txt: File which contains an SE(3) transformation from the camera frame to the world frame. Form: name, flattened SE(3), camera height above water
+tag_locations/*.csv files containing pixel locations

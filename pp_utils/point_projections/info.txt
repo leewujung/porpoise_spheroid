@@ -1,0 +1,21 @@
+Projection points in the world frame of view.
+
+The python script "tag_points_to_world.py" will parse all files located under "data/tag_locations/", calculate their 3D positions relative to the camera, and project those 3D points to the "world" cordinate frame, i.e. relative to the calibration targets.
+
+To run, just: ./tag_points_to_world.py. Add "-s" to save outputs
+
+Required Inputs:
+1. An intrinsic calibration is required, stored as a 'K' and 'd' csv files. That default location is data/intrinsic_calibration/
+2. A file which "transformation_to_origin" txt file, which contains the extrinsic calibration information for various runs. It is encoded as: fname, flattened SE(3), height (see data/transformation_to_origin_hula.txt for example)
+3. At least 1 "tag locations file". Should be in format shown under data/tag_locations/*. Order of points can switch, but it should always be ordered x,y with depth last
+
+Outputs (optinally)
+1. If -s is specified at runtime, two output files will be saved to output/world_locs/. One file will contain the XYZ points in world coordinates, another in camera coordinates. This is encoded as: run_name, idx, output_information (same order as input)
+
+
+
+Full pipeline
+
+Calculate the extrinsic estimation of the camera position relative to the calibration target with 'calibrator.py'. See run instructions under 'calibrate_hula.txt'. This will output extrinsic calibration csv files to data/extrinsic_calibration/<name>
+Run ./transformation_to_origin.py -s. This will calculate the relationship of the camera for each trial to the origin of calibration targets. Will output to data/transformation_to_origin/
+Run ./tag_points_to_world.py to get the location of the tag points in world coordinates

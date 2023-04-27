@@ -1,0 +1,8 @@
+# Cross cal object:
+$ python calibrator.py -n cross -eo -dlt -pf '*cross_xypts.csv' -ed data/calibration_points/cross/ -d data/dimensions/cross.csv -o data/extrinsic_calibration/ -s
+
+# Hula cal object, flipped:
+$ python calibrator.py -n hula_flip -eo -dlt -pf '*hula_xypts.csv' -ed data/calibration_points/hula_flip/ -d data/dimensions/hula_flip.csv -o data/extrinsic_calibration/ -s
+
+# Hula cal object, non-flipped:
+$ python calibrator.py -n hula_noflip -eo -dlt -pf '*hula_xypts.csv' -ed data/calibration_points/hula_noflip/ -d data/dimensions/hula_noflip.csv -o data/extrinsic_calibration/ -s
