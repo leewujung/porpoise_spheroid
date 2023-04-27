@@ -32,16 +32,35 @@ def test_click_synchronizer_before_sync(test_data_path, test_raw_path):
         assert getattr(c, attr) is not None
 
 
-def test_click_synchronizer_all(test_data_path):
+def test_click_sync_chirp(test_data_path):
 
     df_main = df_main_loader(
         folder=test_data_path["info_csv"], filename="main_info_append_09.csv"
     )
 
+    # trial 30 20190626_s1_t5 only has chirp sync
     c = ClickSynchronizer(df_main=df_main, trial_idx=30)
     c.get_filenames()
     c.get_sampling_rate()
     df_dtag, df_hydro_ch0, df_hydro_ch1, _, _, _ = c.sync_curr_trial(
+        track_label="DTAG", plot_opt=False
+    )
+    assert isinstance(df_dtag, pd.DataFrame)
+    assert isinstance(df_hydro_ch0, pd.DataFrame)
+    assert isinstance(df_hydro_ch1, pd.DataFrame)
+
+
+def test_click_sync_LEF(test_data_path):
+
+    df_main = df_main_loader(
+        folder=test_data_path["info_csv"], filename="main_info_append_09.csv"
+    )
+
+    # trial 200 20190703_s2_t8 has LED flash sync
+    c = ClickSynchronizer(df_main=df_main, trial_idx=200)
+    c.get_filenames()
+    c.get_sampling_rate()
+    df_dtag, df_hydro_ch0, df_hydro_ch1, _, _ = c.sync_curr_trial_LED(
         track_label="DTAG", plot_opt=False
     )
     assert isinstance(df_dtag, pd.DataFrame)
