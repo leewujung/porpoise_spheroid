@@ -20,7 +20,7 @@ class TrialProcessor:
 
     def __init__(
         self,
-        df_master: pd.DataFrame,
+        df_main: pd.DataFrame,
         trial_idx: int,
         data_path: Dict = None,
         raw_path: Path = None,
@@ -31,7 +31,7 @@ class TrialProcessor:
         self.track_label = track_label
         self.raw_path = RAW_PATH if raw_path is None else raw_path
         self.data_paths = DATA_PATH if data_path is None else data_path
-        self.trial_series = df_master.iloc[trial_idx, :]
+        self.trial_series = df_main.iloc[trial_idx, :]
 
         # Other init
         self.touch_time_corrected = None
@@ -47,7 +47,7 @@ class TrialProcessor:
 
         # Get all trial flags, params, and paths
         self.flags, self.params, self.paths = get_trial_info(
-            df_master, self.data_paths, self.trial_idx
+            df_main, self.data_paths, self.trial_idx
         )
         if not np.all([flag is True for flag in self.flags.values()]):
             # If not all files exist, set trial to be unusable

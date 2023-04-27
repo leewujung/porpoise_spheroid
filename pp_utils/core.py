@@ -18,15 +18,20 @@ RAW_PATH = Path("/Volumes/SSD_2TB/MURI/fb2019_data")
 data_path_main = Path("/Volumes/SSD_2TB/MURI/fb2019_analysis")
 DATA_PATH = {
     "main": data_path_main,
-    # paths to hydro clicks synced by LED flash
+    # path to info csv
+    # this does not exist but required for tests to work out
+    # do not want to change what's in fb2019_analysis
+    # because the structure is used in many previous analysis/exploration notebooks
+    "info_csv": data_path_main / "all_info_csv",
+    # path to hydro clicks synced by LED flash
     "LED": data_path_main / "click_sync_LED/sync_csv/",
-    # paths to hydro clicks synced by chirp
+    # path to hydro clicks synced by chirp
     "chirp": data_path_main / "click_sync/sync_csv/",
-    # paths to calibrated tracks
+    # path to calibrated tracks
     "track": data_path_main / "tracks/xypressure_cal_transformed",
-    # paths to calibrated target positions
+    # path to calibrated target positions
     "target": data_path_main / "tracks/targets_cal_transformed",
-    # paths to extracted hydrophone clicks
+    # path to extracted hydrophone clicks
     "extracted_clicks": data_path_main / "hydrophone_clicks/extracted_clicks",
 }
 

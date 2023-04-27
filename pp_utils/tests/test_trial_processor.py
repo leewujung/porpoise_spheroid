@@ -2,17 +2,17 @@ import pickle
 import numpy as np
 import pandas as pd
 
-from pp_utils.file_handling import df_master_loader
+from pp_utils.file_handling import df_main_loader
 from pp_utils.trial_processor import TrialProcessor
 from pp_utils.core import HYDRO_PARAMS, SCAN_PARAMS, ENV_PARAMS
 
 
 def test_trial_processor(t100_flags, t100_params, t100_paths, test_data_path, test_raw_path):
 
-    df_master = df_master_loader(folder=test_data_path["main"])
+    df_main = df_main_loader(folder=test_data_path["info_csv"])
     trial_idx = 100
 
-    tp = TrialProcessor(df_master, trial_idx, data_path=test_data_path, raw_path=test_raw_path)
+    tp = TrialProcessor(df_main, trial_idx, data_path=test_data_path, raw_path=test_raw_path)
 
     assert tp.flags == t100_flags
     assert tp.params == t100_params
@@ -30,11 +30,11 @@ def test_trial_processor(t100_flags, t100_params, t100_paths, test_data_path, te
 
 def test_save_tp(t100_flags, t100_params, t100_paths, test_data_path, test_raw_path):
 
-    df_master = df_master_loader(folder=test_data_path["main"])
+    df_main = df_main_loader(folder=test_data_path["info_csv"])
     trial_idx = 100
     save_path = "/Users/wujung/Downloads"
 
-    tp = TrialProcessor(df_master, trial_idx, data_path=test_data_path, raw_path=test_raw_path)
+    tp = TrialProcessor(df_main, trial_idx, data_path=test_data_path, raw_path=test_raw_path)
 
     # Pickle tp object
     save_full_path = tp.save_trial(save_path)
@@ -57,10 +57,10 @@ def test_save_tp(t100_flags, t100_params, t100_paths, test_data_path, test_raw_p
 
 def test_get_sampling_rate(test_data_path, test_raw_path):
 
-    df_master = df_master_loader(folder=test_data_path["main"])
+    df_main = df_main_loader(folder=test_data_path["info_csv"])
     trial_idx = 100
 
-    tp = TrialProcessor(df_master, trial_idx, data_path=test_data_path, raw_path=test_raw_path)
+    tp = TrialProcessor(df_main, trial_idx, data_path=test_data_path, raw_path=test_raw_path)
 
     assert np.isclose(tp.fs_video, 29.97)
     assert tp.fs_dtag == 576000
@@ -69,10 +69,10 @@ def test_get_sampling_rate(test_data_path, test_raw_path):
 
 def test_add_track_features(test_data_path, test_raw_path):
 
-    df_master = df_master_loader(folder=test_data_path["main"])
+    df_main = df_main_loader(folder=test_data_path["info_csv"])
     trial_idx = 100
 
-    tp = TrialProcessor(df_master, trial_idx, data_path=test_data_path, raw_path=test_raw_path)
+    tp = TrialProcessor(df_main, trial_idx, data_path=test_data_path, raw_path=test_raw_path)
 
     df_track_original = tp.df_track.copy()
 
@@ -98,10 +98,10 @@ def test_add_track_features(test_data_path, test_raw_path):
 
 def test_add_hydro_features(test_data_path, test_raw_path):
 
-    df_master = df_master_loader(folder=test_data_path["main"])
+    df_main = df_main_loader(folder=test_data_path["info_csv"])
     trial_idx = 100
 
-    tp = TrialProcessor(df_master, trial_idx, data_path=test_data_path, raw_path=test_raw_path)
+    tp = TrialProcessor(df_main, trial_idx, data_path=test_data_path, raw_path=test_raw_path)
 
     # Add hydro info
     tp.add_hydro_features()
@@ -130,10 +130,10 @@ def test_add_hydro_features(test_data_path, test_raw_path):
 
 def test_add_before_touch_to_all_dfs(test_data_path, test_raw_path):
 
-    df_master = df_master_loader(folder=test_data_path["main"])
+    df_main = df_main_loader(folder=test_data_path["info_csv"])
     trial_idx = 100
 
-    tp = TrialProcessor(df_master, trial_idx, data_path=test_data_path, raw_path=test_raw_path)
+    tp = TrialProcessor(df_main, trial_idx, data_path=test_data_path, raw_path=test_raw_path)
 
     # Add "before_touch" column
     tp.add_before_touch_to_all_dfs()
@@ -143,10 +143,10 @@ def test_add_before_touch_to_all_dfs(test_data_path, test_raw_path):
 
 def test_get_desired_track_portion(test_data_path, test_raw_path):
 
-    df_master = df_master_loader(folder=test_data_path["main"])
+    df_main = df_main_loader(folder=test_data_path["info_csv"])
     trial_idx = 100
 
-    tp = TrialProcessor(df_master, trial_idx, data_path=test_data_path, raw_path=test_raw_path)
+    tp = TrialProcessor(df_main, trial_idx, data_path=test_data_path, raw_path=test_raw_path)
     tp.add_track_features()
     tp.add_before_touch_to_all_dfs()
 
@@ -166,10 +166,10 @@ def test_get_desired_track_portion(test_data_path, test_raw_path):
 
 def test_hydro_scan_decision(test_data_path, test_raw_path):
 
-    df_master = df_master_loader(folder=test_data_path["main"])
+    df_main = df_main_loader(folder=test_data_path["info_csv"])
     trial_idx = 100
 
-    tp = TrialProcessor(df_master, trial_idx, data_path=test_data_path, raw_path=test_raw_path)
+    tp = TrialProcessor(df_main, trial_idx, data_path=test_data_path, raw_path=test_raw_path)
     tp.add_track_features()
     tp.add_hydro_features()
     tp.add_SNR_p2p(hydro_params=HYDRO_PARAMS)
@@ -198,10 +198,10 @@ def test_hydro_scan_decision(test_data_path, test_raw_path):
 
 def test_get_dtag_buzz_onset(test_data_path, test_raw_path):
 
-    df_master = df_master_loader(folder=test_data_path["main"])
+    df_main = df_main_loader(folder=test_data_path["info_csv"])
     trial_idx = 100
 
-    tp = TrialProcessor(df_master, trial_idx, data_path=test_data_path, raw_path=test_raw_path)
+    tp = TrialProcessor(df_main, trial_idx, data_path=test_data_path, raw_path=test_raw_path)
     tp.add_before_touch_to_all_dfs()
 
     # tp.get_dtag_buzz_onset needs "before_touch" column
@@ -223,10 +223,10 @@ def test_get_dtag_buzz_onset(test_data_path, test_raw_path):
 
 def test_get_hydro_buzz_onset(test_data_path, test_raw_path):
 
-    df_master = df_master_loader(folder=test_data_path["main"])
+    df_main = df_main_loader(folder=test_data_path["info_csv"])
     trial_idx = 100
 
-    tp = TrialProcessor(df_master, trial_idx, data_path=test_data_path, raw_path=test_raw_path)
+    tp = TrialProcessor(df_main, trial_idx, data_path=test_data_path, raw_path=test_raw_path)
     tp.add_before_touch_to_all_dfs()
 
     # tp.get_hydro_buzz_onset needs tp.df_click_scan
@@ -250,10 +250,10 @@ def test_get_hydro_buzz_onset(test_data_path, test_raw_path):
 
 def test_get_inspection_angle_in_view(test_data_path, test_raw_path):
 
-    df_master = df_master_loader(folder=test_data_path["main"])
+    df_main = df_main_loader(folder=test_data_path["info_csv"])
     trial_idx = 100
 
-    tp = TrialProcessor(df_master, trial_idx, data_path=test_data_path, raw_path=test_raw_path)
+    tp = TrialProcessor(df_main, trial_idx, data_path=test_data_path, raw_path=test_raw_path)
 
     #  RL is needed for selecting clicks in tp.get_inspection_angle_in_view
     tp.add_hydro_features()
@@ -275,10 +275,10 @@ def test_get_inspection_angle_in_view(test_data_path, test_raw_path):
 
 def test_last_scan(test_data_path, test_raw_path):
 
-    df_master = df_master_loader(folder=test_data_path["main"])
+    df_main = df_main_loader(folder=test_data_path["info_csv"])
     trial_idx = 100
 
-    tp = TrialProcessor(df_master, trial_idx, data_path=test_data_path, raw_path=test_raw_path)
+    tp = TrialProcessor(df_main, trial_idx, data_path=test_data_path, raw_path=test_raw_path)
 
     # tp.df_click_scan is needed for last scan calculations
     tp.add_track_features()

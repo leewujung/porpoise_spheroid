@@ -52,37 +52,37 @@ TRIAL_FILE_PATHS = {
 }
 
 
-def df_master_loader(folder=DATA_PATH["main"], filename="analysis_master_info_append_09.csv"):
+def df_main_loader(folder=DATA_PATH["info_csv"], filename="main_info_append_09.csv"):
     """
-    Read and add/modify info into the master dataframe.
+    Read and add/modify info into the main dataframe.
     """
-    # master dataframe with all info
-    df_master = pd.read_csv(folder / filename, index_col=0)
-    df_master["fname_prefix"] = df_master.apply(
+    # main dataframe with all info
+    df_main = pd.read_csv(folder / filename, index_col=0)
+    df_main["fname_prefix"] = df_main.apply(
         lambda x: "%s_s%s_t%s" % ((x["DATE"]), x["SESSION"], x["TRIAL"]), axis=1
     )
-    df_master["TARGET_ANGLE"] = df_master.apply(
+    df_main["TARGET_ANGLE"] = df_main.apply(
         lambda x: x["LEFT"] + x["RIGHT"] + str(x["ANGLE"]), axis=1
     )
     # # add a column for trial index
-    # df_master["trial_index"] = np.arange(len(df_master))
+    # df_main["trial_index"] = np.arange(len(df_main))
 
     # Revise `TOUCH_FRAME` for trial 114 and 116
     # See 2022/04/04 notes.
-    df_master.loc[
-        (df_master["DATE"] == 20190628)
-        & (df_master["SESSION"] == 3)
-        & (df_master["TRIAL"] == 4),
+    df_main.loc[
+        (df_main["DATE"] == 20190628)
+        & (df_main["SESSION"] == 3)
+        & (df_main["TRIAL"] == 4),
         "TOUCH_FRAME",
     ] = 18959
-    df_master.loc[
-        (df_master["DATE"] == 20190628)
-        & (df_master["SESSION"] == 3)
-        & (df_master["TRIAL"] == 6),
+    df_main.loc[
+        (df_main["DATE"] == 20190628)
+        & (df_main["SESSION"] == 3)
+        & (df_main["TRIAL"] == 6),
         "TOUCH_FRAME",
     ] = 22510
 
-    return df_master
+    return df_main
 
 
 def get_priority_cal_obj(track_files: List) -> Tuple[str, int]:
@@ -200,18 +200,18 @@ def get_extracted_clk_filepath(fname_prefix: str, clk_path: Path, flags: Dict):
 
 
 
-def get_trial_info(df_master : pd.DataFrame, data_path: Dict, trial_idx: int) -> Tuple[Dict, Dict, Dict]:
+def get_trial_info(df_main : pd.DataFrame, data_path: Dict, trial_idx: int) -> Tuple[Dict, Dict, Dict]:
     """
     Obtain file existence flags, file paths, and other params for a trial.
 
     Parameters
     ----------
-    df_master : pd.DataFrame
-        the master dataframe
+    df_main : pd.DataFrame
+        the main dataframe
     data_path : dict
         dictionary containing path for each file category, with the following entries:
     trial_idx : int
-        sequential index of the trial to be selected in df_master
+        sequential index of the trial to be selected in df_main
 
     Returns
     -------
@@ -228,7 +228,7 @@ def get_trial_info(df_master : pd.DataFrame, data_path: Dict, trial_idx: int) ->
     paths = dict.fromkeys(TRIAL_FILE_PATHS)
 
     # Get series for the trial
-    ts = df_master.iloc[trial_idx]
+    ts = df_main.iloc[trial_idx]
     params["fname_prefix"] = ts["fname_prefix"]
 
     # Select click sync set: use LED sync if that exists

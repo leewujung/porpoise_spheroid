@@ -1,13 +1,13 @@
-from pp_utils.file_handling import get_trial_info, df_master_loader, assemble_target_df
+from pp_utils.file_handling import get_trial_info, df_main_loader, assemble_target_df
 
 
 def test_get_trial_info(t100_flags, t100_params, t100_paths, test_data_path):
 
-    df_master = df_master_loader(folder=test_data_path["main"])
+    df_main = df_main_loader(folder=test_data_path["info_csv"])
     trial_idx = 100
 
     flags, params, paths = get_trial_info(
-        df_master=df_master, data_path=test_data_path, trial_idx=trial_idx
+        df_main=df_main, data_path=test_data_path, trial_idx=trial_idx
     )
 
     assert flags == t100_flags

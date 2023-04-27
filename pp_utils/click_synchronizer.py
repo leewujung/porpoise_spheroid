@@ -20,59 +20,41 @@ CAL_OBJ_STR = (
 CAL_OBJ_MATCHER = re.compile(CAL_OBJ_STR)
 
 
-# Source pre-processed data paths under DATA_PATH["main"]
-SRC_PATH = {
-    "hydro": DATA_PATH["main"] / "hydrophone/click_reclean_202103/points_cleaned_20211019",
-    "dtag": DATA_PATH["main"] / "dtag/dtag_reclean_202104/points_cleaned",
-    "track": DATA_PATH["main"] / "tracks/xypressure_cal_transformed",
-    "target": DATA_PATH["main"] / "tracks/targets_cal_transformed",    
-}
-
-# Destination paths to store synchronized outputs
-OUT_PATH = {
-    "csv": "click_sync/sync_csv",
-    "spectrogram": "click_sync/sync_spectrogram",
-    "df_time": "click_sync/sync_df_time",
-    "track": "click_sync/sync_track",
-}
-
-
 class ClickSynchronizer:
-    """
-    Test click_synchronizer for one trial:
-        from click_synchronizer.click_synchronizer import click_synchronizer
-        c = click_synchronizer()
-        c.get_sampling_rate()
-        c.curr_trial_idx = 35
-        c.get_filenames()
-        c.sync_curr_trial()
-    """
 
     def __init__(
             self,
-            df_master: pd.DataFrame,
+            df_main: pd.DataFrame,
             trial_idx: int,
             raw_path: Path = None,
-            src_path: Dict = None,
-            out_path: Dict = None
+            data_path: Dict = None,
         ):
 
         self.trial_idx = trial_idx
-        self.trial_series = df_master.iloc[trial_idx, :]
+        self.trial_series = df_main.iloc[trial_idx, :]
         self.raw_path = RAW_PATH if raw_path is None else raw_path
-        self.source_path = SRC_PATH if src_path is None else src_path
-        self.output_path = OUT_PATH if out_path is None else out_path
+        self.data_path = DATA_PATH if data_path is None else data_path
+
+        # set paths to source files
+        self.set_source_path()
 
         # file paths
         self.hydro_file = None
         self.dtag_file = None
         self.track_file = None
-        self.video_file = None
 
         # sampling rates
         self.fs_dtag = None
         self.fs_hydro = None
         self.fs_video = None
+
+    def set_source_path(self):
+        self.source_path = {
+            "hydro": self.data_path["main"] / "hydrophone/click_reclean_202103/points_cleaned_20211019",
+            "dtag": self.data_path["main"] / "dtag/dtag_reclean_202104/points_cleaned",
+            "track": self.data_path["main"] / "tracks/xypressure_cal_transformed",
+            "target": self.data_path["main"] / "tracks/targets_cal_transformed",
+        }
 
     def get_filenames(self):
         # hydrophone click detection file

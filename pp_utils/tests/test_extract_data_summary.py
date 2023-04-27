@@ -3,15 +3,15 @@ This script is used to debug running through the routines in extract_data_summar
 """
 
 from pp_utils.core import DATA_PATH, RAW_PATH, HYDRO_PARAMS, MISC_PARAMS, ENV_PARAMS, SCAN_PARAMS
-from pp_utils.file_handling import df_master_loader
+from pp_utils.file_handling import df_main_loader
 from pp_utils.misc import interp_xy
 from pp_utils.trial_processor import TrialProcessor
 
 
 # Process trial
 trial_idx = 2
-df_master = df_master_loader(folder=DATA_PATH["main"])
-tp = TrialProcessor(df_master, trial_idx, data_path=DATA_PATH, raw_path=RAW_PATH)
+df_main = df_main_loader(folder=DATA_PATH["main"], filename="analysis_master_info_append_09.csv")
+tp = TrialProcessor(df_main, trial_idx, data_path=DATA_PATH, raw_path=RAW_PATH)
 
 
 # Add track and hydrophone features

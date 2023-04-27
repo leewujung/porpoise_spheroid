@@ -233,7 +233,7 @@ def get_ensonification_angle(x, angle_expt, angle_yaxis_name="angle_yaxis_DTAG")
     This function is meant to be used with pandas.apply
     >>> df_hydro_ch0["enso_angle"] = df_hydro_ch0.apply(
         get_ensonification_angle,  axis=1,
-        args=(ANGLE_MAP[df_master.iloc[trial_idx]["ANGLE"]], "angle_yaxis_DTAG")
+        args=(ANGLE_MAP[df_main.iloc[trial_idx]["ANGLE"]], "angle_yaxis_DTAG")
     )
 
     Parameters
