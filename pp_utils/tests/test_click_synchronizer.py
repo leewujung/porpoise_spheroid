@@ -1,6 +1,5 @@
 import pandas as pd
 
-from pp_utils.core import DATA_PATH
 from pp_utils.file_handling import df_main_loader
 from pp_utils.click_synchronizer import ClickSynchronizer
 
@@ -42,7 +41,7 @@ def test_click_sync_chirp(test_data_path):
     c = ClickSynchronizer(df_main=df_main, trial_idx=30)
     c.get_filenames()
     c.get_sampling_rate()
-    df_dtag, df_hydro_ch0, df_hydro_ch1, _, _, _ = c.sync_curr_trial(
+    df_dtag, df_hydro_ch0, df_hydro_ch1, _, _, _ = c.sync_trial(
         track_label="DTAG", plot_opt=False
     )
     assert isinstance(df_dtag, pd.DataFrame)
@@ -50,7 +49,7 @@ def test_click_sync_chirp(test_data_path):
     assert isinstance(df_hydro_ch1, pd.DataFrame)
 
 
-def test_click_sync_LEF(test_data_path):
+def test_click_sync_LED(test_data_path):
 
     df_main = df_main_loader(
         folder=test_data_path["info_csv"], filename="main_info_append_09.csv"
@@ -60,7 +59,7 @@ def test_click_sync_LEF(test_data_path):
     c = ClickSynchronizer(df_main=df_main, trial_idx=200)
     c.get_filenames()
     c.get_sampling_rate()
-    df_dtag, df_hydro_ch0, df_hydro_ch1, _, _ = c.sync_curr_trial_LED(
+    df_dtag, df_hydro_ch0, df_hydro_ch1, _, _ = c.sync_trial_LED(
         track_label="DTAG", plot_opt=False
     )
     assert isinstance(df_dtag, pd.DataFrame)

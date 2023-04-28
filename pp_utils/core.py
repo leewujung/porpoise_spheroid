@@ -15,25 +15,30 @@ RAW_PATH = Path("/Volumes/SSD_2TB/MURI/fb2019_data")
 
 
 # Paths to processed data
+def generate_data_path_dict(main_path: Path):
+    return {
+        "main": main_path,
+        # path to info csv
+        "info_csv": main_path / "all_info_csv",
+        # path to hydro clicks synced by LED flash
+        "LED": main_path / "click_sync_LED/sync_csv/",
+        # path to hydro clicks synced by chirp
+        "chirp": main_path / "click_sync/sync_csv/",
+        # path to calibrated tracks
+        "track": main_path / "tracks/xypressure_cal_transformed",
+        # path to calibrated target positions
+        "target": main_path / "tracks/targets_cal_transformed",
+        # path to extracted hydrophone clicks
+        "extracted_clicks": main_path / "hydrophone_clicks/extracted_clicks",
+    }
+
+
 data_path_main = Path("/Volumes/SSD_2TB/MURI/fb2019_analysis")
-DATA_PATH = {
-    "main": data_path_main,
-    # path to info csv
-    # this does not exist but required for tests to work out
-    # do not want to change what's in fb2019_analysis
-    # because the structure is used in many previous analysis/exploration notebooks
-    "info_csv": data_path_main / "all_info_csv",
-    # path to hydro clicks synced by LED flash
-    "LED": data_path_main / "click_sync_LED/sync_csv/",
-    # path to hydro clicks synced by chirp
-    "chirp": data_path_main / "click_sync/sync_csv/",
-    # path to calibrated tracks
-    "track": data_path_main / "tracks/xypressure_cal_transformed",
-    # path to calibrated target positions
-    "target": data_path_main / "tracks/targets_cal_transformed",
-    # path to extracted hydrophone clicks
-    "extracted_clicks": data_path_main / "hydrophone_clicks/extracted_clicks",
-}
+# fb2019_analysis/info_csv does not exist but required for tests to work out
+# do not want to change what's in fb2019_analysis
+# because the structure is used in many previous analysis/exploration notebooks
+DATA_PATH = generate_data_path_dict(main_path=data_path_main)
+
 
 # Mapping of angle code with actual angle from Y-axis
 ANGLE_MAP = dict(zip(np.arange(4) + 1, np.arange(4) * 45))

@@ -61,35 +61,35 @@ class ClickSynchronizer:
         hydro_file = self.source_path["hydro"].joinpath(
             f"t{self.trial_idx:03d}_hydrophone_cleaned.npz"
         )
+        print("* hydrophone click detection file:")
         if not hydro_file.exists():
-            print("cannot find the hydrophone detection file!")
+            print("  - CANNOT FIND!")
         else:
             self.hydro_file = hydro_file
-            print("* hydrophone click detection file:")
             print("  - %s" % self.hydro_file.name)
 
         # dtag click detection file
         dtag_file = self.source_path["dtag"] / f"t{self.trial_idx:03d}_dtag_cleaned.npz"
+        print("* dtag click detection file:")
         if not dtag_file.exists():
-            print("cannot find the dtag detection file!")
+            print("  - CANNOT FIND!")
         else:
             self.dtag_file = dtag_file
-            print("* dtag click detection file:")
             print("  - %s" % self.dtag_file.name)
 
         # track file
         track_file = sorted(list(
             self.source_path["track"].glob(self.trial_series["fname_prefix"] + "_*.csv")
         ))
+        print("* track file(s):")
         if track_file:
             self.track_file = track_file
-            print("* track file(s):")
             for ff in self.track_file:
                 print("  - %s" % ff.name)
         else:
-            print("cannot find corresponding track file!")
+            print("  - CANNOT FIND!")
 
-    def get_sampling_rate(self):
+    def get_sampling_rate(self, print_opt: bool = False):
         hydro_wav = (
             self.raw_path
             / self.trial_series['DATE'].astype(str)
@@ -104,9 +104,10 @@ class ClickSynchronizer:
         self.fs_video = fh.get_fs_video(str(video_mp4))  # opencv only takes str path
 
         # print sampling rate
-        print("Hydrophone was sampled at %d Hz" % self.fs_hydro)
-        print("DTAG was sampled at %d Hz" % self.fs_dtag)
-        print("Video was sampled at %f Hz" % self.fs_video)
+        if print_opt is True:
+            print("Hydrophone was sampled at %d Hz" % self.fs_hydro)
+            print("DTAG was sampled at %d Hz" % self.fs_dtag)
+            print("Video was sampled at %f Hz" % self.fs_video)
 
     def get_scenario(self):
         print("* experiment scenario:")
@@ -258,7 +259,7 @@ class ClickSynchronizer:
         )
 
     def plot_chirp_detection(self, seg_t, seg, corr_t, corr, chirp_idx, title_text):
-        fig, ax = plt.subplots(2, 1, figsize=(12, 6), sharex="col")
+        fig, ax = plt.subplots(2, 1, figsize=(10, 4), sharex="col")
         plt.subplots_adjust(hspace=0.1)
         # time series and detection
         ax[0].plot(seg_t, seg * 10, label="raw", lw=1)
@@ -272,7 +273,7 @@ class ClickSynchronizer:
         )
         ax[0].set_xlim(0, corr_t.max())
         ax[0].set_ylim(-1, 2)
-        ax[0].legend(fontsize=12)
+        ax[0].legend(fontsize=10)
         ax[0].set_title(title_text)
         # spectrogram
         _ = ax[1].specgram(seg, NFFT=256, Fs=self.fs_dtag, vmax=-100, vmin=-160)
@@ -283,7 +284,7 @@ class ClickSynchronizer:
 
     @staticmethod
     def plot_click_sync_time(tr, dtag, ch0, ch1, title_text):
-        fig = plt.figure(figsize=(8, 6))
+        fig = plt.figure(figsize=(6, 4))
         plt.plot(tr["time_corrected"].dropna(), "k", label="track")
         plt.plot(dtag["time_corrected"], ".", markersize=3, label="dtag")
         plt.plot(ch0["time_corrected"], ".", markersize=3, label="hydro 0")
@@ -291,14 +292,14 @@ class ClickSynchronizer:
         plt.xlabel("Point / detection", fontsize=12)
         plt.ylabel("Time in video (sec)", fontsize=12)
         plt.grid()
-        plt.legend(fontsize=12)
+        plt.legend(fontsize=10)
         plt.title(title_text)
         plt.show()
         return fig
 
     @staticmethod
     def plot_track_with_clicks(dfs, cal_obj, df_track, title_text, track_label):
-        fig, ax = plt.subplots(figsize=(9, 6))
+        fig, ax = plt.subplots(figsize=(8, 4))
         df_track.plot(
             ax=ax,
             x=track_label + "_X",
@@ -364,12 +365,12 @@ class ClickSynchronizer:
         plt.title("%s, %s" % (title_text, cal_obj))
         plt.xlabel("Distance (m)", fontsize=12)
         plt.ylabel("Distance (m)", fontsize=12)
-        plt.legend(fontsize=12)
+        plt.legend(fontsize=10)
         plt.grid()
         plt.show()
         return fig
 
-    def sync_curr_trial(
+    def sync_trial(
         self,
         track_label,
         proc_track=True,
@@ -539,7 +540,7 @@ class ClickSynchronizer:
 
         return df_dtag, df_hydro_ch0, df_hydro_ch1, fig_spectrogram, fig_df_time, fig_track
 
-    def sync_curr_trial_LED(self, track_label, proc_track=True, plot_opt=True):
+    def sync_trial_LED(self, track_label, proc_track=True, plot_opt=True):
         """
         Synchronize hydrophone detection with LED flash at the beginning of the track video.
 
