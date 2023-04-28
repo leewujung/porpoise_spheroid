@@ -1,17 +1,23 @@
 """
 This script is used to debug running through the routines in extract_data_summary_20230425.ipynb
 """
+from pathlib import Path
 
-from pp_utils.core import DATA_PATH, RAW_PATH, HYDRO_PARAMS, MISC_PARAMS, ENV_PARAMS, SCAN_PARAMS
+from pp_utils.core import (
+    generate_data_path_dict, HYDRO_PARAMS, MISC_PARAMS, ENV_PARAMS, SCAN_PARAMS
+)
 from pp_utils.file_handling import df_main_loader
 from pp_utils.misc import interp_xy
 from pp_utils.trial_processor import TrialProcessor
 
 
+data_path = generate_data_path_dict(Path("data_processed"))
+raw_path = Path("data_raw")
+
 # Process trial
 trial_idx = 2
-df_main = df_main_loader(folder=DATA_PATH["main"], filename="analysis_master_info_append_09.csv")
-tp = TrialProcessor(df_main, trial_idx, data_path=DATA_PATH, raw_path=RAW_PATH)
+df_main = df_main_loader(folder=data_path["info_csv"], filename="main_info_append_09.csv")
+tp = TrialProcessor(df_main, trial_idx, data_path=data_path, raw_path=raw_path)
 
 
 # Add track and hydrophone features

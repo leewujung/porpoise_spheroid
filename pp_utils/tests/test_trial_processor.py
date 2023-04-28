@@ -7,7 +7,7 @@ from pp_utils.trial_processor import TrialProcessor
 from pp_utils.core import HYDRO_PARAMS, SCAN_PARAMS, ENV_PARAMS
 
 
-def test_trial_processor(t100_flags, t100_params, t100_paths, test_data_path, test_raw_path):
+def test_init(t100_flags, t100_params, t100_paths, test_data_path, test_raw_path):
 
     df_main = df_main_loader(folder=test_data_path["info_csv"])
     trial_idx = 100
