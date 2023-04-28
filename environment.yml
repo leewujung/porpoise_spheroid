@@ -13,6 +13,7 @@ dependencies:
   - opencv
   - openpyxl
   - pandas<2
+  - papermill
   - pip
   - pytest
   - pytables
