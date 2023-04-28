@@ -1,6 +1,122 @@
 from typing import Union
+
 import numpy as np
 import pandas as pd
+
+import soundfile as sf
+
+
+def load_detected_click_dfs(clk_file):
+    """
+    Load detected hydro clicks from npy files.
+
+    The loaded dataframes are not synched
+    (as opposed to those in from click_sync).
+
+    Parameters
+    ----------
+    clk_file : str
+        filename of detected click npy file
+
+    Returns
+    -------
+    df_ch0, df_ch1 : pd.DataFrame
+        dataframe containing location and peak height info
+        of the detected clicks
+    """
+    # load detected clicks
+    pts = np.load(clk_file, allow_pickle=True)
+    clk_locs = {ch: v for ch, v in enumerate(pts["location"])}
+    clk_pks = {ch: v for ch, v in enumerate(pts["peak"])}
+
+    # assemble channel locs-pks
+    df_ch0 = pd.DataFrame(
+        np.vstack((clk_locs[0], clk_pks[0])).T, columns=["locs", "pks"]
+    )
+    df_ch1 = pd.DataFrame(
+        np.vstack((clk_locs[1], clk_pks[1])).T, columns=["locs", "pks"]
+    )
+    return df_ch0, df_ch1
+
+
+def cut_out_click(
+    clk_file,
+    df_clk,
+    click_seq,
+    fs_hydro,
+    click_len_sec=256e-6,
+    perc_before_pk=50,
+    ch=None,
+):
+    """
+    Cut out 1 click from wav file.
+
+    Parameters
+    ----------
+    clk_file : str
+        hydrophone wav file
+    df_clk : pd.DataFrame
+        dataframe with click locs and pks info
+    click_len_sec : int or float
+        length of click to cut out [seconds]
+    perc_before_pk : int or float
+        percentage of click length to cut out before detected peak [%]
+    click_seq : int
+        sequence number of the click wanted
+    fs_hydro : int or float
+        hydrophone sampling rate [Hz]
+    ch : int or None
+        channel of the click to be cut out. None means all channels (default)
+    """
+    click_len_pt = click_len_sec * fs_hydro  # number of points for the specified length
+    len_pt_offset = int(perc_before_pk / 100 * click_len_pt)
+    click_len_pt = int(click_len_pt)  # convert to int (originally float)
+
+    click_pk_pt = int(df_clk.iloc[click_seq, :]["locs"])  # peak location in point
+    click, _ = sf.read(
+        clk_file, frames=click_len_pt, start=click_pk_pt - len_pt_offset
+    )  # read signal
+
+    if ch is None:
+        return click
+    else:
+        return click[:, ch]
+    
+    
+def gather_clicks(
+    clk_file, df_clk, fs_hydro, click_len_sec=256e-6, perc_before_pk=50, ch=0
+):
+    """
+    Gather all clicks from a detection file.
+
+    Parameters
+    ----------
+    clk_file : str
+        hydrophone wav file
+    df_clk : pd.DataFrame
+        dataframe with click locs and pks info
+    click_len_sec : int or float
+        length of click to cut out [seconds]
+    perc_before_pk : int or float
+        percentage of click length to cut out before detected peak [%]
+    fs_hydro : int or float
+        hydrophone sampling rate [Hz]
+    ch : int
+        channel of the click to be cut out (default to 0).
+    """
+    clk_all = []
+    for clk in df_clk.itertuples():
+        click_test = cut_out_click(
+            clk_file=clk_file,
+            df_clk=df_clk,
+            click_len_sec=click_len_sec,
+            perc_before_pk=perc_before_pk,
+            click_seq=clk.Index,
+            fs_hydro=fs_hydro,
+            ch=ch,
+        )
+        clk_all.append(click_test)
+    return np.array(clk_all)
 
 
 def get_clk_variance(clk_mtx, clk_sel_len_sec, perc_before_pk, fs_hydro):
