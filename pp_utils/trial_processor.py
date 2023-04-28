@@ -33,7 +33,17 @@ class TrialProcessor:
         self.data_paths = DATA_PATH if data_path is None else data_path
         self.trial_series = df_main.iloc[trial_idx, :]
 
+        # Core dataframes
+        self.df_track = None
+        self.df_hydro_ch0 = None
+        self.df_hydro_ch1 = None
+        self.df_dtag = None
+        self.df_targets = None
+
         # Other init
+        self.fs_dtag = None
+        self.fs_hydro = None
+        self.fs_video = None
         self.touch_time_corrected = None
         self.df_click_all = None  # all selected clicks from both hydro channels
         self.df_click_scan = None  # clicks retained after scan determination

@@ -135,13 +135,11 @@ def get_cal_obj_and_track_filepath(fname_prefix: str, track_path: str) -> Tuple[
     return cal_obj, track_file_wanted
 
 
-def get_target_filepath(fname_prefix, cal_obj, target_path) -> Union[PosixPath, None]:
+def get_target_filepath(fname_prefix: str, cal_obj: str, target_path: Path) -> Union[PosixPath, None]:
     """
     Get file path(s) containing target positions.
     """
-    target_file = Path(target_path).joinpath(
-        "%s_targets_%s_transformed.csv" % (fname_prefix, cal_obj)
-    )
+    target_file = target_path / f"{fname_prefix}_targets_{cal_obj}_transformed.csv"
     return target_file if target_file.exists() else None
 
 
