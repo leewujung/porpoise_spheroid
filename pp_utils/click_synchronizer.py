@@ -247,12 +247,12 @@ class ClickSynchronizer:
 
     @staticmethod
     def interpolate_xy(df_pos, df_track, cal_obj, track_label="ROSTRUM"):
-        df_pos[cal_obj + "_pos_x"] = np.interp(
+        df_pos[f"{cal_obj}_pos_x"] = np.interp(
             df_pos["time_corrected"],
             df_track["time_corrected"],
             df_track[track_label + "_X"],
         )
-        df_pos[cal_obj + "_pos_y"] = np.interp(
+        df_pos[f"{cal_obj}_pos_y"] = np.interp(
             df_pos["time_corrected"],
             df_track["time_corrected"],
             df_track[track_label + "_Y"],
@@ -300,50 +300,56 @@ class ClickSynchronizer:
     @staticmethod
     def plot_track_with_clicks(dfs, cal_obj, df_track, title_text, track_label):
         fig, ax = plt.subplots(figsize=(8, 4))
-        df_track.plot(
-            ax=ax,
-            x=track_label + "_X",
-            y=track_label + "_Y",
-            label="track " + track_label,
-            color="k",
-            lw=0.5,
-        )
-        dfs["dtag"].plot(
-            ax=ax,
-            x=cal_obj + "_pos_x",
-            y=cal_obj + "_pos_y",
-            marker="x",
-            linestyle="none",
-            color="k",
-            label="dtag clicks",
-            markersize=5,
-        )
-        dfs["hydro_ch0"].plot(
-            ax=ax,
-            x=cal_obj + "_pos_x",
-            y=cal_obj + "_pos_y",
-            marker=".",
-            linestyle="none",
-            color="r",
-            label="hydro 0 clicks",
-            markersize=5,
-        )
-        dfs["hydro_ch1"].plot(
-            ax=ax,
-            x=cal_obj + "_pos_x",
-            y=cal_obj + "_pos_y",
-            marker="o",
-            markerfacecolor="none",
-            color="b",
-            linestyle="none",
-            label="hydro 1 clicks",
-            markersize=5,
-        )
+
+        # Only plot track if {track_label}_X/Y are not all NaN
+        if not (
+            df_track[f"{track_label}_X"].isna().all()
+            or df_track[f"{track_label}_X"].isna().all()
+        ):
+            df_track.plot(
+                ax=ax,
+                x=f"{track_label}_X",
+                y=f"{track_label}_Y",
+                label="track " + track_label,
+                color="k",
+                lw=0.5,
+            )
+            dfs["dtag"].plot(
+                ax=ax,
+                x=f"{cal_obj}_pos_x",
+                y=f"{cal_obj}_pos_y",
+                marker="x",
+                linestyle="none",
+                color="k",
+                label="dtag clicks",
+                markersize=5,
+            )
+            dfs["hydro_ch0"].plot(
+                ax=ax,
+                x=f"{cal_obj}_pos_x",
+                y=f"{cal_obj}_pos_y",
+                marker=".",
+                linestyle="none",
+                color="r",
+                label="hydro 0 clicks",
+                markersize=5,
+            )
+            dfs["hydro_ch1"].plot(
+                ax=ax,
+                x=f"{cal_obj}_pos_x",
+                y=f"{cal_obj}_pos_y",
+                marker="o",
+                markerfacecolor="none",
+                color="b",
+                linestyle="none",
+                label="hydro 1 clicks",
+                markersize=5,
+            )
         if dfs["targets"] is not None:  # if both target and clutter were present
             dfs["targets"].plot(
                 ax=ax,
-                x="target_" + cal_obj + "_pos_x",
-                y="target_" + cal_obj + "_pos_y",
+                x=f"target_{cal_obj}_pos_x",
+                y=f"target_{cal_obj}_pos_y",
                 linestyle="none",
                 marker="*",
                 color="c",
@@ -352,8 +358,8 @@ class ClickSynchronizer:
             )
             dfs["targets"].plot(
                 ax=ax,
-                x="clutter_" + cal_obj + "_pos_x",
-                y="clutter_" + cal_obj + "_pos_y",
+                x=f"clutter_{cal_obj}_pos_x",
+                y=f"clutter_{cal_obj}_pos_y",
                 linestyle="none",
                 marker="o",
                 color="c",
@@ -362,7 +368,7 @@ class ClickSynchronizer:
             )
         plt.axis("equal")
         plt.gca().invert_yaxis()
-        plt.title("%s, %s" % (title_text, cal_obj))
+        plt.title(f"{title_text}, {cal_obj}")
         plt.xlabel("Distance (m)", fontsize=12)
         plt.ylabel("Distance (m)", fontsize=12)
         plt.legend(fontsize=10)
