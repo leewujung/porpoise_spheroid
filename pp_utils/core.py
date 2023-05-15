@@ -29,7 +29,7 @@ def generate_data_path_dict(main_path: Path):
         # path to calibrated target positions
         "target": main_path / "tracks/targets_cal_transformed",
         # path to extracted hydrophone clicks
-        "extracted_clicks": main_path / "hydrophone_clicks/extracted_clicks",
+        "extracted_clicks": main_path / "hydrophone/extracted_clicks",
     }
 
 

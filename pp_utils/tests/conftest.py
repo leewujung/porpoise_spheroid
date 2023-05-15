@@ -18,7 +18,7 @@ def test_data_path():
         # path to calibrated target positions
         "target": data_path_main / "tracks/targets_cal_transformed",
         # path to extracted hydrophone clicks
-        "extracted_clicks": data_path_main / "hydrophone_clicks/extracted_clicks",
+        "extracted_clicks": data_path_main / "hydrophone/extracted_clicks",
     }
 
 @pytest.fixture
