@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import scipy.interpolate as interpolate
 
 
@@ -310,3 +311,85 @@ def get_track_index_based_on_dist(
         idx_dist_min = df_track[df_track[dist_name_min] > dist_th_min].index[-1]
 
     return idx_dist_min, idx_dist_max
+
+
+def get_feature_array(
+    list_df_track: list,
+    feature_name: list,
+    align: str = "left",
+    normalize_time: bool = True,
+    normalize_timebase: np.ndarray = np.arange(0, 1.01, 0.01),
+    verbose:bool = False,
+):
+    """
+    Gather desired feature into a numpy array.
+
+    Parameters
+    ----------
+    list_df_track : list
+        list of all retrieved df_track portion
+    feature_name : list[str]
+        a list of feature names to be retrieved
+    align : {"left", "right"}
+        align the feature array to the left (default) or right
+    normalize : boolean
+        whether or not to normalize time
+        if time is not normalized, the returned feature array
+        is aligned to the left or right and padded with NaN
+    normalized_timebase : np.array
+        timebase to normalize the time to
+    verbose : bool
+        whether to print out reset_index for each track dataframe
+
+    Returns
+    -------
+    feature_array : np.ndarray
+        the compiled feature array
+    feature_len : np.ndarray or None
+        a 1D array containing the feature length per trial if time is not normalized
+        None if time if normalized
+    """
+
+    def check_index(df_track):
+        if not isinstance(
+            df_track.index,
+            (pd.core.indexes.range.RangeIndex, pd.core.indexes.numeric.Int64Index),
+        ):
+            if verbose:
+                print("Reset dataframe index to be linear from 0!")
+            return df_track.reset_index()
+        else:
+            return df_track
+
+    if normalize_time:
+        feature_array = []
+        for v in list_df_track:
+            df_now = check_index(v.copy())
+            df_now["normalized_time"] = (df_now.index - df_now.index[0]) / (
+                len(df_now) - 1
+            )
+            f_feature = interpolate.interp1d(
+                df_now["normalized_time"],
+                df_now[feature_name],
+                axis=0,  # specify axis for >1 feature
+            )
+            feature_array.append(f_feature(normalize_timebase))
+        feature_array = np.array(feature_array)
+        return feature_array, None
+    else:
+        # gather feature into a list
+        feature_list = []
+        for v in list_df_track:
+            feature_list.append(v[feature_name].values)
+        # convert list to padded array
+        feature_len = [ff.shape[0] for ff in feature_list]
+        feature_array = np.nan * np.ones(
+            (len(feature_list), max(feature_len), len(feature_name))
+        )
+        for seq, f in enumerate(feature_list):
+            if align == "left":
+                feature_array[seq, : feature_len[seq], :] = f  # type: ignore
+            else:
+                feature_array[seq, max(feature_len) - feature_len[seq] :, :] = f  # type: ignore
+        return feature_array, feature_len
+
