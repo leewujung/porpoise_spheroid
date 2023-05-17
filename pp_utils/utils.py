@@ -10,7 +10,12 @@ def get_time_range_threshold(df_tr: pd.DataFrame, th_range: int):
 
 
 def filter_clicks_far(
-    df_h: pd.DataFrame, th_RL: float, time_range_th: float, time_decision: float, **kwargs
+    df_h: pd.DataFrame,
+    th_RL: float,
+    time_range_th: float,
+    time_decision: float,
+    time_far_start: float,
+    **kwargs
 ):
     """
     Select only clicks BEFORE the animal reached a certain range threshold.
@@ -22,9 +27,17 @@ def filter_clicks_far(
     """
     if time_decision < time_range_th:
         # decision before reaching range threshold
-        return df_h[(df_h["time_corrected"] < time_decision) & (df_h["RL"] > th_RL)]
+        return df_h[
+            (df_h["time_corrected"] > time_far_start)
+            & (df_h["time_corrected"] < time_decision)
+            & (df_h["RL"] > th_RL)
+        ]
     else:
-        return df_h[(df_h["time_corrected"] < time_range_th) & (df_h["RL"] > th_RL)]
+        return df_h[
+            (df_h["time_corrected"] > time_far_start)
+            & (df_h["time_corrected"] < time_range_th)
+            & (df_h["RL"] > th_RL)
+        ]
 
 
 def filter_clicks_close(
