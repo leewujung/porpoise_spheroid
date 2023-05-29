@@ -11,6 +11,7 @@ def test_enso2spheroid_angle():
     assert enso2spheroid_angle(0) == -90
     assert enso2spheroid_angle(60) == -30
     assert enso2spheroid_angle(255) == 15
+    assert enso2spheroid_angle(90) == 0
 
     assert np.array_equal(
         enso2spheroid_angle(np.arange(45, 225 + 15, 15)),

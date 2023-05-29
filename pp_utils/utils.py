@@ -44,7 +44,8 @@ def filter_clicks_close(
     df_h: pd.DataFrame, th_RL: float, time_range_th: float, time_decision: float, **kwargs
 ):
     """
-    Select only clicks AFTER the animal reached a certain range threshold.
+    Select only clicks AFTER the animal reached a certain range threshold
+    but before decision (i.e., this time range includes the last scan).
 
     Only clicks with RL above th_RL are returned.
     """
