@@ -3,6 +3,85 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 
+STAT_FILENAME_MIDDLE = {
+    "A": "A_decision_time",
+    "B1": "B1_decision_range_target",
+    "B2": "B2_decision_range_clutter",
+    "C": "C_buzz_time",
+    "D": "D_buzz_range",
+    "E": "E_scan_ch0",
+    "F": "F_scan_ch1",
+}
+
+STAT_PLOT_XPOS = [[0, 1], [0, 2], [1, 2], [3, 4], [3, 5], [4, 5]]
+
+STAT_POSITION = ["TC"] * 3 + ["CT"] * 3
+
+
+# Between spheroids
+STAT_CONTRAST_DIFF_AR = [
+    "AR=1.3 - AR=2.9",
+    "AR=1.1 - AR=2.9",
+    "AR=1.1 - AR=1.3",
+] * 2
+
+STAT_CONTRAST_RATIO_AR = [
+    "AR=1.3 / AR=2.9",
+    "AR=1.1 / AR=2.9",
+    "AR=1.1 / AR=1.3",
+] * 2
+
+STAT_CONTRAST_STR_AR = [
+    "TC: AR=2.9 v. AR=1.3: p=",
+    "TC: AR=2.9 v. AR=1.1: p=",
+    "TC: AR=1.3 v. AR=1.1: p=",
+    "CT: AR=2.9 v. AR=1.3: p=",
+    "CT: AR=2.9 v. AR=1.1: p=",
+    "CT: AR=1.3 v. AR=1.1: p=",
+]
+
+# Between AR=1.3 clusters
+STAT_CONTRAST_DIFF = [
+    "(Curved-1) - Straight",
+    "(Curved-2) - Straight",
+    "(Curved-1) - (Curved-2)",
+] * 2
+
+STAT_CONTRAST_RATIO = [
+    "(Curved-1) / Straight",
+    "(Curved-2) / Straight",
+    "(Curved-1) / (Curved-2)",
+] * 2
+
+STAT_CONTRAST_STR = [
+    "TC-Straight v. TC-Curved-1: p=",
+    "TC-Straight v. TC-Curved-2: p=",
+    "TC-Curved-1 v. TC-Curved-2: p=",
+    "CT-Straight v. CT-Curved-1: p=",
+    "CT-Straight v. CT-Curved-2: p=",
+    "CT-Curved-1 v. CT-Curved-2: p=",
+]
+
+
+# Functions for annotating p values
+def get_p_val_position(df: pd.DataFrame):
+    """
+    Get p value from TC vs CT position contrast
+    """
+    return df["p.value"].values[0]
+
+
+def get_p_val_group(df: pd.DataFrame, position: str, contrast: str):
+    """
+    Get p values from contrasts between clusters
+    """
+    return df[
+        (df["position"] == position)
+        & (df["contrast"] == contrast)
+    ]["p.value"].values[0]
+
+
+# Functions for other plots
 def plot_track(axx: plt.Axes, df: pd.DataFrame, color: str, alpha=0.1, lw=2):
     axx.plot(
         df[df["before_touch"]]["DTAG_X"],
@@ -43,3 +122,4 @@ def plot_jitter(
         vals,
         ls="none", color=color, **kwargs
     )
+
