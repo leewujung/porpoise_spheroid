@@ -65,14 +65,14 @@ df_cluster$cluster = as.factor(df_cluster$cluster)
 
 ## Linear models
 
-### Time at buzz onset to touch
+### Duration of last scan
 ```{r}
-lm_time = lm(time_last_nonchosen ~ position + position:cluster, data=df_cluster)
+glm_time = glm(time_last_nonchosen ~ position + position:cluster, data=df_cluster, family=Gamma(link="log"))
 
-lm_time_coeff = cbind(coef(summary(lm_time)), confint(lm_time))
-lm_time_coeff
+glm_time_coeff = cbind(coef(summary(glm_time)), confint(glm_time))
+glm_time_coeff
 
-write.csv(lm_time_coeff, file.path(stat_path, "AR13_last_scan_duration_coeff.csv"))
+write.csv(glm_time_coeff, file.path(stat_path, "AR13_last_scan_duration_coeff.csv"))
 ```
 
 
@@ -80,12 +80,12 @@ write.csv(lm_time_coeff, file.path(stat_path, "AR13_last_scan_duration_coeff.csv
 
 ## Post hoc analysis
 
-### Time at buzz onset to touch
+### Duration of last scan
 
 #### Position (TC vs CT)
 ```{r}
 # emmeans table
-emm_time = emmeans(lm_time, ~position, type="response")
+emm_time = emmeans(glm_time, ~position, type="response")
 emm_time
 
 write.csv(emm_time, file=file.path(stat_path, "AR13_last_scan_duration_position_emmeans.csv"), row.names=FALSE)
@@ -100,7 +100,7 @@ write.csv(s, file=file.path(stat_path, "AR13_last_scan_duration_position_contras
 
 #### Cluster (straight vs curved)
 ```{r}
-emm_time_2level = emmeans(lm_time, ~cluster|position, type="response")
+emm_time_2level = emmeans(glm_time, ~cluster|position, type="response")
 emm_time_2level
 
 write.csv(emm_time_2level, file=file.path(stat_path, "AR13_last_scan_duration_cluster_emmeans.csv"), row.names=FALSE)
