@@ -47,14 +47,13 @@ df_cluster = read.csv(
 )
 
 # Separate out fname_prefix into 3 columns DATE-SESSION-TRIAL
-df_cluster = df_cluster %>% separate(
-  fname_prefix, c("DATE","SESSION","TRIAL"), sep="_"
-) %>% unite("DATE_SESSION", DATE:SESSION, remove=FALSE)
+df_cluster = df_cluster %>%
+  separate(fname_prefix, c("DATE","SESSION","TRIAL"), sep="_") %>%
+  unite("DATE_SESSION", DATE:SESSION, remove=FALSE)
 
 # Get cluster (Straight vs Curved) factor
-df_cluster = df_cluster %>% separate(
-  cluster, c("position","cluster"), sep="_", remove=FALSE
-)
+df_cluster = df_cluster %>%
+  separate(cluster, c("position","cluster"), sep="_", remove=FALSE)
 
 # Convert SPHEROID column to factor for Cuzick test
 df_cluster$SPHEROID = as.factor(df_cluster$SPHEROID)

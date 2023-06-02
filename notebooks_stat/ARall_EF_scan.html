@@ -10,7 +10,7 @@
 
 
 
-<meta name="date" content="2023-05-30" />
+<meta name="date" content="2023-06-01" />
 
 <title>All spheroids comparison: Number of scans to sphere/spheroid</title>
 
@@ -351,7 +351,7 @@ display: none;
 
 <h1 class="title toc-ignore">All spheroids comparison: Number of scans
 to sphere/spheroid</h1>
-<h4 class="date">2023-05-30</h4>
+<h4 class="date">2023-06-01</h4>
 
 </div>
 
@@ -412,7 +412,9 @@ stat_path = file.path(main_path, &quot;stat&quot;)</code></pre>
 df = df %&gt;%
   separate(TARGET_ANGLE,  c(&quot;position&quot;), sep=2, extra=&quot;drop&quot;, remove=FALSE) %&gt;%
   filter(position==&quot;TC&quot; | position==&quot;CT&quot;) %&gt;%
-  mutate(position=factor(position))
+  mutate(position=factor(position)) %&gt;%
+  filter(TRIAL_TO_INCLUDE==&quot;Y&quot;)
+
 
 # Change L/M/S to AR=2.9/1.3/1.1
 df = df %&gt;%
@@ -435,19 +437,19 @@ df = df %&gt;%
 lm_ch0_coeff = cbind(coef(summary(lm_ch0)), confint(lm_ch0))
 lm_ch0_coeff</code></pre>
 <pre><code>##                             Estimate Std. Error   t value     Pr(&gt;|t|)
-## (Intercept)                5.6000000  0.4058538 13.798071 2.055907e-30
-## positionTC                -0.9333333  0.5495287 -1.698425 9.107316e-02
-## positionCT:SPHEROIDAR=1.3  1.0727273  0.4578649  2.342891 2.017516e-02
-## positionTC:SPHEROIDAR=1.3  1.4404762  0.4258934  3.382246 8.737908e-04
-## positionCT:SPHEROIDAR=2.9  1.4833333  0.5173642  2.867097 4.612787e-03
-## positionTC:SPHEROIDAR=2.9  1.5185185  0.4783033  3.174802 1.750859e-03
+## (Intercept)                5.6000000  0.4022921 13.920234 1.824786e-30
+## positionTC                -0.9333333  0.5447061 -1.713462 8.833021e-02
+## positionCT:SPHEROIDAR=1.3  1.0727273  0.4538467  2.363634 1.915101e-02
+## positionTC:SPHEROIDAR=1.3  1.4088050  0.4250520  3.314430 1.108144e-03
+## positionCT:SPHEROIDAR=2.9  1.6173913  0.5170938  3.127849 2.050790e-03
+## positionTC:SPHEROIDAR=2.9  1.5833333  0.4858138  3.259136 1.333643e-03
 ##                                2.5 %    97.5 %
-## (Intercept)                4.7994147 6.4005853
-## positionTC                -2.0173309 0.1506643
-## positionCT:SPHEROIDAR=1.3  0.1695453 1.9759093
-## positionTC:SPHEROIDAR=1.3  0.6003610 2.2805913
-## positionCT:SPHEROIDAR=2.9  0.4627834 2.5038833
-## positionTC:SPHEROIDAR=2.9  0.5750197 2.4620173</code></pre>
+## (Intercept)                4.8062439 6.3937561
+## positionTC                -2.0080842 0.1414175
+## positionCT:SPHEROIDAR=1.3  0.1772496 1.9682049
+## positionTC:SPHEROIDAR=1.3  0.5701416 2.2474684
+## positionCT:SPHEROIDAR=2.9  0.5971217 2.6376609
+## positionTC:SPHEROIDAR=2.9  0.6247818 2.5418849</code></pre>
 <pre class="r"><code>write.csv(lm_ch0_coeff, file.path(stat_path, &quot;ARall_E_scan_ch0_coeff.csv&quot;))</code></pre>
 </div>
 <div id="scan-on-spheroid-ch1" class="section level3">
@@ -457,19 +459,19 @@ lm_ch0_coeff</code></pre>
 lm_ch1_coeff = cbind(coef(summary(lm_ch1)), confint(lm_ch1))
 lm_ch1_coeff</code></pre>
 <pre><code>##                             Estimate Std. Error   t value     Pr(&gt;|t|)
-## (Intercept)                5.2666667  0.4021534 13.096164 2.624150e-28
-## positionTC                -0.6555556  0.5445183 -1.203918 2.301268e-01
-## positionCT:SPHEROIDAR=1.3  1.0242424  0.4536902  2.257581 2.511549e-02
-## positionTC:SPHEROIDAR=1.3  1.1210317  0.4220102  2.656409 8.572841e-03
-## positionCT:SPHEROIDAR=2.9  1.4416667  0.5126470  2.812202 5.439824e-03
-## positionTC:SPHEROIDAR=2.9  1.0555556  0.4739423  2.227181 2.711531e-02
+## (Intercept)                5.2666667  0.3972435 13.258032 1.626165e-28
+## positionTC                -0.6555556  0.5378702 -1.218799 2.244980e-01
+## positionCT:SPHEROIDAR=1.3  1.0242424  0.4481511  2.285485 2.343739e-02
+## positionTC:SPHEROIDAR=1.3  1.1247379  0.4197178  2.679748 8.043603e-03
+## positionCT:SPHEROIDAR=2.9  1.6028986  0.5106045  3.139217 1.976827e-03
+## positionTC:SPHEROIDAR=2.9  1.0555556  0.4797171  2.200371 2.903946e-02
 ##                                2.5 %    97.5 %
-## (Intercept)                4.4733809 6.0599525
-## positionTC                -1.7296696 0.4185585
-## positionCT:SPHEROIDAR=1.3  0.1292953 1.9191895
-## positionTC:SPHEROIDAR=1.3  0.2885765 1.9534870
-## positionCT:SPHEROIDAR=2.9  0.4304217 2.4529116
-## positionTC:SPHEROIDAR=2.9  0.1206593 1.9904518</code></pre>
+## (Intercept)                4.4828719 6.0504614
+## positionTC                -1.7168187 0.4057076
+## positionCT:SPHEROIDAR=1.3  0.1400027 1.9084822
+## positionTC:SPHEROIDAR=1.3  0.2965994 1.9528764
+## positionCT:SPHEROIDAR=2.9  0.5954329 2.6103642
+## positionTC:SPHEROIDAR=2.9  0.1090335 2.0020777</code></pre>
 <pre class="r"><code>write.csv(lm_ch1_coeff, file.path(stat_path, &quot;ARall_F_scan_ch1_coeff.csv&quot;))</code></pre>
 </div>
 </div>
@@ -486,8 +488,8 @@ emm_ch0 = emmeans(lm_ch0, ~position, type=&quot;response&quot;)</code></pre>
 <pre><code>## NOTE: Results may be misleading due to involvement in interactions</code></pre>
 <pre class="r"><code>emm_ch0</code></pre>
 <pre><code>##  position emmean    SE  df lower.CL upper.CL
-##  CT         6.45 0.186 189     6.08     6.82
-##  TC         5.65 0.174 189     5.31     6.00
+##  CT         6.50 0.186 182     6.13     6.86
+##  TC         5.66 0.177 182     5.31     6.01
 ## 
 ## Results are averaged over the levels of: SPHEROID 
 ## Confidence level used: 0.95</code></pre>
@@ -496,7 +498,7 @@ emm_ch0 = emmeans(lm_ch0, ~position, type=&quot;response&quot;)</code></pre>
 s = summary(contrast(emm_ch0, method=&quot;revpairwise&quot;, type=&quot;response&quot;, level=0.95), infer=TRUE)
 s</code></pre>
 <pre><code>##  contrast estimate    SE  df lower.CL upper.CL t.ratio p.value
-##  TC - CT    -0.799 0.255 189     -1.3   -0.296  -3.133  0.0020
+##  TC - CT    -0.833 0.257 182    -1.34   -0.326  -3.243  0.0014
 ## 
 ## Results are averaged over the levels of: SPHEROID 
 ## Confidence level used: 0.95</code></pre>
@@ -510,15 +512,15 @@ s</code></pre>
 <pre class="r"><code>emm_ch0_2level</code></pre>
 <pre><code>## position = CT:
 ##  SPHEROID emmean    SE  df lower.CL upper.CL
-##  AR=1.1     5.60 0.406 189     4.80     6.40
-##  AR=1.3     6.67 0.212 189     6.25     7.09
-##  AR=2.9     7.08 0.321 189     6.45     7.72
+##  AR=1.1     5.60 0.402 182     4.81     6.39
+##  AR=1.3     6.67 0.210 182     6.26     7.09
+##  AR=2.9     7.22 0.325 182     6.58     7.86
 ## 
 ## position = TC:
 ##  SPHEROID emmean    SE  df lower.CL upper.CL
-##  AR=1.1     4.67 0.370 189     3.94     5.40
-##  AR=1.3     6.11 0.210 189     5.69     6.52
-##  AR=2.9     6.19 0.303 189     5.59     6.78
+##  AR=1.1     4.67 0.367 182     3.94     5.39
+##  AR=1.3     6.08 0.214 182     5.65     6.50
+##  AR=2.9     6.25 0.318 182     5.62     6.88
 ## 
 ## Confidence level used: 0.95</code></pre>
 <pre class="r"><code>write.csv(emm_ch0_2level, file=file.path(stat_path, &quot;ARall_E_scan_ch0_spheroid_emmeans.csv&quot;), row.names=FALSE)</code></pre>
@@ -527,15 +529,15 @@ s = summary(contrast(emm_ch0_2level, method=&quot;pairwise&quot;, type=&quot;res
 s</code></pre>
 <pre><code>## position = CT:
 ##  contrast        estimate    SE  df lower.CL upper.CL t.ratio p.value
-##  AR=1.1 - AR=1.3   -1.073 0.458 189    -2.39  0.24555  -2.343  0.1823
-##  AR=1.1 - AR=2.9   -1.483 0.517 189    -2.97  0.00625  -2.867  0.0517
-##  AR=1.3 - AR=2.9   -0.411 0.385 189    -1.52  0.69656  -1.068  0.8935
+##  AR=1.1 - AR=1.3   -1.073 0.454 182    -2.38    0.234  -2.364  0.1748
+##  AR=1.1 - AR=2.9   -1.617 0.517 182    -3.11   -0.128  -3.128  0.0247
+##  AR=1.3 - AR=2.9   -0.545 0.387 182    -1.66    0.570  -1.408  0.7223
 ## 
 ## position = TC:
 ##  contrast        estimate    SE  df lower.CL upper.CL t.ratio p.value
-##  AR=1.1 - AR=1.3   -1.440 0.426 189    -2.67 -0.21425  -3.382  0.0111
-##  AR=1.1 - AR=2.9   -1.519 0.478 189    -2.90 -0.14139  -3.175  0.0213
-##  AR=1.3 - AR=2.9   -0.078 0.368 189    -1.14  0.98230  -0.212  0.9999
+##  AR=1.1 - AR=1.3   -1.409 0.425 182    -2.63   -0.185  -3.314  0.0139
+##  AR=1.1 - AR=2.9   -1.583 0.486 182    -2.98   -0.184  -3.259  0.0166
+##  AR=1.3 - AR=2.9   -0.175 0.383 182    -1.28    0.930  -0.455  0.9975
 ## 
 ## Confidence level used: 0.95 
 ## Conf-level adjustment: tukey method for comparing a family of 6 estimates 
@@ -554,8 +556,8 @@ emm_ch1 = emmeans(lm_ch1, ~position, type=&quot;response&quot;)</code></pre>
 <pre><code>## NOTE: Results may be misleading due to involvement in interactions</code></pre>
 <pre class="r"><code>emm_ch1</code></pre>
 <pre><code>##  position emmean    SE  df lower.CL upper.CL
-##  CT         6.09 0.185 189     5.72     6.45
-##  TC         5.34 0.173 189     5.00     5.68
+##  CT         6.14 0.184 182     5.78     6.50
+##  TC         5.34 0.175 182     4.99     5.68
 ## 
 ## Results are averaged over the levels of: SPHEROID 
 ## Confidence level used: 0.95</code></pre>
@@ -564,7 +566,7 @@ emm_ch1 = emmeans(lm_ch1, ~position, type=&quot;response&quot;)</code></pre>
 s = summary(contrast(emm_ch1, method=&quot;revpairwise&quot;, type=&quot;response&quot;, level=0.95), infer=TRUE)
 s</code></pre>
 <pre><code>##  contrast estimate    SE  df lower.CL upper.CL t.ratio p.value
-##  TC - CT    -0.752 0.253 189    -1.25   -0.253  -2.975  0.0033
+##  TC - CT    -0.805 0.254 182     -1.3   -0.304  -3.173  0.0018
 ## 
 ## Results are averaged over the levels of: SPHEROID 
 ## Confidence level used: 0.95</code></pre>
@@ -578,15 +580,15 @@ s</code></pre>
 <pre class="r"><code>emm_ch1_2level</code></pre>
 <pre><code>## position = CT:
 ##  SPHEROID emmean    SE  df lower.CL upper.CL
-##  AR=1.1     5.27 0.402 189     4.47     6.06
-##  AR=1.3     6.29 0.210 189     5.88     6.71
-##  AR=2.9     6.71 0.318 189     6.08     7.34
+##  AR=1.1     5.27 0.397 182     4.48     6.05
+##  AR=1.3     6.29 0.207 182     5.88     6.70
+##  AR=2.9     6.87 0.321 182     6.24     7.50
 ## 
 ## position = TC:
 ##  SPHEROID emmean    SE  df lower.CL upper.CL
-##  AR=1.1     4.61 0.367 189     3.89     5.34
-##  AR=1.3     5.73 0.208 189     5.32     6.14
-##  AR=2.9     5.67 0.300 189     5.08     6.26
+##  AR=1.1     4.61 0.363 182     3.90     5.33
+##  AR=1.3     5.74 0.211 182     5.32     6.15
+##  AR=2.9     5.67 0.314 182     5.05     6.29
 ## 
 ## Confidence level used: 0.95</code></pre>
 <pre class="r"><code>write.csv(emm_ch1_2level, file=file.path(stat_path, &quot;ARall_F_scan_ch1_spheroid_emmeans.csv&quot;), row.names=FALSE)</code></pre>
@@ -595,15 +597,15 @@ s = summary(contrast(emm_ch1_2level, method=&quot;pairwise&quot;, type=&quot;res
 s</code></pre>
 <pre><code>## position = CT:
 ##  contrast        estimate    SE  df lower.CL upper.CL t.ratio p.value
-##  AR=1.1 - AR=1.3  -1.0242 0.454 189   -2.331   0.2820  -2.258  0.2169
-##  AR=1.1 - AR=2.9  -1.4417 0.513 189   -2.918   0.0343  -2.812  0.0598
-##  AR=1.3 - AR=2.9  -0.4174 0.381 189   -1.514   0.6796  -1.096  0.8827
+##  AR=1.1 - AR=1.3  -1.0242 0.448 182    -2.32   0.2666  -2.285  0.2054
+##  AR=1.1 - AR=2.9  -1.6029 0.511 182    -3.07  -0.1322  -3.139  0.0239
+##  AR=1.3 - AR=2.9  -0.5787 0.382 182    -1.68   0.5217  -1.515  0.6553
 ## 
 ## position = TC:
 ##  contrast        estimate    SE  df lower.CL upper.CL t.ratio p.value
-##  AR=1.1 - AR=1.3  -1.1210 0.422 189   -2.336   0.0940  -2.656  0.0892
-##  AR=1.1 - AR=2.9  -1.0556 0.474 189   -2.420   0.3090  -2.227  0.2303
-##  AR=1.3 - AR=2.9   0.0655 0.365 189   -0.985   1.1162   0.179  1.0000
+##  AR=1.1 - AR=1.3  -1.1247 0.420 182    -2.33   0.0842  -2.680  0.0843
+##  AR=1.1 - AR=2.9  -1.0556 0.480 182    -2.44   0.3262  -2.200  0.2427
+##  AR=1.3 - AR=2.9   0.0692 0.379 182    -1.02   1.1595   0.183  1.0000
 ## 
 ## Confidence level used: 0.95 
 ## Conf-level adjustment: tukey method for comparing a family of 6 estimates 

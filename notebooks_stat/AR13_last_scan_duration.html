@@ -409,14 +409,13 @@ stat_path = file.path(main_path, &quot;stat&quot;)</code></pre>
 )
 
 # Separate out fname_prefix into 3 columns DATE-SESSION-TRIAL
-df_cluster = df_cluster %&gt;% separate(
-  fname_prefix, c(&quot;DATE&quot;,&quot;SESSION&quot;,&quot;TRIAL&quot;), sep=&quot;_&quot;
-) %&gt;% unite(&quot;DATE_SESSION&quot;, DATE:SESSION, remove=FALSE)
+df_cluster = df_cluster %&gt;%
+  separate(fname_prefix, c(&quot;DATE&quot;,&quot;SESSION&quot;,&quot;TRIAL&quot;), sep=&quot;_&quot;) %&gt;%
+  unite(&quot;DATE_SESSION&quot;, DATE:SESSION, remove=FALSE)
 
 # Get cluster (Straight vs Curved) factor
-df_cluster = df_cluster %&gt;% separate(
-  cluster, c(&quot;position&quot;,&quot;cluster&quot;), sep=&quot;_&quot;, remove=FALSE
-)
+df_cluster = df_cluster %&gt;%
+  separate(cluster, c(&quot;position&quot;,&quot;cluster&quot;), sep=&quot;_&quot;, remove=FALSE)
 
 # Convert SPHEROID column to factor
 df_cluster$SPHEROID = as.factor(df_cluster$SPHEROID)
