@@ -54,16 +54,18 @@ STAT_CONTRAST_RATIO = [
 ] * 2
 
 STAT_CONTRAST_STR = [
-    "TC-Straight v. TC-Curved-1: p=",
-    "TC-Straight v. TC-Curved-2: p=",
-    "TC-Curved-1 v. TC-Curved-2: p=",
-    "CT-Straight v. CT-Curved-1: p=",
-    "CT-Straight v. CT-Curved-2: p=",
-    "CT-Curved-1 v. CT-Curved-2: p=",
+    "TC-Straight v. TC-Curved-1",
+    "TC-Straight v. TC-Curved-2",
+    "TC-Curved-1 v. TC-Curved-2",
+    "CT-Straight v. CT-Curved-1",
+    "CT-Straight v. CT-Curved-2",
+    "CT-Curved-1 v. CT-Curved-2",
 ]
 
 
+# =======================================
 # Functions for annotating p values
+# =======================================
 def get_p_val_position(df: pd.DataFrame):
     """
     Get p value from TC vs CT position contrast
@@ -81,7 +83,229 @@ def get_p_val_group(df: pd.DataFrame, position: str, contrast: str):
     ]["p.value"].values[0]
 
 
+def get_p_star(p_val, p_range=[0.05, 0.01, 0.001, 0.0001]):
+    """
+    Return star annotation for a p value.
+    
+    The levels are:
+        - ns    P > 0.05
+        - *     P ≤ 0.05
+        - **    P ≤ 0.01
+        - ***   P ≤ 0.001
+        - ****  P ≤ 0.0001
+    """
+    if p_val <= p_range[3]:
+        return r"$\asterisk\asterisk\asterisk\asterisk$"
+        # return "****"
+    elif p_val <= p_range[2]:
+        return r"$\asterisk\asterisk\asterisk$"
+        # return "***"
+    elif p_val <= p_range[1]:
+        return r"$\asterisk\asterisk$"
+        # return "**"
+    elif p_val <= p_range[0]:
+        return r"$\asterisk$"
+        # return "*"
+    else:
+        return "ns"
+
+
+def add_TCCT_text(ax: plt.Axes, y_height: float=1.02):
+    ylim = ax.get_ylim()
+    ax.text(1, ylim[1]*y_height, "TC", fontsize=14, ha="center", fontweight="bold")
+    ax.text(4, ylim[1]*y_height, "CT", fontsize=14, ha="center", fontweight="bold")
+
+
+def annotate_p_val_cluster(
+    ax: plt.Axes,
+    df_stat: pd.DataFrame,
+    star_only: bool=True,
+    ratio: bool=False,
+    vert_h: np.ndarray=np.array([0.92 , 0.86, 0.80, 0.92 , 0.86, 0.80])
+    # vert_h: np.ndarray=np.array([0.9 , 0.82, 0.74, 0.9 , 0.82, 0.74])
+):
+    """
+    ax : plt.Axes
+        axis to annotate
+    df_stat : pd.DataFrame
+        dataframe holding p values
+    star_only : bool
+        use * to denote p value range
+    ratio : bool
+        whether contrast is a ratio (from glm)
+    vert_h : np.ndarray
+        vertical offset of p value annotation
+    """
+    # Get p values
+    constrast_str = STAT_CONTRAST_RATIO if ratio else STAT_CONTRAST_DIFF
+    p_val_cluster = [
+        get_p_val_group(df_stat, STAT_POSITION[idx], constrast_str[idx])
+        for idx in np.arange(6)
+    ]
+    if star_only:
+        p_val_cluster = [get_p_star(p) for p in p_val_cluster]
+    
+    # Scale vertical position
+    ylim = ax.get_ylim()
+    vert_h = vert_h * (ylim[1] - ylim[0]) + ylim[0]
+
+    # Annotate
+    for idx in np.arange(6):
+        cmp_str = p_val_cluster[idx] if star_only else f"{p_val_cluster[idx]:2.2E}"        
+        ax.plot(STAT_PLOT_XPOS[idx], vert_h[idx] * np.ones(2), color="k", lw=0.5)
+        ax.text(
+            np.mean(STAT_PLOT_XPOS[idx]), vert_h[idx], cmp_str,
+            ha="center", va="bottom", fontsize=9
+        )            
+
+
+def annotate_p_val_spheroid(
+    ax: plt.Axes,
+    df_stat: pd.DataFrame,
+    ratio: bool=False,
+    star_only: bool=True,
+    vert_h: np.ndarray=np.array([0.92 , 0.86, 0.80, 0.92 , 0.86, 0.80])
+    # vert_h: np.ndarray=np.array([0.9 , 0.82, 0.74, 0.9 , 0.82, 0.74])
+):
+    """
+    ax : plt.Axes
+        axis to annotate
+    df_stat : pd.DataFrame
+        dataframe holding p values
+    star_only : bool
+        use * to denote p value range
+    ratio : bool
+        whether contrast is a ratio (from glm)
+    vert_h : np.ndarray
+        vertical offset of p value annotation
+    """
+    # Get p values
+    constrast_str = STAT_CONTRAST_RATIO_AR if ratio else STAT_CONTRAST_DIFF_AR
+    p_val_spheroid = [
+        get_p_val_group(df_stat, STAT_POSITION[idx], constrast_str[idx])
+        for idx in np.arange(6)
+    ]
+    if star_only:
+        p_val_spheroid = [get_p_star(p) for p in p_val_spheroid]
+    
+    # Scale vertical position
+    ylim = ax.get_ylim()
+    vert_h = vert_h * (ylim[1] - ylim[0]) + ylim[0]
+
+    # Annotate
+    for idx in np.arange(6):
+        ax.plot(STAT_PLOT_XPOS[idx], vert_h[idx] * np.ones(2), color="k", lw=0.5)
+        cmp_str = p_val_spheroid[idx] if star_only else f"{p_val_spheroid[idx]:2.2E}"
+        ax.text(
+            np.mean(STAT_PLOT_XPOS[idx]), vert_h[idx], cmp_str,
+            ha="center", va="bottom", fontsize=9
+        )
+
+
+def annotate_p_val_position(
+    ax: plt.Axes, df_stat: pd.DataFrame, star_only: bool=True, y_height: float=1.02
+):
+    """
+    ax : plt.Axes
+        axis to annotate
+    df_stat : pd.DataFrame
+        dataframe holding p values
+    """
+    p_val_position = get_p_val_position(df_stat)
+    if star_only:
+        p_val_position = get_p_star(p_val_position)
+
+    ax.annotate('', xy=(0.32, y_height), xycoords='axes fraction', xytext=(0.68, 1.02),
+        arrowprops=dict(arrowstyle="-", color='k', lw=0.5))
+    
+    ylim = ax.get_ylim()
+    cmp_str = p_val_position if star_only else f"{p_val_position:2.2E}"
+    ax.text(
+        2.5, ylim[1]*y_height, cmp_str,
+        ha="center", va="bottom", fontsize=9
+    )
+
+
+def annotate_p_val_scan(
+    ax: plt.Axes,
+    df_stat_position: pd.DataFrame,
+    df_stat_group: pd.DataFrame,
+    group: str="cluster",
+    ratio: bool=False,
+    star_only: bool=True,
+    vert_text: float=-0.3,
+    vert_text_gap: float=0.1,
+    horz_text_left: float=0,
+    horz_text_right: float=6,
+    **kwargs
+):
+    """
+    ax : plt.Axes
+        axis to annotate
+    df_stat_position : pd.DataFrame
+        dataframe holding p values for TC vs CT comparison
+    df_stat_group : pd.DataFrame
+        dataframe holding p values for comparisons across spheroids (if group="spheroid")
+        or across AR=1.3 clusters (if group="cluster")
+    star_only : bool
+        use * to denote p value range
+    ratio : bool
+        whether contrast is a ratio (from glm)
+    """
+    # Get p values
+    if group == "cluster":
+        constrast_str = STAT_CONTRAST_RATIO if ratio else STAT_CONTRAST_DIFF
+    elif group == "spheroid":
+        constrast_str = STAT_CONTRAST_RATIO_AR if ratio else STAT_CONTRAST_DIFF_AR
+    else:
+        raise ValueError(f"{group} is not allowed as the comparison group specifier!")
+
+    p_val_cluster = [
+        get_p_val_group(df_stat_group, STAT_POSITION[idx], constrast_str[idx])
+        for idx in np.arange(6)
+    ]
+    p_val_position = get_p_val_position(df_stat_position)
+    
+    if star_only:
+        p_val_cluster = [get_p_star(p) for p in p_val_cluster]
+        p_val_position = get_p_star(p_val_position)
+
+    # TC vs CT
+    tcct_str = (
+        f"TC v. CT: {p_val_position}" if star_only
+        else f"TC v. CT: {p_val_position:2.2E}"
+    )
+    ax.text(
+        horz_text_left, vert_text, tcct_str,
+        ha="left", va="center", fontsize=9
+    )
+
+    # TC comparisons
+    contrast_str = STAT_CONTRAST_STR if group == "cluster" else STAT_CONTRAST_STR_AR
+    for idx in np.arange(3):
+        cmp_str = (
+            f"{contrast_str[idx]}: {p_val_cluster[idx]}" if star_only
+            else f"{contrast_str[idx]}: {p_val_cluster[idx]:2.2E}"
+        )
+        ax.text(
+            horz_text_left, vert_text - vert_text_gap*(idx+1), cmp_str,
+            ha="left", va="center", fontsize=9
+        )
+    # CT comparisons
+    for idx in np.arange(3):
+        cmp_str = (
+            f"{contrast_str[idx+3]}: {p_val_cluster[idx]}" if star_only
+            else f"{contrast_str[idx+3]}: {p_val_cluster[idx]:2.2E}"
+        )
+        ax.text(
+            horz_text_right, vert_text - vert_text_gap*(idx+1), cmp_str,
+            ha="left", va="center", fontsize=9
+        )
+
+
+# =======================================
 # Functions for other plots
+# =======================================
 def plot_track(axx: plt.Axes, df: pd.DataFrame, color: str, alpha=0.1, lw=2):
     axx.plot(
         df[df["before_touch"]]["DTAG_X"],
