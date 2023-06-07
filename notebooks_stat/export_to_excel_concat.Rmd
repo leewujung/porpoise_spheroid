@@ -34,10 +34,10 @@ stat_path = file.path(main_path, "stat")
 ```{r}
 rename_estimate_ratio = function(df){
   if("estimate" %in% colnames(df)){
-      df = df %>% rename("estimate or ratio" = "estimate")
+      df = df %>% rename("estimate.or.ratio" = "estimate")
   }
   if("ratio" %in% colnames(df)){
-      df = df %>% rename("estimate or ratio" = "ratio")
+      df = df %>% rename("estimate.or.ratio" = "ratio")
   }
   return(df)
 }
@@ -95,7 +95,7 @@ for (f in names(spheroid_position_list)) {
     file=paste(stat_path, spheroid_position_list[[f]], sep="/")
   )
   spheroid_position_list[[f]] = rename_estimate_ratio(df) %>%
-    add_column("p.value.annotation" = apply(df["p.value"], MARGIN = 1, FUN = get_p_star))
+    add_column("p.annotation" = apply(df["p.value"], MARGIN = 1, FUN = get_p_star))
 }
 
 df_all = bind_rows(spheroid_position_list) %>%
@@ -136,9 +136,9 @@ stat_spheroid_panel = list(
 for (f in names(spheroid_AR_list)) {
   print(sprintf("Sheet %s: %s", f, spheroid_AR_list[[f]]))
   df = read.csv(file=paste(stat_path, spheroid_AR_list[[f]], sep="/")) %>%
-    add_column(fig_panel = stat_spheroid_panel[[f]], .before = "position")
+    add_column(fig.panel = stat_spheroid_panel[[f]], .before = "position")
   spheroid_AR_list[[f]] = rename_estimate_ratio(df) %>%
-    add_column("p.value.annotation" = apply(df["p.value"], MARGIN = 1, FUN = get_p_star))
+    add_column("p.annotation" = apply(df["p.value"], MARGIN = 1, FUN = get_p_star))
 }
 
 df_all = bind_rows(spheroid_AR_list)
@@ -171,11 +171,11 @@ for (f in names(ar13_position_list)) {
     file=paste(stat_path, ar13_position_list[[f]], sep="/")
   )
   ar13_position_list[[f]] = rename_estimate_ratio(df) %>%
-    add_column("p.value.annotation" = apply(df["p.value"], MARGIN = 1, FUN = get_p_star))
+    add_column("p.annotation" = apply(df["p.value"], MARGIN = 1, FUN = get_p_star))
 }
 
 df_all = bind_rows(ar13_position_list) %>%
-  add_column(fig_panel = c("A", "B_left", "B_right", "C", "D", "E", "F"), .before = "contrast")
+  add_column(fig.panel = c("A", "B_left", "B_right", "C", "D", "E", "F"), .before = "contrast")
 
 out_file = file.path(stat_path, "cmp_AR13_position.xlsx")
 print(sprintf("Outputs written to %s", out_file))
@@ -212,9 +212,9 @@ ar13_cluster_panel = list(
 for (f in names(ar13_cluster_list)) {
   print(sprintf("Sheet %s: %s", f, ar13_cluster_list[[f]]))
   df = read.csv(file=paste(stat_path, ar13_cluster_list[[f]], sep="/")) %>%
-    add_column(fig_panel = ar13_cluster_panel[[f]], .before = "position")
+    add_column(fig.panel = ar13_cluster_panel[[f]], .before = "position")
   ar13_cluster_list[[f]] = rename_estimate_ratio(df) %>%
-    add_column("p.value.annotation" = apply(df["p.value"], MARGIN = 1, FUN = get_p_star))
+    add_column("p.annotation" = apply(df["p.value"], MARGIN = 1, FUN = get_p_star))
 }
 
 df_all = bind_rows(ar13_cluster_list)

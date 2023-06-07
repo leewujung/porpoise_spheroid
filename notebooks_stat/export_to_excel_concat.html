@@ -383,10 +383,10 @@ stat_path = file.path(main_path, &quot;stat&quot;)</code></pre>
 <h2>Functions</h2>
 <pre class="r"><code>rename_estimate_ratio = function(df){
   if(&quot;estimate&quot; %in% colnames(df)){
-      df = df %&gt;% rename(&quot;estimate or ratio&quot; = &quot;estimate&quot;)
+      df = df %&gt;% rename(&quot;estimate.or.ratio&quot; = &quot;estimate&quot;)
   }
   if(&quot;ratio&quot; %in% colnames(df)){
-      df = df %&gt;% rename(&quot;estimate or ratio&quot; = &quot;ratio&quot;)
+      df = df %&gt;% rename(&quot;estimate.or.ratio&quot; = &quot;ratio&quot;)
   }
   return(df)
 }</code></pre>
