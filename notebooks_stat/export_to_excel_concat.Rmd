@@ -66,6 +66,7 @@ get_p_star = function(p_val){
 ### TC vs CT comparisons
 ```{r}
 spheroid_position_list = list(
+  "last_scan_duration" =              "ARall_last_scan_duration_position_contrast.csv",
   "A_pos_decision_time" =             "ARall_A_decision_time_position_contrast.csv",
   "B_pos_decision_dist_sphere" =      "ARall_B1_decision_range_target_position_contrast.csv",
   "B_pos_decision_dist_spheroid" =    "ARall_B2_decision_range_clutter_position_contrast.csv",
@@ -73,18 +74,6 @@ spheroid_position_list = list(
   "D_pos_buzz_range" =                "ARall_D_buzz_range_position_contrast.csv",
   "E_pos_scan_to_sphere" =            "ARall_E_scan_ch0_position_contrast.csv",
   "F_pos_scan_to_spheroid" =          "ARall_F_scan_ch1_position_contrast.csv"
-)
-```
-
-```{r}
-spheroid_AR_list = list(
-  "A_sph_decision_time" =             "ARall_A_decision_time_spheroid_contrast.csv",
-  "B_sph_decision_dist_to_sphere" =   "ARall_B1_decision_range_target_spheroid_contrast.csv",
-  "B_sph_decision_dist_to_spheroid" = "ARall_B2_decision_range_clutter_spheroid_contrast.csv",
-  "C_sph_buzz_time" =                 "ARall_C_buzz_time_spheroid_contrast.csv",
-  "D_sph_buzz_range" =                "ARall_D_buzz_range_spheroid_contrast.csv",
-  "E_sph_scan_sphere" =               "ARall_E_scan_ch0_spheroid_contrast.csv",
-  "F_sph_scan_spheroid" =             "ARall_F_scan_ch1_spheroid_contrast.csv"
 )
 ```
 
@@ -101,7 +90,8 @@ for (f in names(spheroid_position_list)) {
 df_all = bind_rows(spheroid_position_list) %>%
   add_column(
     fig.panel = c(
-      "Fig. 9A", "Fig. 9B left", "Fig. 9B right", "Fig. 9C", "Fig. 9D", "Fig. 9E", "Fig. 9F"
+      "Fig. 8A", "Fig. 9A", "Fig. 9B left", "Fig. 9B right",
+      "Fig. 9C", "Fig. 9D", "Fig. 9E", "Fig. 9F"
     ), .before = "contrast"
   )
 
@@ -114,6 +104,7 @@ print(sprintf("Outputs written to %s", out_file))
 ### AR comparisons
 ```{r}
 spheroid_AR_list = list(
+  "last_scan_duration" =              "ARall_last_scan_duration_spheroid_contrast.csv",
   "A_sph_decision_time" =             "ARall_A_decision_time_spheroid_contrast.csv",
   "B_sph_decision_dist_to_sphere" =   "ARall_B1_decision_range_target_spheroid_contrast.csv",
   "B_sph_decision_dist_to_spheroid" = "ARall_B2_decision_range_clutter_spheroid_contrast.csv",
@@ -126,6 +117,7 @@ spheroid_AR_list = list(
 
 ```{r}
 stat_spheroid_panel = list(
+  "last_scan_duration" =              "Fig. 8A",
   "A_sph_decision_time" =             "Fig. 9A",
   "B_sph_decision_dist_to_sphere" =   "Fig. 9B left",
   "B_sph_decision_dist_to_spheroid" = "Fig. 9B right",
@@ -158,6 +150,7 @@ print(sprintf("Outputs written to %s", out_file))
 ### TC vs CT comparisons
 ```{r}
 ar13_position_list = list(
+  "last_scan_duration" =              "AR13_last_scan_duration_position_contrast.csv",
   "A_pos_decision_time" =             "AR13_A_decision_time_position_contrast.csv",
   "B_pos_decision_dist_sphere" =      "AR13_B1_decision_range_target_position_contrast.csv",
   "B_pos_decision_dist_spheroid" =    "AR13_B2_decision_range_clutter_position_contrast.csv",
@@ -181,7 +174,8 @@ for (f in names(ar13_position_list)) {
 df_all = bind_rows(ar13_position_list) %>%
   add_column(
     fig.panel = c(
-      "Fig. 10A", "Fig. 10B left", "Fig. 10B right", "Fig. 10C", "Fig. 10D", "Fig. 10E", "Fig. 10F"
+      "Fig. 8B", "Fig. 10A", "Fig. 10B left", "Fig. 10B right",
+      "Fig. 10C", "Fig. 10D", "Fig. 10E", "Fig. 10F"
     ),
     .before = "contrast"
   )
@@ -195,6 +189,7 @@ write.xlsx(df_all, file = out_file)
 ### Cluster comparisons
 ```{r}
 ar13_cluster_list = list(
+  "last_scan_duration" =              "AR13_last_scan_duration_cluster_contrast.csv",
   "A_clu_decision_time" =             "AR13_A_decision_time_cluster_contrast.csv",
   "B_clu_decision_dist_to_sphere" =   "AR13_B1_decision_range_target_cluster_contrast.csv",
   "B_clu_decision_dist_to_spheroid" = "AR13_B2_decision_range_clutter_cluster_contrast.csv",
@@ -207,6 +202,7 @@ ar13_cluster_list = list(
 
 ```{r}
 ar13_cluster_panel = list(
+  "last_scan_duration" =              "Fig. 8B",
   "A_clu_decision_time" =             "Fig. 10A",
   "B_clu_decision_dist_to_sphere" =   "Fig. 10B left",
   "B_clu_decision_dist_to_spheroid" = "Fig. 10B right",
