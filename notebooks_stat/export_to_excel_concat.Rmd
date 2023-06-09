@@ -99,7 +99,11 @@ for (f in names(spheroid_position_list)) {
 }
 
 df_all = bind_rows(spheroid_position_list) %>%
-  add_column(fig.panel = c("A", "B_left", "B_right", "C", "D", "E", "F"), .before = "contrast")
+  add_column(
+    fig.panel = c(
+      "Fig. 9A", "Fig. 9B left", "Fig. 9B right", "Fig. 9C", "Fig. 9D", "Fig. 9E", "Fig. 9F"
+    ), .before = "contrast"
+  )
 
 out_file = file.path(stat_path, "cmp_ARall_position.xlsx")
 write.xlsx(df_all, file = out_file)
@@ -122,13 +126,13 @@ spheroid_AR_list = list(
 
 ```{r}
 stat_spheroid_panel = list(
-  "A_sph_decision_time" =             "A",
-  "B_sph_decision_dist_to_sphere" =   "B_left",
-  "B_sph_decision_dist_to_spheroid" = "B_right",
-  "C_sph_buzz_time" =                 "C",
-  "D_sph_buzz_range" =                "D",
-  "E_sph_scan_sphere" =               "E",
-  "F_sph_scan_spheroid" =             "F"
+  "A_sph_decision_time" =             "Fig. 9A",
+  "B_sph_decision_dist_to_sphere" =   "Fig. 9B left",
+  "B_sph_decision_dist_to_spheroid" = "Fig. 9B right",
+  "C_sph_buzz_time" =                 "Fig. 9C",
+  "D_sph_buzz_range" =                "Fig. 9D",
+  "E_sph_scan_sphere" =               "Fig. 9E",
+  "F_sph_scan_spheroid" =             "Fig. 9F"
 )
 ```
 
@@ -175,7 +179,12 @@ for (f in names(ar13_position_list)) {
 }
 
 df_all = bind_rows(ar13_position_list) %>%
-  add_column(fig.panel = c("A", "B_left", "B_right", "C", "D", "E", "F"), .before = "contrast")
+  add_column(
+    fig.panel = c(
+      "Fig. 10A", "Fig. 10B left", "Fig. 10B right", "Fig. 10C", "Fig. 10D", "Fig. 10E", "Fig. 10F"
+    ),
+    .before = "contrast"
+  )
 
 out_file = file.path(stat_path, "cmp_AR13_position.xlsx")
 print(sprintf("Outputs written to %s", out_file))
@@ -198,13 +207,13 @@ ar13_cluster_list = list(
 
 ```{r}
 ar13_cluster_panel = list(
-  "A_clu_decision_time" =             "A",
-  "B_clu_decision_dist_to_sphere" =   "B_left",
-  "B_clu_decision_dist_to_spheroid" = "B_right",
-  "C_clu_buzz_time" =                 "C",
-  "D_clu_buzz_range" =                "D",
-  "E_clu_scan_sphere" =               "E",
-  "F_clu_scan_spheroid" =             "F"
+  "A_clu_decision_time" =             "Fig. 10A",
+  "B_clu_decision_dist_to_sphere" =   "Fig. 10B left",
+  "B_clu_decision_dist_to_spheroid" = "Fig. 10B right",
+  "C_clu_buzz_time" =                 "Fig. 10C",
+  "D_clu_buzz_range" =                "Fig. 10D",
+  "E_clu_scan_sphere" =               "Fig. 10E",
+  "F_clu_scan_spheroid" =             "Fig. 10F"
 )
 ```
 

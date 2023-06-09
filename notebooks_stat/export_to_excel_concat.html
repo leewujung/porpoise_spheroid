@@ -10,7 +10,7 @@
 
 
 
-<meta name="date" content="2023-06-07" />
+<meta name="date" content="2023-06-09" />
 
 <title>AR=1.3 spheroid clusters comparison: time and range at buzz onset</title>
 
@@ -351,7 +351,7 @@ display: none;
 
 <h1 class="title toc-ignore">AR=1.3 spheroid clusters comparison: time
 and range at buzz onset</h1>
-<h4 class="date">2023-06-07</h4>
+<h4 class="date">2023-06-09</h4>
 
 </div>
 
@@ -433,7 +433,7 @@ stat_path = file.path(main_path, &quot;stat&quot;)</code></pre>
     file=paste(stat_path, spheroid_position_list[[f]], sep=&quot;/&quot;)
   )
   spheroid_position_list[[f]] = rename_estimate_ratio(df) %&gt;%
-    add_column(&quot;p.value.annotation&quot; = apply(df[&quot;p.value&quot;], MARGIN = 1, FUN = get_p_star))
+    add_column(&quot;p.annotation&quot; = apply(df[&quot;p.value&quot;], MARGIN = 1, FUN = get_p_star))
 }</code></pre>
 <pre><code>## [1] &quot;Sheet A_pos_decision_time: ARall_A_decision_time_position_contrast.csv&quot;
 ## [1] &quot;Sheet B_pos_decision_dist_sphere: ARall_B1_decision_range_target_position_contrast.csv&quot;
@@ -443,7 +443,11 @@ stat_path = file.path(main_path, &quot;stat&quot;)</code></pre>
 ## [1] &quot;Sheet E_pos_scan_to_sphere: ARall_E_scan_ch0_position_contrast.csv&quot;
 ## [1] &quot;Sheet F_pos_scan_to_spheroid: ARall_F_scan_ch1_position_contrast.csv&quot;</code></pre>
 <pre class="r"><code>df_all = bind_rows(spheroid_position_list) %&gt;%
-  add_column(fig.panel = c(&quot;A&quot;, &quot;B_left&quot;, &quot;B_right&quot;, &quot;C&quot;, &quot;D&quot;, &quot;E&quot;, &quot;F&quot;), .before = &quot;contrast&quot;)
+  add_column(
+    fig.panel = c(
+      &quot;Fig. 9A&quot;, &quot;Fig. 9B left&quot;, &quot;Fig. 9B right&quot;, &quot;Fig. 9C&quot;, &quot;Fig. 9D&quot;, &quot;Fig. 9E&quot;, &quot;Fig. 9F&quot;
+    ), .before = &quot;contrast&quot;
+  )
 
 out_file = file.path(stat_path, &quot;cmp_ARall_position.xlsx&quot;)
 write.xlsx(df_all, file = out_file)
@@ -462,20 +466,20 @@ print(sprintf(&quot;Outputs written to %s&quot;, out_file))</code></pre>
   &quot;F_sph_scan_spheroid&quot; =             &quot;ARall_F_scan_ch1_spheroid_contrast.csv&quot;
 )</code></pre>
 <pre class="r"><code>stat_spheroid_panel = list(
-  &quot;A_sph_decision_time&quot; =             &quot;A&quot;,
-  &quot;B_sph_decision_dist_to_sphere&quot; =   &quot;B_left&quot;,
-  &quot;B_sph_decision_dist_to_spheroid&quot; = &quot;B_right&quot;,
-  &quot;C_sph_buzz_time&quot; =                 &quot;C&quot;,
-  &quot;D_sph_buzz_range&quot; =                &quot;D&quot;,
-  &quot;E_sph_scan_sphere&quot; =               &quot;E&quot;,
-  &quot;F_sph_scan_spheroid&quot; =             &quot;F&quot;
+  &quot;A_sph_decision_time&quot; =             &quot;Fig. 9A&quot;,
+  &quot;B_sph_decision_dist_to_sphere&quot; =   &quot;Fig. 9B left&quot;,
+  &quot;B_sph_decision_dist_to_spheroid&quot; = &quot;Fig. 9B right&quot;,
+  &quot;C_sph_buzz_time&quot; =                 &quot;Fig. 9C&quot;,
+  &quot;D_sph_buzz_range&quot; =                &quot;Fig. 9D&quot;,
+  &quot;E_sph_scan_sphere&quot; =               &quot;Fig. 9E&quot;,
+  &quot;F_sph_scan_spheroid&quot; =             &quot;Fig. 9F&quot;
 )</code></pre>
 <pre class="r"><code>for (f in names(spheroid_AR_list)) {
   print(sprintf(&quot;Sheet %s: %s&quot;, f, spheroid_AR_list[[f]]))
   df = read.csv(file=paste(stat_path, spheroid_AR_list[[f]], sep=&quot;/&quot;)) %&gt;%
-    add_column(fig_panel = stat_spheroid_panel[[f]], .before = &quot;position&quot;)
+    add_column(fig.panel = stat_spheroid_panel[[f]], .before = &quot;position&quot;)
   spheroid_AR_list[[f]] = rename_estimate_ratio(df) %&gt;%
-    add_column(&quot;p.value.annotation&quot; = apply(df[&quot;p.value&quot;], MARGIN = 1, FUN = get_p_star))
+    add_column(&quot;p.annotation&quot; = apply(df[&quot;p.value&quot;], MARGIN = 1, FUN = get_p_star))
 }</code></pre>
 <pre><code>## [1] &quot;Sheet A_sph_decision_time: ARall_A_decision_time_spheroid_contrast.csv&quot;
 ## [1] &quot;Sheet B_sph_decision_dist_to_sphere: ARall_B1_decision_range_target_spheroid_contrast.csv&quot;
@@ -511,7 +515,7 @@ print(sprintf(&quot;Outputs written to %s&quot;, out_file))</code></pre>
     file=paste(stat_path, ar13_position_list[[f]], sep=&quot;/&quot;)
   )
   ar13_position_list[[f]] = rename_estimate_ratio(df) %&gt;%
-    add_column(&quot;p.value.annotation&quot; = apply(df[&quot;p.value&quot;], MARGIN = 1, FUN = get_p_star))
+    add_column(&quot;p.annotation&quot; = apply(df[&quot;p.value&quot;], MARGIN = 1, FUN = get_p_star))
 }</code></pre>
 <pre><code>## [1] &quot;Sheet A_pos_decision_time: AR13_A_decision_time_position_contrast.csv&quot;
 ## [1] &quot;Sheet B_pos_decision_dist_sphere: AR13_B1_decision_range_target_position_contrast.csv&quot;
@@ -521,7 +525,12 @@ print(sprintf(&quot;Outputs written to %s&quot;, out_file))</code></pre>
 ## [1] &quot;Sheet E_pos_scan_to_sphere: AR13_E_scan_ch0_position_contrast.csv&quot;
 ## [1] &quot;Sheet F_pos_scan_to_spheroid: AR13_F_scan_ch1_position_contrast.csv&quot;</code></pre>
 <pre class="r"><code>df_all = bind_rows(ar13_position_list) %&gt;%
-  add_column(fig_panel = c(&quot;A&quot;, &quot;B_left&quot;, &quot;B_right&quot;, &quot;C&quot;, &quot;D&quot;, &quot;E&quot;, &quot;F&quot;), .before = &quot;contrast&quot;)
+  add_column(
+    fig.panel = c(
+      &quot;Fig. 10A&quot;, &quot;Fig. 10B left&quot;, &quot;Fig. 10B right&quot;, &quot;Fig. 10C&quot;, &quot;Fig. 10D&quot;, &quot;Fig. 10E&quot;, &quot;Fig. 10F&quot;
+    ),
+    .before = &quot;contrast&quot;
+  )
 
 out_file = file.path(stat_path, &quot;cmp_AR13_position.xlsx&quot;)
 print(sprintf(&quot;Outputs written to %s&quot;, out_file))</code></pre>
@@ -540,20 +549,20 @@ print(sprintf(&quot;Outputs written to %s&quot;, out_file))</code></pre>
   &quot;F_clu_scan_spheroid&quot; =             &quot;AR13_F_scan_ch1_cluster_contrast.csv&quot;
 )</code></pre>
 <pre class="r"><code>ar13_cluster_panel = list(
-  &quot;A_clu_decision_time&quot; =             &quot;A&quot;,
-  &quot;B_clu_decision_dist_to_sphere&quot; =   &quot;B_left&quot;,
-  &quot;B_clu_decision_dist_to_spheroid&quot; = &quot;B_right&quot;,
-  &quot;C_clu_buzz_time&quot; =                 &quot;C&quot;,
-  &quot;D_clu_buzz_range&quot; =                &quot;D&quot;,
-  &quot;E_clu_scan_sphere&quot; =               &quot;E&quot;,
-  &quot;F_clu_scan_spheroid&quot; =             &quot;F&quot;
+  &quot;A_clu_decision_time&quot; =             &quot;Fig. 10A&quot;,
+  &quot;B_clu_decision_dist_to_sphere&quot; =   &quot;Fig. 10B left&quot;,
+  &quot;B_clu_decision_dist_to_spheroid&quot; = &quot;Fig. 10B right&quot;,
+  &quot;C_clu_buzz_time&quot; =                 &quot;Fig. 10C&quot;,
+  &quot;D_clu_buzz_range&quot; =                &quot;Fig. 10D&quot;,
+  &quot;E_clu_scan_sphere&quot; =               &quot;Fig. 10E&quot;,
+  &quot;F_clu_scan_spheroid&quot; =             &quot;Fig. 10F&quot;
 )</code></pre>
 <pre class="r"><code>for (f in names(ar13_cluster_list)) {
   print(sprintf(&quot;Sheet %s: %s&quot;, f, ar13_cluster_list[[f]]))
   df = read.csv(file=paste(stat_path, ar13_cluster_list[[f]], sep=&quot;/&quot;)) %&gt;%
-    add_column(fig_panel = ar13_cluster_panel[[f]], .before = &quot;position&quot;)
+    add_column(fig.panel = ar13_cluster_panel[[f]], .before = &quot;position&quot;)
   ar13_cluster_list[[f]] = rename_estimate_ratio(df) %&gt;%
-    add_column(&quot;p.value.annotation&quot; = apply(df[&quot;p.value&quot;], MARGIN = 1, FUN = get_p_star))
+    add_column(&quot;p.annotation&quot; = apply(df[&quot;p.value&quot;], MARGIN = 1, FUN = get_p_star))
 }</code></pre>
 <pre><code>## [1] &quot;Sheet A_clu_decision_time: AR13_A_decision_time_cluster_contrast.csv&quot;
 ## [1] &quot;Sheet B_clu_decision_dist_to_sphere: AR13_B1_decision_range_target_cluster_contrast.csv&quot;
