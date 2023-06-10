@@ -66,7 +66,6 @@ get_p_star = function(p_val){
 ### TC vs CT comparisons
 ```{r}
 spheroid_position_list = list(
-  "last_scan_duration" =              "ARall_last_scan_duration_position_contrast.csv",
   "A_pos_decision_time" =             "ARall_A_decision_time_position_contrast.csv",
   "B_pos_decision_dist_sphere" =      "ARall_B1_decision_range_target_position_contrast.csv",
   "B_pos_decision_dist_spheroid" =    "ARall_B2_decision_range_clutter_position_contrast.csv",
@@ -90,7 +89,7 @@ for (f in names(spheroid_position_list)) {
 df_all = bind_rows(spheroid_position_list) %>%
   add_column(
     fig.panel = c(
-      "Fig. 8A", "Fig. 9A", "Fig. 9B left", "Fig. 9B right",
+      "Fig. 9A", "Fig. 9B left", "Fig. 9B right",
       "Fig. 9C", "Fig. 9D", "Fig. 9E", "Fig. 9F"
     ), .before = "contrast"
   ) %>%
@@ -101,8 +100,7 @@ df_all = bind_rows(spheroid_position_list) %>%
          "Upper CL" = "upper.CL",
          "T ratio" = "t.ratio",
          "P value" = "p.value",
-         "Fig annotation" = "p.annotation",
-         "Null" = "null")
+         "Fig annotation" = "p.annotation")
 
 out_file = file.path(stat_path, "cmp_ARall_position.xlsx")
 write.xlsx(df_all, file = out_file)
@@ -113,7 +111,6 @@ print(sprintf("Outputs written to %s", out_file))
 ### AR comparisons
 ```{r}
 spheroid_AR_list = list(
-  "last_scan_duration" =              "ARall_last_scan_duration_spheroid_contrast.csv",
   "A_sph_decision_time" =             "ARall_A_decision_time_spheroid_contrast.csv",
   "B_sph_decision_dist_to_sphere" =   "ARall_B1_decision_range_target_spheroid_contrast.csv",
   "B_sph_decision_dist_to_spheroid" = "ARall_B2_decision_range_clutter_spheroid_contrast.csv",
@@ -126,7 +123,6 @@ spheroid_AR_list = list(
 
 ```{r}
 stat_spheroid_panel = list(
-  "last_scan_duration" =              "Fig. 8A",
   "A_sph_decision_time" =             "Fig. 9A",
   "B_sph_decision_dist_to_sphere" =   "Fig. 9B left",
   "B_sph_decision_dist_to_spheroid" = "Fig. 9B right",
@@ -155,8 +151,7 @@ df_all = bind_rows(spheroid_AR_list) %>%
          "Upper CL" = "upper.CL",
          "T ratio" = "t.ratio",
          "P value" = "p.value",
-         "Fig annotation" = "p.annotation",
-         "Null" = "null")
+         "Fig annotation" = "p.annotation")
 
 out_file = file.path(stat_path, "cmp_ARall_spheroid.xlsx")
 write.xlsx(df_all, file = out_file)

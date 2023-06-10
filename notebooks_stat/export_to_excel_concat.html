@@ -410,7 +410,6 @@ stat_path = file.path(main_path, &quot;stat&quot;)</code></pre>
 <div id="tc-vs-ct-comparisons" class="section level3">
 <h3>TC vs CT comparisons</h3>
 <pre class="r"><code>spheroid_position_list = list(
-  &quot;last_scan_duration&quot; =              &quot;ARall_last_scan_duration_position_contrast.csv&quot;,
   &quot;A_pos_decision_time&quot; =             &quot;ARall_A_decision_time_position_contrast.csv&quot;,
   &quot;B_pos_decision_dist_sphere&quot; =      &quot;ARall_B1_decision_range_target_position_contrast.csv&quot;,
   &quot;B_pos_decision_dist_spheroid&quot; =    &quot;ARall_B2_decision_range_clutter_position_contrast.csv&quot;,
@@ -427,8 +426,7 @@ stat_path = file.path(main_path, &quot;stat&quot;)</code></pre>
   spheroid_position_list[[f]] = rename_estimate_ratio(df) %&gt;%
     add_column(&quot;p.annotation&quot; = apply(df[&quot;p.value&quot;], MARGIN = 1, FUN = get_p_star))
 }</code></pre>
-<pre><code>## [1] &quot;Sheet last_scan_duration: ARall_last_scan_duration_position_contrast.csv&quot;
-## [1] &quot;Sheet A_pos_decision_time: ARall_A_decision_time_position_contrast.csv&quot;
+<pre><code>## [1] &quot;Sheet A_pos_decision_time: ARall_A_decision_time_position_contrast.csv&quot;
 ## [1] &quot;Sheet B_pos_decision_dist_sphere: ARall_B1_decision_range_target_position_contrast.csv&quot;
 ## [1] &quot;Sheet B_pos_decision_dist_spheroid: ARall_B2_decision_range_clutter_position_contrast.csv&quot;
 ## [1] &quot;Sheet C_pos_buzz_time: ARall_C_buzz_time_position_contrast.csv&quot;
@@ -438,7 +436,7 @@ stat_path = file.path(main_path, &quot;stat&quot;)</code></pre>
 <pre class="r"><code>df_all = bind_rows(spheroid_position_list) %&gt;%
   add_column(
     fig.panel = c(
-      &quot;Fig. 8A&quot;, &quot;Fig. 9A&quot;, &quot;Fig. 9B left&quot;, &quot;Fig. 9B right&quot;,
+      &quot;Fig. 9A&quot;, &quot;Fig. 9B left&quot;, &quot;Fig. 9B right&quot;,
       &quot;Fig. 9C&quot;, &quot;Fig. 9D&quot;, &quot;Fig. 9E&quot;, &quot;Fig. 9F&quot;
     ), .before = &quot;contrast&quot;
   ) %&gt;%
@@ -449,8 +447,7 @@ stat_path = file.path(main_path, &quot;stat&quot;)</code></pre>
          &quot;Upper CL&quot; = &quot;upper.CL&quot;,
          &quot;T ratio&quot; = &quot;t.ratio&quot;,
          &quot;P value&quot; = &quot;p.value&quot;,
-         &quot;Fig annotation&quot; = &quot;p.annotation&quot;,
-         &quot;Null&quot; = &quot;null&quot;)
+         &quot;Fig annotation&quot; = &quot;p.annotation&quot;)
 
 out_file = file.path(stat_path, &quot;cmp_ARall_position.xlsx&quot;)
 write.xlsx(df_all, file = out_file)
@@ -460,7 +457,6 @@ print(sprintf(&quot;Outputs written to %s&quot;, out_file))</code></pre>
 <div id="ar-comparisons" class="section level3">
 <h3>AR comparisons</h3>
 <pre class="r"><code>spheroid_AR_list = list(
-  &quot;last_scan_duration&quot; =              &quot;ARall_last_scan_duration_spheroid_contrast.csv&quot;,
   &quot;A_sph_decision_time&quot; =             &quot;ARall_A_decision_time_spheroid_contrast.csv&quot;,
   &quot;B_sph_decision_dist_to_sphere&quot; =   &quot;ARall_B1_decision_range_target_spheroid_contrast.csv&quot;,
   &quot;B_sph_decision_dist_to_spheroid&quot; = &quot;ARall_B2_decision_range_clutter_spheroid_contrast.csv&quot;,
@@ -470,7 +466,6 @@ print(sprintf(&quot;Outputs written to %s&quot;, out_file))</code></pre>
   &quot;F_sph_scan_spheroid&quot; =             &quot;ARall_F_scan_ch1_spheroid_contrast.csv&quot;
 )</code></pre>
 <pre class="r"><code>stat_spheroid_panel = list(
-  &quot;last_scan_duration&quot; =              &quot;Fig. 8A&quot;,
   &quot;A_sph_decision_time&quot; =             &quot;Fig. 9A&quot;,
   &quot;B_sph_decision_dist_to_sphere&quot; =   &quot;Fig. 9B left&quot;,
   &quot;B_sph_decision_dist_to_spheroid&quot; = &quot;Fig. 9B right&quot;,
@@ -486,8 +481,7 @@ print(sprintf(&quot;Outputs written to %s&quot;, out_file))</code></pre>
   spheroid_AR_list[[f]] = rename_estimate_ratio(df) %&gt;%
     add_column(&quot;p.annotation&quot; = apply(df[&quot;p.value&quot;], MARGIN = 1, FUN = get_p_star))
 }</code></pre>
-<pre><code>## [1] &quot;Sheet last_scan_duration: ARall_last_scan_duration_spheroid_contrast.csv&quot;
-## [1] &quot;Sheet A_sph_decision_time: ARall_A_decision_time_spheroid_contrast.csv&quot;
+<pre><code>## [1] &quot;Sheet A_sph_decision_time: ARall_A_decision_time_spheroid_contrast.csv&quot;
 ## [1] &quot;Sheet B_sph_decision_dist_to_sphere: ARall_B1_decision_range_target_spheroid_contrast.csv&quot;
 ## [1] &quot;Sheet B_sph_decision_dist_to_spheroid: ARall_B2_decision_range_clutter_spheroid_contrast.csv&quot;
 ## [1] &quot;Sheet C_sph_buzz_time: ARall_C_buzz_time_spheroid_contrast.csv&quot;
@@ -503,8 +497,7 @@ print(sprintf(&quot;Outputs written to %s&quot;, out_file))</code></pre>
          &quot;Upper CL&quot; = &quot;upper.CL&quot;,
          &quot;T ratio&quot; = &quot;t.ratio&quot;,
          &quot;P value&quot; = &quot;p.value&quot;,
-         &quot;Fig annotation&quot; = &quot;p.annotation&quot;,
-         &quot;Null&quot; = &quot;null&quot;)
+         &quot;Fig annotation&quot; = &quot;p.annotation&quot;)
 
 out_file = file.path(stat_path, &quot;cmp_ARall_spheroid.xlsx&quot;)
 write.xlsx(df_all, file = out_file)
