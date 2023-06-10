@@ -18,7 +18,6 @@ This notebook uses data summary file `data_processed/data_summary/data_summary_a
 library(lme4)
 library(lmerTest)
 library(emmeans)
-library(DHARMa)
 library(tidyr)
 library(dplyr)
 ```

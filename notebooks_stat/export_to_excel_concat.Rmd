@@ -93,7 +93,16 @@ df_all = bind_rows(spheroid_position_list) %>%
       "Fig. 8A", "Fig. 9A", "Fig. 9B left", "Fig. 9B right",
       "Fig. 9C", "Fig. 9D", "Fig. 9E", "Fig. 9F"
     ), .before = "contrast"
-  )
+  ) %>%
+  rename("Fig panel" = "fig.panel",
+         "Contrast" = "contrast",
+         "Estimate or ratio" = "estimate.or.ratio",
+         "Lower CL" = "lower.CL",
+         "Upper CL" = "upper.CL",
+         "T ratio" = "t.ratio",
+         "P value" = "p.value",
+         "Fig annotation" = "p.annotation",
+         "Null" = "null")
 
 out_file = file.path(stat_path, "cmp_ARall_position.xlsx")
 write.xlsx(df_all, file = out_file)
@@ -137,7 +146,17 @@ for (f in names(spheroid_AR_list)) {
     add_column("p.annotation" = apply(df["p.value"], MARGIN = 1, FUN = get_p_star))
 }
 
-df_all = bind_rows(spheroid_AR_list)
+df_all = bind_rows(spheroid_AR_list) %>%
+  rename("Fig panel" = "fig.panel",
+         "Position" = "position",
+         "Contrast" = "contrast",
+         "Estimate or ratio" = "estimate.or.ratio",
+         "Lower CL" = "lower.CL",
+         "Upper CL" = "upper.CL",
+         "T ratio" = "t.ratio",
+         "P value" = "p.value",
+         "Fig annotation" = "p.annotation",
+         "Null" = "null")
 
 out_file = file.path(stat_path, "cmp_ARall_spheroid.xlsx")
 write.xlsx(df_all, file = out_file)
@@ -178,11 +197,20 @@ df_all = bind_rows(ar13_position_list) %>%
       "Fig. 10C", "Fig. 10D", "Fig. 10E", "Fig. 10F"
     ),
     .before = "contrast"
-  )
+  ) %>%
+  rename("Fig panel" = "fig.panel",
+         "Contrast" = "contrast",
+         "Estimate or ratio" = "estimate.or.ratio",
+         "Lower CL" = "lower.CL",
+         "Upper CL" = "upper.CL",
+         "T ratio" = "t.ratio",
+         "P value" = "p.value",
+         "Fig annotation" = "p.annotation",
+         "Null" = "null")
 
 out_file = file.path(stat_path, "cmp_AR13_position.xlsx")
-print(sprintf("Outputs written to %s", out_file))
 write.xlsx(df_all, file = out_file)
+print(sprintf("Outputs written to %s", out_file))
 ```
 
 
@@ -222,11 +250,21 @@ for (f in names(ar13_cluster_list)) {
     add_column("p.annotation" = apply(df["p.value"], MARGIN = 1, FUN = get_p_star))
 }
 
-df_all = bind_rows(ar13_cluster_list)
+df_all = bind_rows(ar13_cluster_list) %>%
+  rename("Fig panel" = "fig.panel",
+         "Contrast" = "contrast",
+         "Position" = "position",
+         "Estimate or ratio" = "estimate.or.ratio",
+         "Lower CL" = "lower.CL",
+         "Upper CL" = "upper.CL",
+         "T ratio" = "t.ratio",
+         "P value" = "p.value",
+         "Fig annotation" = "p.annotation",
+         "Null" = "null")
 
 out_file = file.path(stat_path, "cmp_AR13_cluster.xlsx")
-print(sprintf("Outputs written to %s", out_file))
 write.xlsx(df_all, file = out_file)
+print(sprintf("Outputs written to %s", out_file))
 ```
 
 

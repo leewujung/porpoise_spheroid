@@ -10,7 +10,7 @@
 
 
 
-<meta name="date" content="2023-06-01" />
+<meta name="date" content="2023-06-10" />
 
 <title>AR=1.3 spheroid clusters comparison: time and range at buzz onset</title>
 
@@ -351,7 +351,7 @@ display: none;
 
 <h1 class="title toc-ignore">AR=1.3 spheroid clusters comparison: time
 and range at buzz onset</h1>
-<h4 class="date">2023-06-01</h4>
+<h4 class="date">2023-06-10</h4>
 
 </div>
 
@@ -374,9 +374,7 @@ each nested under the TC/CT scenarios.</p>
 ## 
 ##     step</code></pre>
 <pre class="r"><code>library(emmeans)
-library(DHARMa)</code></pre>
-<pre><code>## This is DHARMa 0.4.6. For overview type &#39;?DHARMa&#39;. For recent changes, type news(package = &#39;DHARMa&#39;)</code></pre>
-<pre class="r"><code>library(tidyr)</code></pre>
+library(tidyr)</code></pre>
 <pre><code>## 
 ## Attaching package: &#39;tidyr&#39;</code></pre>
 <pre><code>## The following objects are masked from &#39;package:Matrix&#39;:
@@ -414,12 +412,10 @@ df_cluster = df_cluster %&gt;% separate(fname_prefix, c(&quot;DATE&quot;,&quot;S
 
 # Get cluster (Straight vs Curved) factor
 df_cluster = df_cluster %&gt;%
-  separate(cluster, c(&quot;position&quot;,&quot;cluster&quot;), sep=&quot;_&quot;, remove=FALSE)
-
-# Convert SPHEROID column to factor for Cuzick test
-df_cluster$SPHEROID = as.factor(df_cluster$SPHEROID)
-df_cluster$position = as.factor(df_cluster$position)
-df_cluster$cluster = as.factor(df_cluster$cluster)</code></pre>
+  separate(cluster, c(&quot;position&quot;,&quot;cluster&quot;), sep=&quot;_&quot;, remove=FALSE) %&gt;%
+  mutate(SPHEROID = factor(SPHEROID)) %&gt;%
+  mutate(position = factor(position, levels = c(&quot;TC&quot;, &quot;CT&quot;))) %&gt;%
+  mutate(cluster = factor(cluster, levels = c(&quot;Straight&quot;, &quot;Curved-1&quot;, &quot;Curved-2&quot;)))</code></pre>
 </div>
 <div id="linear-models" class="section level2">
 <h2>Linear models</h2>
@@ -430,19 +426,19 @@ df_cluster$cluster = as.factor(df_cluster$cluster)</code></pre>
 lm_time_coeff = cbind(coef(summary(lm_time)), confint(lm_time))
 lm_time_coeff</code></pre>
 <pre><code>##                               Estimate Std. Error    t value     Pr(&gt;|t|)
-## (Intercept)                 1.88784805  0.2056364  9.1805169 9.643414e-14
-## positionTC                  0.14797609  0.2518521  0.5875516 5.586715e-01
-## positionCT:clusterCurved-2  1.26859731  0.3141147  4.0386433 1.327737e-04
-## positionTC:clusterCurved-2  0.94558924  0.2423448  3.9018347 2.125466e-04
-## positionCT:clusterStraight  0.17192987  0.2387354  0.7201691 4.737524e-01
-## positionTC:clusterStraight -0.09141345  0.2056364 -0.4445394 6.579861e-01
+## (Intercept)                 1.94441069  0.1454069 13.3722072 3.389172e-21
+## positionCT                  0.11536723  0.1893448  0.6092972 5.442454e-01
+## positionTC:clusterCurved-1  0.09141345  0.2056364  0.4445394 6.579861e-01
+## positionCT:clusterCurved-1 -0.17192987  0.2387354 -0.7201691 4.737524e-01
+## positionTC:clusterCurved-2  1.03700269  0.2423448  4.2790389 5.689523e-05
+## positionCT:clusterCurved-2  1.09666744  0.2666271  4.1131126 1.023993e-04
 ##                                 2.5 %    97.5 %
-## (Intercept)                 1.4779195 2.2977766
-## positionTC                 -0.3540818 0.6500340
-## positionCT:clusterCurved-2  0.6424211 1.8947736
-## positionTC:clusterCurved-2  0.4624838 1.4286947
-## positionCT:clusterStraight -0.3039805 0.6478402
-## positionTC:clusterStraight -0.5013420 0.3185151</code></pre>
+## (Intercept)                 1.6545474 2.2342740
+## positionCT                 -0.2620847 0.4928191
+## positionTC:clusterCurved-1 -0.3185151 0.5013420
+## positionCT:clusterCurved-1 -0.6478402 0.3039805
+## positionTC:clusterCurved-2  0.5538972 1.5201082
+## positionCT:clusterCurved-2  0.5651560 1.6281789</code></pre>
 <pre class="r"><code>write.csv(lm_time_coeff, file.path(stat_path, &quot;AR13_C_buzz_time_coeff.csv&quot;))</code></pre>
 </div>
 <div id="range-at-buzz-onset-to-closest-target" class="section level3">
@@ -452,19 +448,19 @@ lm_time_coeff</code></pre>
 lm_range_coeff = cbind(coef(summary(lm_range)), confint(lm_range))
 lm_range_coeff</code></pre>
 <pre><code>##                                Estimate Std. Error    t value     Pr(&gt;|t|)
-## (Intercept)                 0.876777489 0.05931908 14.7806986 1.675258e-23
-## positionTC                  0.317287916 0.07265074  4.3673045 4.142084e-05
-## positionCT:clusterCurved-2  0.112608264 0.09061140  1.2427605 2.179882e-01
-## positionTC:clusterCurved-2 -0.199929189 0.06990821 -2.8598814 5.541453e-03
-## positionCT:clusterStraight  0.200787132 0.06886703  2.9155770 4.729698e-03
-## positionTC:clusterStraight -0.007198129 0.05931908 -0.1213459 9.037551e-01
-##                                  2.5 %      97.5 %
-## (Intercept)                 0.75852706  0.99502792
-## positionTC                  0.17246131  0.46211452
-## positionCT:clusterCurved-2 -0.06802225  0.29323878
-## positionTC:clusterCurved-2 -0.33928866 -0.06056972
-## positionCT:clusterStraight  0.06350322  0.33807105
-## positionTC:clusterStraight -0.12544856  0.11105230</code></pre>
+## (Intercept)                 1.186867276 0.04194493 28.2958487 9.628845e-41
+## positionCT                 -0.109302655 0.05461951 -2.0011650 4.914457e-02
+## positionTC:clusterCurved-1  0.007198129 0.05931908  0.1213459 9.037551e-01
+## positionCT:clusterCurved-1 -0.200787132 0.06886703 -2.9155770 4.729698e-03
+## positionTC:clusterCurved-2 -0.192731060 0.06990821 -2.7569160 7.388521e-03
+## positionCT:clusterCurved-2 -0.088178868 0.07691285 -1.1464778 2.553934e-01
+##                                 2.5 %        97.5 %
+## (Intercept)                 1.1032516  1.2704829572
+## positionCT                 -0.2181847 -0.0004206478
+## positionTC:clusterCurved-1 -0.1110523  0.1254485600
+## positionCT:clusterCurved-1 -0.3380710 -0.0635032156
+## positionTC:clusterCurved-2 -0.3320905 -0.0533715907
+## positionCT:clusterCurved-2 -0.2415018  0.0651440867</code></pre>
 <pre class="r"><code>write.csv(lm_range_coeff, file.path(stat_path, &quot;AR13_D_buzz_range_coeff.csv&quot;))</code></pre>
 </div>
 </div>
@@ -481,8 +477,8 @@ emm_time = emmeans(lm_time, ~position, type=&quot;response&quot;)</code></pre>
 <pre><code>## NOTE: Results may be misleading due to involvement in interactions</code></pre>
 <pre class="r"><code>emm_time</code></pre>
 <pre><code>##  position emmean     SE df lower.CL upper.CL
-##  CT         2.37 0.1122 72     2.14     2.59
 ##  TC         2.32 0.0942 72     2.13     2.51
+##  CT         2.37 0.1122 72     2.14     2.59
 ## 
 ## Results are averaged over the levels of: cluster 
 ## Confidence level used: 0.95</code></pre>
@@ -491,7 +487,7 @@ emm_time = emmeans(lm_time, ~position, type=&quot;response&quot;)</code></pre>
 s = summary(contrast(emm_time, method=&quot;revpairwise&quot;, type=&quot;response&quot;, level=0.95), infer=TRUE)
 s</code></pre>
 <pre><code>##  contrast estimate    SE df lower.CL upper.CL t.ratio p.value
-##  TC - CT   -0.0475 0.147 72    -0.34    0.245  -0.324  0.7469
+##  CT - TC    0.0475 0.147 72   -0.245     0.34   0.324  0.7469
 ## 
 ## Results are averaged over the levels of: cluster 
 ## Confidence level used: 0.95</code></pre>
@@ -503,17 +499,17 @@ s</code></pre>
 <pre><code>## NOTE: A nesting structure was detected in the fitted model:
 ##     cluster %in% position</code></pre>
 <pre class="r"><code>emm_time_2level</code></pre>
-<pre><code>## position = CT:
+<pre><code>## position = TC:
 ##  cluster  emmean    SE df lower.CL upper.CL
-##  Curved-1   1.89 0.206 72     1.48     2.30
-##  Curved-2   3.16 0.237 72     2.68     3.63
-##  Straight   2.06 0.121 72     1.82     2.30
-## 
-## position = TC:
-##  cluster  emmean    SE df lower.CL upper.CL
+##  Straight   1.94 0.145 72     1.65     2.23
 ##  Curved-1   2.04 0.145 72     1.75     2.33
 ##  Curved-2   2.98 0.194 72     2.59     3.37
-##  Straight   1.94 0.145 72     1.65     2.23
+## 
+## position = CT:
+##  cluster  emmean    SE df lower.CL upper.CL
+##  Straight   2.06 0.121 72     1.82     2.30
+##  Curved-1   1.89 0.206 72     1.48     2.30
+##  Curved-2   3.16 0.237 72     2.68     3.63
 ## 
 ## Confidence level used: 0.95</code></pre>
 <pre class="r"><code>write.csv(emm_time_2level, file=file.path(stat_path, &quot;AR13_C_buzz_time_cluster_emmeans.csv&quot;), row.names=FALSE)</code></pre>
@@ -522,15 +518,15 @@ s = summary(contrast(emm_time_2level, method=&quot;pairwise&quot;, type=&quot;re
 s</code></pre>
 <pre><code>## position = CT:
 ##  contrast                estimate    SE df lower.CL upper.CL t.ratio p.value
+##  Straight - (Curved-1)     0.1719 0.239 72   -0.527    0.871   0.720  0.9789
+##  Straight - (Curved-2)    -1.0967 0.267 72   -1.877   -0.316  -4.113  0.0014
 ##  (Curved-1) - (Curved-2)  -1.2686 0.314 72   -2.188   -0.349  -4.039  0.0018
-##  (Curved-1) - Straight    -0.1719 0.239 72   -0.871    0.527  -0.720  0.9789
-##  (Curved-2) - Straight     1.0967 0.267 72    0.316    1.877   4.113  0.0014
 ## 
 ## position = TC:
 ##  contrast                estimate    SE df lower.CL upper.CL t.ratio p.value
+##  Straight - (Curved-1)    -0.0914 0.206 72   -0.693    0.511  -0.445  0.9977
+##  Straight - (Curved-2)    -1.0370 0.242 72   -1.747   -0.327  -4.279  0.0008
 ##  (Curved-1) - (Curved-2)  -0.9456 0.242 72   -1.655   -0.236  -3.902  0.0028
-##  (Curved-1) - Straight     0.0914 0.206 72   -0.511    0.693   0.445  0.9977
-##  (Curved-2) - Straight     1.0370 0.242 72    0.327    1.747   4.279  0.0008
 ## 
 ## Confidence level used: 0.95 
 ## Conf-level adjustment: tukey method for comparing a family of 6 estimates 
@@ -549,8 +545,8 @@ emm_range = emmeans(lm_range, ~position, type=&quot;response&quot;)</code></pre>
 <pre><code>## NOTE: Results may be misleading due to involvement in interactions</code></pre>
 <pre class="r"><code>emm_range</code></pre>
 <pre><code>##  position emmean     SE df lower.CL upper.CL
-##  CT        0.981 0.0324 72    0.917     1.05
 ##  TC        1.125 0.0272 72    1.071     1.18
+##  CT        0.981 0.0324 72    0.917     1.05
 ## 
 ## Results are averaged over the levels of: cluster 
 ## Confidence level used: 0.95</code></pre>
@@ -559,7 +555,7 @@ emm_range = emmeans(lm_range, ~position, type=&quot;response&quot;)</code></pre>
 s = summary(contrast(emm_range, method=&quot;revpairwise&quot;, type=&quot;response&quot;, level=0.95), infer=TRUE)
 s</code></pre>
 <pre><code>##  contrast estimate     SE df lower.CL upper.CL t.ratio p.value
-##  TC - CT     0.144 0.0423 72   0.0595    0.228   3.401  0.0011
+##  CT - TC    -0.144 0.0423 72   -0.228  -0.0595  -3.401  0.0011
 ## 
 ## Results are averaged over the levels of: cluster 
 ## Confidence level used: 0.95</code></pre>
@@ -571,17 +567,17 @@ s</code></pre>
 <pre><code>## NOTE: A nesting structure was detected in the fitted model:
 ##     cluster %in% position</code></pre>
 <pre class="r"><code>emm_range_2level</code></pre>
-<pre><code>## position = CT:
+<pre><code>## position = TC:
 ##  cluster  emmean     SE df lower.CL upper.CL
-##  Curved-1  0.877 0.0593 72    0.759    0.995
-##  Curved-2  0.989 0.0685 72    0.853    1.126
-##  Straight  1.078 0.0350 72    1.008    1.147
-## 
-## position = TC:
-##  cluster  emmean     SE df lower.CL upper.CL
+##  Straight  1.187 0.0419 72    1.103    1.270
 ##  Curved-1  1.194 0.0419 72    1.110    1.278
 ##  Curved-2  0.994 0.0559 72    0.883    1.106
-##  Straight  1.187 0.0419 72    1.103    1.270
+## 
+## position = CT:
+##  cluster  emmean     SE df lower.CL upper.CL
+##  Straight  1.078 0.0350 72    1.008    1.147
+##  Curved-1  0.877 0.0593 72    0.759    0.995
+##  Curved-2  0.989 0.0685 72    0.853    1.126
 ## 
 ## Confidence level used: 0.95</code></pre>
 <pre class="r"><code>write.csv(emm_range_2level, file=file.path(stat_path, &quot;AR13_D_buzz_range_cluster_emmeans.csv&quot;), row.names=FALSE)</code></pre>
@@ -589,16 +585,16 @@ s</code></pre>
 s = summary(contrast(emm_range_2level, method=&quot;pairwise&quot;, type=&quot;response&quot;, level=0.95), infer=TRUE)
 s</code></pre>
 <pre><code>## position = CT:
-##  contrast                estimate     SE df lower.CL upper.CL t.ratio p.value
-##  (Curved-1) - (Curved-2)  -0.1126 0.0906 72 -0.37791 0.152690  -1.243  0.8143
-##  (Curved-1) - Straight    -0.2008 0.0689 72 -0.40242 0.000846  -2.916  0.0516
-##  (Curved-2) - Straight    -0.0882 0.0769 72 -0.31337 0.137012  -1.146  0.8601
+##  contrast                estimate     SE df  lower.CL upper.CL t.ratio p.value
+##  Straight - (Curved-1)     0.2008 0.0689 72 -0.000846    0.402   2.916  0.0516
+##  Straight - (Curved-2)     0.0882 0.0769 72 -0.137012    0.313   1.146  0.8601
+##  (Curved-1) - (Curved-2)  -0.1126 0.0906 72 -0.377906    0.153  -1.243  0.8143
 ## 
 ## position = TC:
-##  contrast                estimate     SE df lower.CL upper.CL t.ratio p.value
-##  (Curved-1) - (Curved-2)   0.1999 0.0699 72 -0.00475 0.404611   2.860  0.0594
-##  (Curved-1) - Straight     0.0072 0.0593 72 -0.16648 0.180876   0.121  1.0000
-##  (Curved-2) - Straight    -0.1927 0.0699 72 -0.39741 0.011951  -2.757  0.0766
+##  contrast                estimate     SE df  lower.CL upper.CL t.ratio p.value
+##  Straight - (Curved-1)    -0.0072 0.0593 72 -0.180876    0.166  -0.121  1.0000
+##  Straight - (Curved-2)     0.1927 0.0699 72 -0.011951    0.397   2.757  0.0766
+##  (Curved-1) - (Curved-2)   0.1999 0.0699 72 -0.004753    0.405   2.860  0.0594
 ## 
 ## Confidence level used: 0.95 
 ## Conf-level adjustment: tukey method for comparing a family of 6 estimates 
@@ -628,8 +624,8 @@ s</code></pre>
 ## [1] stats     graphics  grDevices utils     datasets  methods   base     
 ## 
 ## other attached packages:
-## [1] dplyr_1.1.2    tidyr_1.3.0    DHARMa_0.4.6   emmeans_1.8.6  lmerTest_3.1-3
-## [6] lme4_1.1-33    Matrix_1.5-4  
+## [1] dplyr_1.1.2    tidyr_1.3.0    emmeans_1.8.6  lmerTest_3.1-3 lme4_1.1-33   
+## [6] Matrix_1.5-4  
 ## 
 ## loaded via a namespace (and not attached):
 ##  [1] gtable_0.3.3        jsonlite_1.8.4      compiler_4.3.0     
@@ -644,11 +640,11 @@ s</code></pre>
 ## [28] sass_0.4.6          estimability_1.4.1  cli_3.6.1          
 ## [31] withr_2.5.0         magrittr_2.0.3      digest_0.6.31      
 ## [34] grid_4.3.0          xtable_1.8-4        mvtnorm_1.1-3      
-## [37] lifecycle_1.0.3     nlme_3.1-162        vctrs_0.6.2        
-## [40] evaluate_0.21       glue_1.6.2          numDeriv_2016.8-1.1
-## [43] fansi_1.0.4         colorspace_2.1-0    purrr_1.0.1        
-## [46] rmarkdown_2.21      tools_4.3.0         pkgconfig_2.0.3    
-## [49] htmltools_0.5.5</code></pre>
+## [37] rstudioapi_0.14     lifecycle_1.0.3     nlme_3.1-162       
+## [40] vctrs_0.6.2         evaluate_0.21       glue_1.6.2         
+## [43] numDeriv_2016.8-1.1 fansi_1.0.4         colorspace_2.1-0   
+## [46] purrr_1.0.1         rmarkdown_2.21      tools_4.3.0        
+## [49] pkgconfig_2.0.3     htmltools_0.5.5</code></pre>
 </div>
 
 

@@ -10,7 +10,7 @@
 
 
 
-<meta name="date" content="2023-06-09" />
+<meta name="date" content="2023-06-10" />
 
 <title>AR=1.3 spheroid clusters comparison: time and range at buzz onset</title>
 
@@ -351,7 +351,7 @@ display: none;
 
 <h1 class="title toc-ignore">AR=1.3 spheroid clusters comparison: time
 and range at buzz onset</h1>
-<h4 class="date">2023-06-09</h4>
+<h4 class="date">2023-06-10</h4>
 
 </div>
 
@@ -441,7 +441,16 @@ stat_path = file.path(main_path, &quot;stat&quot;)</code></pre>
       &quot;Fig. 8A&quot;, &quot;Fig. 9A&quot;, &quot;Fig. 9B left&quot;, &quot;Fig. 9B right&quot;,
       &quot;Fig. 9C&quot;, &quot;Fig. 9D&quot;, &quot;Fig. 9E&quot;, &quot;Fig. 9F&quot;
     ), .before = &quot;contrast&quot;
-  )
+  ) %&gt;%
+  rename(&quot;Fig panel&quot; = &quot;fig.panel&quot;,
+         &quot;Contrast&quot; = &quot;contrast&quot;,
+         &quot;Estimate or ratio&quot; = &quot;estimate.or.ratio&quot;,
+         &quot;Lower CL&quot; = &quot;lower.CL&quot;,
+         &quot;Upper CL&quot; = &quot;upper.CL&quot;,
+         &quot;T ratio&quot; = &quot;t.ratio&quot;,
+         &quot;P value&quot; = &quot;p.value&quot;,
+         &quot;Fig annotation&quot; = &quot;p.annotation&quot;,
+         &quot;Null&quot; = &quot;null&quot;)
 
 out_file = file.path(stat_path, &quot;cmp_ARall_position.xlsx&quot;)
 write.xlsx(df_all, file = out_file)
@@ -485,7 +494,17 @@ print(sprintf(&quot;Outputs written to %s&quot;, out_file))</code></pre>
 ## [1] &quot;Sheet D_sph_buzz_range: ARall_D_buzz_range_spheroid_contrast.csv&quot;
 ## [1] &quot;Sheet E_sph_scan_sphere: ARall_E_scan_ch0_spheroid_contrast.csv&quot;
 ## [1] &quot;Sheet F_sph_scan_spheroid: ARall_F_scan_ch1_spheroid_contrast.csv&quot;</code></pre>
-<pre class="r"><code>df_all = bind_rows(spheroid_AR_list)
+<pre class="r"><code>df_all = bind_rows(spheroid_AR_list) %&gt;%
+  rename(&quot;Fig panel&quot; = &quot;fig.panel&quot;,
+         &quot;Position&quot; = &quot;position&quot;,
+         &quot;Contrast&quot; = &quot;contrast&quot;,
+         &quot;Estimate or ratio&quot; = &quot;estimate.or.ratio&quot;,
+         &quot;Lower CL&quot; = &quot;lower.CL&quot;,
+         &quot;Upper CL&quot; = &quot;upper.CL&quot;,
+         &quot;T ratio&quot; = &quot;t.ratio&quot;,
+         &quot;P value&quot; = &quot;p.value&quot;,
+         &quot;Fig annotation&quot; = &quot;p.annotation&quot;,
+         &quot;Null&quot; = &quot;null&quot;)
 
 out_file = file.path(stat_path, &quot;cmp_ARall_spheroid.xlsx&quot;)
 write.xlsx(df_all, file = out_file)
@@ -530,12 +549,21 @@ print(sprintf(&quot;Outputs written to %s&quot;, out_file))</code></pre>
       &quot;Fig. 10C&quot;, &quot;Fig. 10D&quot;, &quot;Fig. 10E&quot;, &quot;Fig. 10F&quot;
     ),
     .before = &quot;contrast&quot;
-  )
+  ) %&gt;%
+  rename(&quot;Fig panel&quot; = &quot;fig.panel&quot;,
+         &quot;Contrast&quot; = &quot;contrast&quot;,
+         &quot;Estimate or ratio&quot; = &quot;estimate.or.ratio&quot;,
+         &quot;Lower CL&quot; = &quot;lower.CL&quot;,
+         &quot;Upper CL&quot; = &quot;upper.CL&quot;,
+         &quot;T ratio&quot; = &quot;t.ratio&quot;,
+         &quot;P value&quot; = &quot;p.value&quot;,
+         &quot;Fig annotation&quot; = &quot;p.annotation&quot;,
+         &quot;Null&quot; = &quot;null&quot;)
 
 out_file = file.path(stat_path, &quot;cmp_AR13_position.xlsx&quot;)
+write.xlsx(df_all, file = out_file)
 print(sprintf(&quot;Outputs written to %s&quot;, out_file))</code></pre>
 <pre><code>## [1] &quot;Outputs written to ~/code_git/porpoise_spheroid/stat/cmp_AR13_position.xlsx&quot;</code></pre>
-<pre class="r"><code>write.xlsx(df_all, file = out_file)</code></pre>
 </div>
 <div id="cluster-comparisons" class="section level3">
 <h3>Cluster comparisons</h3>
@@ -574,12 +602,22 @@ print(sprintf(&quot;Outputs written to %s&quot;, out_file))</code></pre>
 ## [1] &quot;Sheet D_clu_buzz_range: AR13_D_buzz_range_cluster_contrast.csv&quot;
 ## [1] &quot;Sheet E_clu_scan_sphere: AR13_E_scan_ch0_cluster_contrast.csv&quot;
 ## [1] &quot;Sheet F_clu_scan_spheroid: AR13_F_scan_ch1_cluster_contrast.csv&quot;</code></pre>
-<pre class="r"><code>df_all = bind_rows(ar13_cluster_list)
+<pre class="r"><code>df_all = bind_rows(ar13_cluster_list) %&gt;%
+  rename(&quot;Fig panel&quot; = &quot;fig.panel&quot;,
+         &quot;Contrast&quot; = &quot;contrast&quot;,
+         &quot;Position&quot; = &quot;position&quot;,
+         &quot;Estimate or ratio&quot; = &quot;estimate.or.ratio&quot;,
+         &quot;Lower CL&quot; = &quot;lower.CL&quot;,
+         &quot;Upper CL&quot; = &quot;upper.CL&quot;,
+         &quot;T ratio&quot; = &quot;t.ratio&quot;,
+         &quot;P value&quot; = &quot;p.value&quot;,
+         &quot;Fig annotation&quot; = &quot;p.annotation&quot;,
+         &quot;Null&quot; = &quot;null&quot;)
 
 out_file = file.path(stat_path, &quot;cmp_AR13_cluster.xlsx&quot;)
+write.xlsx(df_all, file = out_file)
 print(sprintf(&quot;Outputs written to %s&quot;, out_file))</code></pre>
 <pre><code>## [1] &quot;Outputs written to ~/code_git/porpoise_spheroid/stat/cmp_AR13_cluster.xlsx&quot;</code></pre>
-<pre class="r"><code>write.xlsx(df_all, file = out_file)</code></pre>
 </div>
 </div>
 <div id="session-info" class="section level2">

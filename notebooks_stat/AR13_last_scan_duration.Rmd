@@ -19,7 +19,6 @@ This notebook uses data summary file `data_processed/data_summary/data_summary_c
 library(lme4)
 library(lmerTest)
 library(emmeans)
-library(DHARMa)
 library(tidyr)
 library(dplyr)
 ```
@@ -53,12 +52,10 @@ df_cluster = df_cluster %>%
 
 # Get cluster (Straight vs Curved) factor
 df_cluster = df_cluster %>%
-  separate(cluster, c("position","cluster"), sep="_", remove=FALSE)
-
-# Convert SPHEROID column to factor
-df_cluster$SPHEROID = as.factor(df_cluster$SPHEROID)
-df_cluster$position = as.factor(df_cluster$position)
-df_cluster$cluster = as.factor(df_cluster$cluster)
+  separate(cluster, c("position","cluster"), sep="_", remove=FALSE) %>%
+  mutate(SPHEROID = factor(SPHEROID)) %>%
+  mutate(position = factor(position, levels = c("TC", "CT"))) %>%
+  mutate(cluster = factor(cluster, levels = c("Straight", "Curved-1", "Curved-2")))
 ```
 
 
