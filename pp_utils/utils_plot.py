@@ -20,46 +20,46 @@ STAT_POSITION = ["TC"] * 3 + ["CT"] * 3
 
 # Between spheroids
 STAT_CONTRAST_DIFF_AR = [
-    "AR=1.3 - AR=2.9",
-    "AR=1.1 - AR=2.9",
-    "AR=1.1 - AR=1.3",
+    "AR=2.9 - AR=1.3",
+    "AR=2.9 - AR=1.1",
+    "AR=1.3 - AR=1.1",
 ] * 2
 
 STAT_CONTRAST_RATIO_AR = [
-    "AR=1.3 / AR=2.9",
-    "AR=1.1 / AR=2.9",
-    "AR=1.1 / AR=1.3",
+    "AR=2.9 / AR=1.3",
+    "AR=2.9 / AR=1.1",
+    "AR=1.3 / AR=1.1",
 ] * 2
 
 STAT_CONTRAST_STR_AR = [
-    "TC: AR=2.9 v. AR=1.3: p=",
-    "TC: AR=2.9 v. AR=1.1: p=",
-    "TC: AR=1.3 v. AR=1.1: p=",
-    "CT: AR=2.9 v. AR=1.3: p=",
-    "CT: AR=2.9 v. AR=1.1: p=",
-    "CT: AR=1.3 v. AR=1.1: p=",
+    "TC: AR=2.9 vs AR=1.3",
+    "TC: AR=2.9 vs AR=1.1",
+    "TC: AR=1.3 vs AR=1.1",
+    "CT: AR=2.9 vs AR=1.3",
+    "CT: AR=2.9 vs AR=1.1",
+    "CT: AR=1.3 vs AR=1.1",
 ]
 
 # Between AR=1.3 clusters
 STAT_CONTRAST_DIFF = [
-    "(Curved-1) - Straight",
-    "(Curved-2) - Straight",
+    "Straight - (Curved-1)",
+    "Straight - (Curved-2)",
     "(Curved-1) - (Curved-2)",
 ] * 2
 
 STAT_CONTRAST_RATIO = [
-    "(Curved-1) / Straight",
-    "(Curved-2) / Straight",
+    "Straight / (Curved-1)",
+    "Straight / (Curved-2)",
     "(Curved-1) / (Curved-2)",
 ] * 2
 
 STAT_CONTRAST_STR = [
-    "TC-Straight v. TC-Curved-1",
-    "TC-Straight v. TC-Curved-2",
-    "TC-Curved-1 v. TC-Curved-2",
-    "CT-Straight v. CT-Curved-1",
-    "CT-Straight v. CT-Curved-2",
-    "CT-Curved-1 v. CT-Curved-2",
+    "TC-Straight vs TC-Curved-1",
+    "TC-Straight vs TC-Curved-2",
+    "TC-Curved-1 vs TC-Curved-2",
+    "CT-Straight vs CT-Curved-1",
+    "CT-Straight vs CT-Curved-2",
+    "CT-Curved-1 vs CT-Curved-2",
 ]
 
 
@@ -121,6 +121,7 @@ def annotate_p_val_cluster(
     df_stat: pd.DataFrame,
     star_only: bool=True,
     ratio: bool=False,
+    fontsize: float=10,
     vert_h: np.ndarray=np.array([0.92 , 0.86, 0.80, 0.92 , 0.86, 0.80])
     # vert_h: np.ndarray=np.array([0.9 , 0.82, 0.74, 0.9 , 0.82, 0.74])
 ):
@@ -155,7 +156,7 @@ def annotate_p_val_cluster(
         ax.plot(STAT_PLOT_XPOS[idx], vert_h[idx] * np.ones(2), color="k", lw=0.5)
         ax.text(
             np.mean(STAT_PLOT_XPOS[idx]), vert_h[idx], cmp_str,
-            ha="center", va="bottom", fontsize=9
+            ha="center", va="bottom", fontsize=fontsize
         )            
 
 
@@ -164,6 +165,7 @@ def annotate_p_val_spheroid(
     df_stat: pd.DataFrame,
     ratio: bool=False,
     star_only: bool=True,
+    fontsize: float=10,
     vert_h: np.ndarray=np.array([0.92 , 0.86, 0.80, 0.92 , 0.86, 0.80])
     # vert_h: np.ndarray=np.array([0.9 , 0.82, 0.74, 0.9 , 0.82, 0.74])
 ):
@@ -198,12 +200,12 @@ def annotate_p_val_spheroid(
         cmp_str = p_val_spheroid[idx] if star_only else f"{p_val_spheroid[idx]:2.2E}"
         ax.text(
             np.mean(STAT_PLOT_XPOS[idx]), vert_h[idx], cmp_str,
-            ha="center", va="bottom", fontsize=9
+            ha="center", va="bottom", fontsize=fontsize
         )
 
 
 def annotate_p_val_position(
-    ax: plt.Axes, df_stat: pd.DataFrame, star_only: bool=True, y_height: float=1.02
+    ax: plt.Axes, df_stat: pd.DataFrame, star_only: bool=True, fontsize: float=10, y_height: float=1.02
 ):
     """
     ax : plt.Axes
@@ -222,7 +224,7 @@ def annotate_p_val_position(
     cmp_str = p_val_position if star_only else f"{p_val_position:2.2E}"
     ax.text(
         2.5, ylim[1]*y_height, cmp_str,
-        ha="center", va="bottom", fontsize=9
+        ha="center", va="bottom", fontsize=fontsize
     )
 
 
@@ -233,6 +235,7 @@ def annotate_p_val_scan(
     group: str="cluster",
     ratio: bool=False,
     star_only: bool=True,
+    fontsize: float=11,
     vert_text: float=-0.3,
     vert_text_gap: float=0.1,
     horz_text_left: float=0,
@@ -260,14 +263,14 @@ def annotate_p_val_scan(
     else:
         raise ValueError(f"{group} is not allowed as the comparison group specifier!")
 
-    p_val_cluster = [
+    p_val_group = [
         get_p_val_group(df_stat_group, STAT_POSITION[idx], constrast_str[idx])
         for idx in np.arange(6)
     ]
     p_val_position = get_p_val_position(df_stat_position)
     
     if star_only:
-        p_val_cluster = [get_p_star(p) for p in p_val_cluster]
+        p_val_group = [get_p_star(p) for p in p_val_group]
         p_val_position = get_p_star(p_val_position)
 
     # TC vs CT
@@ -277,29 +280,29 @@ def annotate_p_val_scan(
     )
     ax.text(
         horz_text_left, vert_text, tcct_str,
-        ha="left", va="center", fontsize=9
+        ha="left", va="center", fontsize=fontsize
     )
 
     # TC comparisons
     contrast_str = STAT_CONTRAST_STR if group == "cluster" else STAT_CONTRAST_STR_AR
     for idx in np.arange(3):
         cmp_str = (
-            f"{contrast_str[idx]}: {p_val_cluster[idx]}" if star_only
-            else f"{contrast_str[idx]}: {p_val_cluster[idx]:2.2E}"
+            f"{contrast_str[idx]}: {p_val_group[idx]}" if star_only
+            else f"{contrast_str[idx]}: {p_val_group[idx]:2.2E}"
         )
         ax.text(
             horz_text_left, vert_text - vert_text_gap*(idx+1), cmp_str,
-            ha="left", va="center", fontsize=9
+            ha="left", va="center", fontsize=fontsize
         )
     # CT comparisons
     for idx in np.arange(3):
         cmp_str = (
-            f"{contrast_str[idx+3]}: {p_val_cluster[idx]}" if star_only
-            else f"{contrast_str[idx+3]}: {p_val_cluster[idx]:2.2E}"
+            f"{contrast_str[idx+3]}: {p_val_group[idx+3]}" if star_only
+            else f"{contrast_str[idx+3]}: {p_val_group[idx+3]:2.2E}"
         )
         ax.text(
             horz_text_right, vert_text - vert_text_gap*(idx+1), cmp_str,
-            ha="left", va="center", fontsize=9
+            ha="left", va="center", fontsize=fontsize
         )
 
 
