@@ -12,7 +12,7 @@
 
 <meta name="date" content="2023-06-10" />
 
-<title>AR=1.3 spheroid clusters comparison: time and range at buzz onset</title>
+<title>All spheroids comparison: Number of scans to sphere/spheroid</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -349,315 +349,179 @@ display: none;
 
 
 
-<h1 class="title toc-ignore">AR=1.3 spheroid clusters comparison: time
-and range at buzz onset</h1>
+<h1 class="title toc-ignore">All spheroids comparison: Number of scans
+to sphere/spheroid</h1>
 <h4 class="date">2023-06-10</h4>
 
 </div>
 
 
-<p>This notebook concatenate statistical results into a big table for: -
-the comparisons across trials involving different spheroids - the
-comparisons across AR=1.3 clusters.</p>
+<p>This notebook uses data summary file
+<code>data_processed/data_summary/data_summary_all.csv</code>. The
+comparison is across the 3 spheroids with different aspect ratios nested
+under the TC/CT scenarios.</p>
 <div id="load-libraries" class="section level2">
 <h2>Load libraries</h2>
-<pre class="r"><code>library(openxlsx)
-library(&#39;tidyverse&#39;)</code></pre>
-<pre><code>## ── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
-## ✔ dplyr     1.1.2     ✔ readr     2.1.4
-## ✔ forcats   1.0.0     ✔ stringr   1.5.0
-## ✔ ggplot2   3.4.2     ✔ tibble    3.2.1
-## ✔ lubridate 1.9.2     ✔ tidyr     1.3.0
-## ✔ purrr     1.0.1     
-## ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
-## ✖ dplyr::filter() masks stats::filter()
-## ✖ dplyr::lag()    masks stats::lag()
-## ℹ Use the conflicted package (&lt;http://conflicted.r-lib.org/&gt;) to force all conflicts to become errors</code></pre>
+<pre class="r"><code>library(lme4)</code></pre>
+<pre><code>## Loading required package: Matrix</code></pre>
+<pre class="r"><code>library(lmerTest)</code></pre>
+<pre><code>## 
+## Attaching package: &#39;lmerTest&#39;</code></pre>
+<pre><code>## The following object is masked from &#39;package:lme4&#39;:
+## 
+##     lmer</code></pre>
+<pre><code>## The following object is masked from &#39;package:stats&#39;:
+## 
+##     step</code></pre>
+<pre class="r"><code>library(emmeans)
+library(tidyr)</code></pre>
+<pre><code>## 
+## Attaching package: &#39;tidyr&#39;</code></pre>
+<pre><code>## The following objects are masked from &#39;package:Matrix&#39;:
+## 
+##     expand, pack, unpack</code></pre>
+<pre class="r"><code>library(dplyr)</code></pre>
+<pre><code>## 
+## Attaching package: &#39;dplyr&#39;</code></pre>
+<pre><code>## The following objects are masked from &#39;package:stats&#39;:
+## 
+##     filter, lag</code></pre>
+<pre><code>## The following objects are masked from &#39;package:base&#39;:
+## 
+##     intersect, setdiff, setequal, union</code></pre>
 </div>
 <div id="set-up-path" class="section level2">
 <h2>Set up path</h2>
 <pre class="r"><code>main_path = &quot;~/code_git/porpoise_spheroid&quot;
+data_path = file.path(main_path, &quot;data_processed/data_summary&quot;)
 stat_path = file.path(main_path, &quot;stat&quot;)</code></pre>
-</div>
-<div id="functions" class="section level2">
-<h2>Functions</h2>
-<pre class="r"><code>rename_estimate_ratio = function(df){
-  if(&quot;estimate&quot; %in% colnames(df)){
-      df = df %&gt;% rename(&quot;estimate.or.ratio&quot; = &quot;estimate&quot;)
-  }
-  if(&quot;ratio&quot; %in% colnames(df)){
-      df = df %&gt;% rename(&quot;estimate.or.ratio&quot; = &quot;ratio&quot;)
-  }
-  return(df)
-}</code></pre>
-<pre class="r"><code>get_p_star = function(p_val){
-  if(p_val &lt;= 0.0001){
-    p_star = &quot;****&quot;
-  } else if (p_val &lt;= 0.001){
-    p_star = &quot;***&quot;
-  } else if (p_val &lt;= 0.01){
-    p_star = &quot;**&quot;
-  } else if (p_val &lt;= 0.05){
-    p_star = &quot;*&quot;
-  } else {
-    p_star = &quot;ns&quot;
-  }
-  return(p_star)
+<p>Create <code>stat</code> folder if it does not already exist:</p>
+<pre class="r"><code>if (!dir.exists(stat_path)){
+  dir.create(stat_path)
 }</code></pre>
 </div>
-<div id="comparison-across-spheroids" class="section level2">
-<h2>Comparison across spheroids</h2>
-<div id="tc-vs-ct-comparisons" class="section level3">
-<h3>TC vs CT comparisons</h3>
-<pre class="r"><code>spheroid_position_list = list(
-  &quot;A_pos_decision_time&quot; =             &quot;ARall_A_decision_time_position_contrast.csv&quot;,
-  &quot;B_pos_decision_dist_sphere&quot; =      &quot;ARall_B1_decision_range_target_position_contrast.csv&quot;,
-  &quot;B_pos_decision_dist_spheroid&quot; =    &quot;ARall_B2_decision_range_clutter_position_contrast.csv&quot;,
-  &quot;C_pos_buzz_time&quot; =                 &quot;ARall_C_buzz_time_position_contrast.csv&quot;,
-  &quot;D_pos_buzz_range&quot; =                &quot;ARall_D_buzz_range_position_contrast.csv&quot;,
-  &quot;E_pos_scan_to_sphere&quot; =            &quot;ARall_E_scan_ch0_position_contrast.csv&quot;,
-  &quot;F_pos_scan_to_spheroid&quot; =          &quot;ARall_F_scan_ch1_position_contrast.csv&quot;
-)</code></pre>
-<pre class="r"><code>for (f in names(spheroid_position_list)) {
-  print(sprintf(&quot;Sheet %s: %s&quot;, f, spheroid_position_list[[f]]))
-   df = read.csv(
-    file=paste(stat_path, spheroid_position_list[[f]], sep=&quot;/&quot;)
-  )
-  spheroid_position_list[[f]] = rename_estimate_ratio(df) %&gt;%
-    add_column(&quot;p.annotation&quot; = apply(df[&quot;p.value&quot;], MARGIN = 1, FUN = get_p_star))
-}</code></pre>
-<pre><code>## [1] &quot;Sheet A_pos_decision_time: ARall_A_decision_time_position_contrast.csv&quot;
-## [1] &quot;Sheet B_pos_decision_dist_sphere: ARall_B1_decision_range_target_position_contrast.csv&quot;
-## [1] &quot;Sheet B_pos_decision_dist_spheroid: ARall_B2_decision_range_clutter_position_contrast.csv&quot;
-## [1] &quot;Sheet C_pos_buzz_time: ARall_C_buzz_time_position_contrast.csv&quot;
-## [1] &quot;Sheet D_pos_buzz_range: ARall_D_buzz_range_position_contrast.csv&quot;
-## [1] &quot;Sheet E_pos_scan_to_sphere: ARall_E_scan_ch0_position_contrast.csv&quot;
-## [1] &quot;Sheet F_pos_scan_to_spheroid: ARall_F_scan_ch1_position_contrast.csv&quot;</code></pre>
-<pre class="r"><code>df_all = bind_rows(spheroid_position_list) %&gt;%
-  add_column(
-    fig.panel = c(
-      &quot;Fig. 9A&quot;, &quot;Fig. 9B left&quot;, &quot;Fig. 9B right&quot;,
-      &quot;Fig. 9C&quot;, &quot;Fig. 9D&quot;, &quot;Fig. 9E&quot;, &quot;Fig. 9F&quot;
-    ), .before = &quot;contrast&quot;
+<div id="load-data" class="section level2">
+<h2>Load data</h2>
+<pre class="r"><code>df = read.csv(
+  file=paste(data_path, &quot;data_summary_all.csv&quot;, sep=&quot;/&quot;)
+)
+
+# Get TC/CT position
+df = df %&gt;%
+  separate(TARGET_ANGLE,  c(&quot;position&quot;), sep=2, extra=&quot;drop&quot;, remove=FALSE) %&gt;%
+  filter(position==&quot;TC&quot; | position==&quot;CT&quot;) %&gt;%
+  mutate(position=factor(position)) %&gt;%
+  filter(TRIAL_TO_INCLUDE==&quot;Y&quot;) %&gt;%
+  filter(CHOICE == 1)
+
+
+# Change L/M/S to AR=2.9/1.3/1.1
+df = df %&gt;%
+  mutate(
+    SPHEROID=case_when(
+      SPHEROID==&quot;L&quot; ~  &quot;AR=2.9&quot;,
+      SPHEROID==&quot;M&quot; ~ &quot;AR=1.3&quot;,
+      SPHEROID==&quot;S&quot; ~ &quot;AR=1.1&quot;,
+      .default = &quot;&quot;
+    )
   ) %&gt;%
-  rename(&quot;Fig panel&quot; = &quot;fig.panel&quot;,
-         &quot;Contrast&quot; = &quot;contrast&quot;,
-         &quot;Estimate or ratio&quot; = &quot;estimate.or.ratio&quot;,
-         &quot;Lower CL&quot; = &quot;lower.CL&quot;,
-         &quot;Upper CL&quot; = &quot;upper.CL&quot;,
-         &quot;T ratio&quot; = &quot;t.ratio&quot;,
-         &quot;P value&quot; = &quot;p.value&quot;,
-         &quot;Fig annotation&quot; = &quot;p.annotation&quot;)
-
-out_file = file.path(stat_path, &quot;cmp_ARall_position.xlsx&quot;)
-write.xlsx(df_all, file = out_file)
-print(sprintf(&quot;Outputs written to %s&quot;, out_file))</code></pre>
-<pre><code>## [1] &quot;Outputs written to ~/code_git/porpoise_spheroid/stat/cmp_ARall_position.xlsx&quot;</code></pre>
+  mutate(SPHEROID=factor(SPHEROID, levels = c(&quot;AR=2.9&quot;, &quot;AR=1.3&quot;, &quot;AR=1.1&quot;))) %&gt;%
+  mutate(position = factor(position, levels = c(&quot;TC&quot;, &quot;CT&quot;)))</code></pre>
 </div>
-<div id="ar-comparisons" class="section level3">
-<h3>AR comparisons</h3>
-<pre class="r"><code>spheroid_AR_list = list(
-  &quot;A_sph_decision_time&quot; =             &quot;ARall_A_decision_time_spheroid_contrast.csv&quot;,
-  &quot;B_sph_decision_dist_to_sphere&quot; =   &quot;ARall_B1_decision_range_target_spheroid_contrast.csv&quot;,
-  &quot;B_sph_decision_dist_to_spheroid&quot; = &quot;ARall_B2_decision_range_clutter_spheroid_contrast.csv&quot;,
-  &quot;C_sph_buzz_time&quot; =                 &quot;ARall_C_buzz_time_spheroid_contrast.csv&quot;,
-  &quot;D_sph_buzz_range&quot; =                &quot;ARall_D_buzz_range_spheroid_contrast.csv&quot;,
-  &quot;E_sph_scan_sphere&quot; =               &quot;ARall_E_scan_ch0_spheroid_contrast.csv&quot;,
-  &quot;F_sph_scan_spheroid&quot; =             &quot;ARall_F_scan_ch1_spheroid_contrast.csv&quot;
-)</code></pre>
-<pre class="r"><code>stat_spheroid_panel = list(
-  &quot;A_sph_decision_time&quot; =             &quot;Fig. 9A&quot;,
-  &quot;B_sph_decision_dist_to_sphere&quot; =   &quot;Fig. 9B left&quot;,
-  &quot;B_sph_decision_dist_to_spheroid&quot; = &quot;Fig. 9B right&quot;,
-  &quot;C_sph_buzz_time&quot; =                 &quot;Fig. 9C&quot;,
-  &quot;D_sph_buzz_range&quot; =                &quot;Fig. 9D&quot;,
-  &quot;E_sph_scan_sphere&quot; =               &quot;Fig. 9E&quot;,
-  &quot;F_sph_scan_spheroid&quot; =             &quot;Fig. 9F&quot;
-)</code></pre>
-<pre class="r"><code>for (f in names(spheroid_AR_list)) {
-  print(sprintf(&quot;Sheet %s: %s&quot;, f, spheroid_AR_list[[f]]))
-  df = read.csv(file=paste(stat_path, spheroid_AR_list[[f]], sep=&quot;/&quot;)) %&gt;%
-    add_column(fig.panel = stat_spheroid_panel[[f]], .before = &quot;position&quot;)
-  spheroid_AR_list[[f]] = rename_estimate_ratio(df) %&gt;%
-    add_column(&quot;p.annotation&quot; = apply(df[&quot;p.value&quot;], MARGIN = 1, FUN = get_p_star))
-}</code></pre>
-<pre><code>## [1] &quot;Sheet A_sph_decision_time: ARall_A_decision_time_spheroid_contrast.csv&quot;
-## [1] &quot;Sheet B_sph_decision_dist_to_sphere: ARall_B1_decision_range_target_spheroid_contrast.csv&quot;
-## [1] &quot;Sheet B_sph_decision_dist_to_spheroid: ARall_B2_decision_range_clutter_spheroid_contrast.csv&quot;
-## [1] &quot;Sheet C_sph_buzz_time: ARall_C_buzz_time_spheroid_contrast.csv&quot;
-## [1] &quot;Sheet D_sph_buzz_range: ARall_D_buzz_range_spheroid_contrast.csv&quot;
-## [1] &quot;Sheet E_sph_scan_sphere: ARall_E_scan_ch0_spheroid_contrast.csv&quot;
-## [1] &quot;Sheet F_sph_scan_spheroid: ARall_F_scan_ch1_spheroid_contrast.csv&quot;</code></pre>
-<pre class="r"><code>df_all = bind_rows(spheroid_AR_list) %&gt;%
-  rename(&quot;Fig panel&quot; = &quot;fig.panel&quot;,
-         &quot;Position&quot; = &quot;position&quot;,
-         &quot;Contrast&quot; = &quot;contrast&quot;,
-         &quot;Estimate or ratio&quot; = &quot;estimate.or.ratio&quot;,
-         &quot;Lower CL&quot; = &quot;lower.CL&quot;,
-         &quot;Upper CL&quot; = &quot;upper.CL&quot;,
-         &quot;T ratio&quot; = &quot;t.ratio&quot;,
-         &quot;P value&quot; = &quot;p.value&quot;,
-         &quot;Fig annotation&quot; = &quot;p.annotation&quot;)
+<div id="linear-models" class="section level2">
+<h2>Linear models</h2>
+<div id="combined-number-of-scans" class="section level3">
+<h3>Combined number of scans</h3>
+<pre class="r"><code>lm = lm(scan_combined ~ position + position:SPHEROID, data=df)
 
-out_file = file.path(stat_path, &quot;cmp_ARall_spheroid.xlsx&quot;)
-write.xlsx(df_all, file = out_file)
-print(sprintf(&quot;Outputs written to %s&quot;, out_file))</code></pre>
-<pre><code>## [1] &quot;Outputs written to ~/code_git/porpoise_spheroid/stat/cmp_ARall_spheroid.xlsx&quot;</code></pre>
+lm_coeff = cbind(coef(summary(lm)), confint(lm))
+lm_coeff</code></pre>
+<pre><code>##                             Estimate Std. Error    t value     Pr(&gt;|t|)
+## (Intercept)               10.0000000  0.4485249 22.2953058 1.168482e-50
+## positionCT                 1.6086957  0.6411676  2.5090095 1.311511e-02
+## positionTC:SPHEROIDAR=1.3  0.3400000  0.5456541  0.6231054 5.341137e-01
+## positionCT:SPHEROIDAR=1.3 -0.4130435  0.5611435 -0.7360747 4.627766e-01
+## positionTC:SPHEROIDAR=1.1 -2.4166667  0.7768679 -3.1107819 2.214499e-03
+## positionCT:SPHEROIDAR=1.1 -2.2753623  0.8639369 -2.6337137 9.285202e-03
+##                                2.5 %     97.5 %
+## (Intercept)                9.1141220 10.8858780
+## positionCT                 0.3423306  2.8750607
+## positionTC:SPHEROIDAR=1.3 -0.7377171  1.4177171
+## positionCT:SPHEROIDAR=1.3 -1.5213535  0.6952665
+## positionTC:SPHEROIDAR=1.1 -3.9510524 -0.8822810
+## positionCT:SPHEROIDAR=1.1 -3.9817172 -0.5690075</code></pre>
+<pre class="r"><code>write.csv(lm_coeff, file.path(stat_path, &quot;ARall_S3_scan_coeff.csv&quot;))</code></pre>
 </div>
 </div>
-<div id="comparison-over-ar1.3-clusters" class="section level2">
-<h2>Comparison over AR=1.3 clusters</h2>
-<div id="tc-vs-ct-comparisons-1" class="section level3">
-<h3>TC vs CT comparisons</h3>
-<pre class="r"><code>ar13_position_list = list(
-  &quot;last_scan_duration&quot; =              &quot;AR13_last_scan_duration_position_contrast.csv&quot;,
-  &quot;A_pos_decision_time&quot; =             &quot;AR13_A_decision_time_position_contrast.csv&quot;,
-  &quot;B_pos_decision_dist_sphere&quot; =      &quot;AR13_B1_decision_range_target_position_contrast.csv&quot;,
-  &quot;B_pos_decision_dist_spheroid&quot; =    &quot;AR13_B2_decision_range_clutter_position_contrast.csv&quot;,
-  &quot;C_pos_buzz_time&quot; =                 &quot;AR13_C_buzz_time_position_contrast.csv&quot;,
-  &quot;D_pos_buzz_range&quot; =                &quot;AR13_D_buzz_range_position_contrast.csv&quot;,
-  &quot;E_pos_scan_to_sphere&quot; =            &quot;AR13_E_scan_ch0_position_contrast.csv&quot;,
-  &quot;F_pos_scan_to_spheroid&quot; =          &quot;AR13_F_scan_ch1_position_contrast.csv&quot;
-)</code></pre>
-<pre class="r"><code>for (f in names(ar13_position_list)) {
-  print(sprintf(&quot;Sheet %s: %s&quot;, f, ar13_position_list[[f]]))
-  df = read.csv(
-    file=paste(stat_path, ar13_position_list[[f]], sep=&quot;/&quot;)
-  )
-  ar13_position_list[[f]] = rename_estimate_ratio(df) %&gt;%
-    add_column(&quot;p.annotation&quot; = apply(df[&quot;p.value&quot;], MARGIN = 1, FUN = get_p_star))
-}</code></pre>
-<pre><code>## [1] &quot;Sheet last_scan_duration: AR13_last_scan_duration_position_contrast.csv&quot;
-## [1] &quot;Sheet A_pos_decision_time: AR13_A_decision_time_position_contrast.csv&quot;
-## [1] &quot;Sheet B_pos_decision_dist_sphere: AR13_B1_decision_range_target_position_contrast.csv&quot;
-## [1] &quot;Sheet B_pos_decision_dist_spheroid: AR13_B2_decision_range_clutter_position_contrast.csv&quot;
-## [1] &quot;Sheet C_pos_buzz_time: AR13_C_buzz_time_position_contrast.csv&quot;
-## [1] &quot;Sheet D_pos_buzz_range: AR13_D_buzz_range_position_contrast.csv&quot;
-## [1] &quot;Sheet E_pos_scan_to_sphere: AR13_E_scan_ch0_position_contrast.csv&quot;
-## [1] &quot;Sheet F_pos_scan_to_spheroid: AR13_F_scan_ch1_position_contrast.csv&quot;</code></pre>
-<pre class="r"><code>df_all = bind_rows(ar13_position_list) %&gt;%
-  add_column(
-    fig.panel = c(
-      &quot;Fig. 8B&quot;, &quot;Fig. 10A&quot;, &quot;Fig. 10B left&quot;, &quot;Fig. 10B right&quot;,
-      &quot;Fig. 10C&quot;, &quot;Fig. 10D&quot;, &quot;Fig. 10E&quot;, &quot;Fig. 10F&quot;
-    ),
-    .before = &quot;contrast&quot;
-  ) %&gt;%
-  rename(&quot;Fig panel&quot; = &quot;fig.panel&quot;,
-         &quot;Contrast&quot; = &quot;contrast&quot;,
-         &quot;Estimate or ratio&quot; = &quot;estimate.or.ratio&quot;,
-         &quot;Lower CL&quot; = &quot;lower.CL&quot;,
-         &quot;Upper CL&quot; = &quot;upper.CL&quot;,
-         &quot;T ratio&quot; = &quot;t.ratio&quot;,
-         &quot;P value&quot; = &quot;p.value&quot;,
-         &quot;Fig annotation&quot; = &quot;p.annotation&quot;,
-         &quot;Null&quot; = &quot;null&quot;)
-
-out_file = file.path(stat_path, &quot;cmp_AR13_position.xlsx&quot;)
-write.xlsx(df_all, file = out_file)
-print(sprintf(&quot;Outputs written to %s&quot;, out_file))</code></pre>
-<pre><code>## [1] &quot;Outputs written to ~/code_git/porpoise_spheroid/stat/cmp_AR13_position.xlsx&quot;</code></pre>
+<div id="post-hoc-analysis" class="section level2">
+<h2>Post hoc analysis</h2>
+<div id="combined-number-of-scans-1" class="section level3">
+<h3>Combined number of scans</h3>
+<div id="position-tc-vs-ct" class="section level4">
+<h4>Position (TC vs CT)</h4>
+<pre class="r"><code># emmeans table
+emm = emmeans(lm, ~position, type=&quot;response&quot;)</code></pre>
+<pre><code>## NOTE: A nesting structure was detected in the fitted model:
+##     SPHEROID %in% position</code></pre>
+<pre><code>## NOTE: Results may be misleading due to involvement in interactions</code></pre>
+<pre class="r"><code>emm</code></pre>
+<pre><code>##  position emmean    SE  df lower.CL upper.CL
+##  TC         9.31 0.279 158     8.76     9.86
+##  CT        10.71 0.308 158    10.11    11.32
+## 
+## Results are averaged over the levels of: SPHEROID 
+## Confidence level used: 0.95</code></pre>
+<pre class="r"><code>write.csv(emm, file=file.path(stat_path, &quot;ARall_S3_scan_position_emmeans.csv&quot;), row.names=FALSE)</code></pre>
+<pre class="r"><code># contrast table with confidence level
+s = summary(contrast(emm, method=&quot;revpairwise&quot;, type=&quot;response&quot;, level=0.95), infer=TRUE)
+s</code></pre>
+<pre><code>##  contrast estimate    SE  df lower.CL upper.CL t.ratio p.value
+##  CT - TC       1.4 0.415 158    0.585     2.22   3.383  0.0009
+## 
+## Results are averaged over the levels of: SPHEROID 
+## Confidence level used: 0.95</code></pre>
+<pre class="r"><code>write.csv(s, file=file.path(stat_path, &quot;ARall_S3_scan_position_contrast.csv&quot;), row.names=FALSE)</code></pre>
 </div>
-<div id="cluster-comparisons" class="section level3">
-<h3>Cluster comparisons</h3>
-<pre class="r"><code>ar13_cluster_list = list(
-  &quot;last_scan_duration&quot; =              &quot;AR13_last_scan_duration_cluster_contrast.csv&quot;,
-  &quot;A_clu_decision_time&quot; =             &quot;AR13_A_decision_time_cluster_contrast.csv&quot;,
-  &quot;B_clu_decision_dist_to_sphere&quot; =   &quot;AR13_B1_decision_range_target_cluster_contrast.csv&quot;,
-  &quot;B_clu_decision_dist_to_spheroid&quot; = &quot;AR13_B2_decision_range_clutter_cluster_contrast.csv&quot;,
-  &quot;C_clu_buzz_time&quot; =                 &quot;AR13_C_buzz_time_cluster_contrast.csv&quot;,
-  &quot;D_clu_buzz_range&quot; =                &quot;AR13_D_buzz_range_cluster_contrast.csv&quot;,
-  &quot;E_clu_scan_sphere&quot; =               &quot;AR13_E_scan_ch0_cluster_contrast.csv&quot;,
-  &quot;F_clu_scan_spheroid&quot; =             &quot;AR13_F_scan_ch1_cluster_contrast.csv&quot;
-)</code></pre>
-<pre class="r"><code>ar13_cluster_panel = list(
-  &quot;last_scan_duration&quot; =              &quot;Fig. 8B&quot;,
-  &quot;A_clu_decision_time&quot; =             &quot;Fig. 10A&quot;,
-  &quot;B_clu_decision_dist_to_sphere&quot; =   &quot;Fig. 10B left&quot;,
-  &quot;B_clu_decision_dist_to_spheroid&quot; = &quot;Fig. 10B right&quot;,
-  &quot;C_clu_buzz_time&quot; =                 &quot;Fig. 10C&quot;,
-  &quot;D_clu_buzz_range&quot; =                &quot;Fig. 10D&quot;,
-  &quot;E_clu_scan_sphere&quot; =               &quot;Fig. 10E&quot;,
-  &quot;F_clu_scan_spheroid&quot; =             &quot;Fig. 10F&quot;
-)</code></pre>
-<pre class="r"><code>for (f in names(ar13_cluster_list)) {
-  print(sprintf(&quot;Sheet %s: %s&quot;, f, ar13_cluster_list[[f]]))
-  df = read.csv(file=paste(stat_path, ar13_cluster_list[[f]], sep=&quot;/&quot;)) %&gt;%
-    add_column(fig.panel = ar13_cluster_panel[[f]], .before = &quot;position&quot;)
-  ar13_cluster_list[[f]] = rename_estimate_ratio(df) %&gt;%
-    add_column(&quot;p.annotation&quot; = apply(df[&quot;p.value&quot;], MARGIN = 1, FUN = get_p_star))
-}</code></pre>
-<pre><code>## [1] &quot;Sheet last_scan_duration: AR13_last_scan_duration_cluster_contrast.csv&quot;
-## [1] &quot;Sheet A_clu_decision_time: AR13_A_decision_time_cluster_contrast.csv&quot;
-## [1] &quot;Sheet B_clu_decision_dist_to_sphere: AR13_B1_decision_range_target_cluster_contrast.csv&quot;
-## [1] &quot;Sheet B_clu_decision_dist_to_spheroid: AR13_B2_decision_range_clutter_cluster_contrast.csv&quot;
-## [1] &quot;Sheet C_clu_buzz_time: AR13_C_buzz_time_cluster_contrast.csv&quot;
-## [1] &quot;Sheet D_clu_buzz_range: AR13_D_buzz_range_cluster_contrast.csv&quot;
-## [1] &quot;Sheet E_clu_scan_sphere: AR13_E_scan_ch0_cluster_contrast.csv&quot;
-## [1] &quot;Sheet F_clu_scan_spheroid: AR13_F_scan_ch1_cluster_contrast.csv&quot;</code></pre>
-<pre class="r"><code>df_all = bind_rows(ar13_cluster_list) %&gt;%
-  rename(&quot;Fig panel&quot; = &quot;fig.panel&quot;,
-         &quot;Contrast&quot; = &quot;contrast&quot;,
-         &quot;Position&quot; = &quot;position&quot;,
-         &quot;Estimate or ratio&quot; = &quot;estimate.or.ratio&quot;,
-         &quot;Lower CL&quot; = &quot;lower.CL&quot;,
-         &quot;Upper CL&quot; = &quot;upper.CL&quot;,
-         &quot;T ratio&quot; = &quot;t.ratio&quot;,
-         &quot;P value&quot; = &quot;p.value&quot;,
-         &quot;Fig annotation&quot; = &quot;p.annotation&quot;,
-         &quot;Null&quot; = &quot;null&quot;)
-
-out_file = file.path(stat_path, &quot;cmp_AR13_cluster.xlsx&quot;)
-write.xlsx(df_all, file = out_file)
-print(sprintf(&quot;Outputs written to %s&quot;, out_file))</code></pre>
-<pre><code>## [1] &quot;Outputs written to ~/code_git/porpoise_spheroid/stat/cmp_AR13_cluster.xlsx&quot;</code></pre>
+<div id="spheroid" class="section level4">
+<h4>Spheroid</h4>
+<pre class="r"><code>emm_2level = emmeans(lm, ~SPHEROID|position, type=&quot;response&quot;)</code></pre>
+<pre><code>## NOTE: A nesting structure was detected in the fitted model:
+##     SPHEROID %in% position</code></pre>
+<pre class="r"><code>emm_2level</code></pre>
+<pre><code>## position = TC:
+##  SPHEROID emmean    SE  df lower.CL upper.CL
+##  AR=2.9    10.00 0.449 158     9.11    10.89
+##  AR=1.3    10.34 0.311 158     9.73    10.95
+##  AR=1.1     7.58 0.634 158     6.33     8.84
+## 
+## position = CT:
+##  SPHEROID emmean    SE  df lower.CL upper.CL
+##  AR=2.9    11.61 0.458 158    10.70    12.51
+##  AR=1.3    11.20 0.324 158    10.56    11.84
+##  AR=1.1     9.33 0.732 158     7.89    10.78
+## 
+## Confidence level used: 0.95</code></pre>
+<pre class="r"><code>write.csv(emm_2level, file=file.path(stat_path, &quot;ARall_S3_scan_spheroid_emmeans.csv&quot;), row.names=FALSE)</code></pre>
+<pre class="r"><code># contrast table with confidence level
+s = summary(contrast(emm_2level, method=&quot;pairwise&quot;, type=&quot;response&quot;, level=0.95), infer=TRUE)
+s</code></pre>
+<pre><code>## position = CT:
+##  contrast        estimate    SE  df lower.CL upper.CL t.ratio p.value
+##  AR=2.9 - AR=1.3    0.413 0.561 158   -1.206     2.03   0.736  0.9771
+##  AR=2.9 - AR=1.1    2.275 0.864 158   -0.217     4.77   2.634  0.0952
+##  AR=1.3 - AR=1.1    1.862 0.801 158   -0.448     4.17   2.325  0.1902
+## 
+## position = TC:
+##  contrast        estimate    SE  df lower.CL upper.CL t.ratio p.value
+##  AR=2.9 - AR=1.3   -0.340 0.546 158   -1.914     1.23  -0.623  0.9892
+##  AR=2.9 - AR=1.1    2.417 0.777 158    0.175     4.66   3.111  0.0264
+##  AR=1.3 - AR=1.1    2.757 0.706 158    0.719     4.79   3.903  0.0019
+## 
+## Confidence level used: 0.95 
+## Conf-level adjustment: tukey method for comparing a family of 6 estimates 
+## P value adjustment: tukey method for comparing a family of 6 estimates</code></pre>
+<pre class="r"><code>write.csv(s, file=file.path(stat_path, &quot;ARall_S3_scan_spheroid_contrast.csv&quot;), row.names=FALSE)</code></pre>
 </div>
-</div>
-<div id="combined-number-of-scans" class="section level2">
-<h2>Combined number of scans</h2>
-<div id="tc-vs-ct-comparisons-2" class="section level3">
-<h3>TC vs CT comparisons</h3>
-<pre class="r"><code>df = read.csv(file=paste(stat_path, &quot;ARall_S3_scan_position_contrast.csv&quot;, sep=&quot;/&quot;))
-
-df = rename_estimate_ratio(df) %&gt;%
-    add_column(&quot;p.annotation&quot; = apply(df[&quot;p.value&quot;], MARGIN = 1, FUN = get_p_star)) %&gt;%
-  add_column(fig.panel = c(&quot;Fig. S3A&quot;), .before = &quot;contrast&quot;
-  ) %&gt;%
-  rename(&quot;Fig panel&quot; = &quot;fig.panel&quot;,
-         &quot;Contrast&quot; = &quot;contrast&quot;,
-         &quot;Estimate or ratio&quot; = &quot;estimate.or.ratio&quot;,
-         &quot;Lower CL&quot; = &quot;lower.CL&quot;,
-         &quot;Upper CL&quot; = &quot;upper.CL&quot;,
-         &quot;T ratio&quot; = &quot;t.ratio&quot;,
-         &quot;P value&quot; = &quot;p.value&quot;,
-         &quot;Fig annotation&quot; = &quot;p.annotation&quot;)
-
-out_file = file.path(stat_path, &quot;cmp_ARall_S3_position.xlsx&quot;)
-write.xlsx(df, file = out_file)
-print(sprintf(&quot;Outputs written to %s&quot;, out_file))</code></pre>
-<pre><code>## [1] &quot;Outputs written to ~/code_git/porpoise_spheroid/stat/cmp_ARall_S3_position.xlsx&quot;</code></pre>
-</div>
-<div id="ar-comparisons-1" class="section level3">
-<h3>AR comparisons</h3>
-<pre class="r"><code>df = read.csv(file=paste(stat_path, &quot;ARall_S3_scan_spheroid_contrast.csv&quot;, sep=&quot;/&quot;))
-
-df = rename_estimate_ratio(df) %&gt;%
-    add_column(&quot;p.annotation&quot; = apply(df[&quot;p.value&quot;], MARGIN = 1, FUN = get_p_star)) %&gt;%
-  add_column(fig.panel = c(&quot;Fig. S3A&quot;), .before = &quot;contrast&quot;
-  ) %&gt;%
-  rename(&quot;Fig panel&quot; = &quot;fig.panel&quot;,
-         &quot;Contrast&quot; = &quot;contrast&quot;,
-         &quot;Estimate or ratio&quot; = &quot;estimate.or.ratio&quot;,
-         &quot;Lower CL&quot; = &quot;lower.CL&quot;,
-         &quot;Upper CL&quot; = &quot;upper.CL&quot;,
-         &quot;T ratio&quot; = &quot;t.ratio&quot;,
-         &quot;P value&quot; = &quot;p.value&quot;,
-         &quot;Fig annotation&quot; = &quot;p.annotation&quot;)
-
-out_file = file.path(stat_path, &quot;cmp_ARall_S3_spheroid.xlsx&quot;)
-write.xlsx(df, file = out_file)
-print(sprintf(&quot;Outputs written to %s&quot;, out_file))</code></pre>
-<pre><code>## [1] &quot;Outputs written to ~/code_git/porpoise_spheroid/stat/cmp_ARall_S3_spheroid.xlsx&quot;</code></pre>
 </div>
 </div>
 <div id="session-info" class="section level2">
@@ -681,22 +545,27 @@ print(sprintf(&quot;Outputs written to %s&quot;, out_file))</code></pre>
 ## [1] stats     graphics  grDevices utils     datasets  methods   base     
 ## 
 ## other attached packages:
-##  [1] lubridate_1.9.2  forcats_1.0.0    stringr_1.5.0    dplyr_1.1.2     
-##  [5] purrr_1.0.1      readr_2.1.4      tidyr_1.3.0      tibble_3.2.1    
-##  [9] ggplot2_3.4.2    tidyverse_2.0.0  openxlsx_4.2.5.2
+## [1] dplyr_1.1.2    tidyr_1.3.0    emmeans_1.8.6  lmerTest_3.1-3 lme4_1.1-33   
+## [6] Matrix_1.5-4  
 ## 
 ## loaded via a namespace (and not attached):
-##  [1] gtable_0.3.3     jsonlite_1.8.4   compiler_4.3.0   tidyselect_1.2.0
-##  [5] Rcpp_1.0.10      zip_2.3.0        jquerylib_0.1.4  scales_1.2.1    
-##  [9] yaml_2.3.7       fastmap_1.1.1    R6_2.5.1         generics_0.1.3  
-## [13] knitr_1.43       munsell_0.5.0    tzdb_0.4.0       bslib_0.4.2     
-## [17] pillar_1.9.0     rlang_1.1.1      utf8_1.2.3       cachem_1.0.8    
-## [21] stringi_1.7.12   xfun_0.39        sass_0.4.6       timechange_0.2.0
-## [25] cli_3.6.1        withr_2.5.0      magrittr_2.0.3   digest_0.6.31   
-## [29] grid_4.3.0       rstudioapi_0.14  hms_1.1.3        lifecycle_1.0.3 
-## [33] vctrs_0.6.2      evaluate_0.21    glue_1.6.2       fansi_1.0.4     
-## [37] colorspace_2.1-0 rmarkdown_2.21   tools_4.3.0      pkgconfig_2.0.3 
-## [41] htmltools_0.5.5</code></pre>
+##  [1] gtable_0.3.3        jsonlite_1.8.4      compiler_4.3.0     
+##  [4] tidyselect_1.2.0    Rcpp_1.0.10         jquerylib_0.1.4    
+##  [7] splines_4.3.0       scales_1.2.1        boot_1.3-28.1      
+## [10] yaml_2.3.7          fastmap_1.1.1       lattice_0.21-8     
+## [13] ggplot2_3.4.2       R6_2.5.1            generics_0.1.3     
+## [16] knitr_1.43          MASS_7.3-58.4       tibble_3.2.1       
+## [19] nloptr_2.0.3        munsell_0.5.0       minqa_1.2.5        
+## [22] bslib_0.4.2         pillar_1.9.0        rlang_1.1.1        
+## [25] utf8_1.2.3          cachem_1.0.8        xfun_0.39          
+## [28] sass_0.4.6          estimability_1.4.1  cli_3.6.1          
+## [31] withr_2.5.0         magrittr_2.0.3      digest_0.6.31      
+## [34] grid_4.3.0          xtable_1.8-4        mvtnorm_1.1-3      
+## [37] rstudioapi_0.14     lifecycle_1.0.3     nlme_3.1-162       
+## [40] vctrs_0.6.2         evaluate_0.21       glue_1.6.2         
+## [43] numDeriv_2016.8-1.1 fansi_1.0.4         colorspace_2.1-0   
+## [46] purrr_1.0.1         rmarkdown_2.21      tools_4.3.0        
+## [49] pkgconfig_2.0.3     htmltools_0.5.5</code></pre>
 </div>
 
 
