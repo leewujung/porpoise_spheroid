@@ -57,6 +57,9 @@ MISC_PARAMS = {
     "num_buzz_for_onset": 30,  # minimum number of clicks to qualify as buzz onset
     "dist_max": ("DTAG_dist_elliptical", 12),  # track max dist selection criteria
     "dist_min": ("ROSTRUM_dist_to_target", 0.1),  # track min dist selection criteria
+    "hydro_angle_th_SNR": 25,  # SNR threshold for computing inspection angle from clicks
+    "hydro_angle_th_range": 6,  # minimum range (hand-marked range to target from Dtag) to be
+                                # considered outside of camera view, in meters
 }
 
 # Hydrophone click processing params

@@ -5,12 +5,14 @@ import pickle
 import numpy as np
 import pandas as pd
 import soundfile as sf
+from scipy import interpolate
 
 from .core import RAW_PATH, DATA_PATH, ANGLE_MAP
 from .file_handling import get_trial_info, assemble_target_df, get_fs_video
 from . import track_features as tf
 from . import hydro_clicks as hc
 from . import inspection_angle as ia
+from . import hydro_localizer as hl
 from .seawater import calc_absorption
 from . import misc
 
@@ -590,6 +592,89 @@ class TrialProcessor:
         angle_h1 = ia.groupby_ops(df_h1, "enso_angle", tc_bins_h1, "median").values.squeeze()
 
         return angle_h0, angle_h1
+
+    def get_inspection_angle_outside_view(
+        self, hydro_wav_path, marks_path, th_ICI=13e-3, th_SNR=25, th_range=8
+    ):
+        """
+        Get range of inspection angle when porpoise was outside of camera view.
+
+        Parameters
+        ----------
+        hydro_wav_path
+            path to hydrophone wav files
+        marks_path
+            path to echogram range hand-marks files
+        th_ICI
+            threshold for ICI between regular clicks and buzzes, in seconds
+            default to 13 msec
+        th_SNR
+            threshold for SNR for hydrophone clicks
+        th_range
+            minimum range (hand-marked range to target from Dtag) to be
+            considered outside of camera view, in meters
+            default to 8 m
+
+        Returns
+        -------
+        angle_h0, angle_h1
+            two numpy arrays holding the inspection angle for channel 0 and 1.
+            angle_h0/h1 can be empty if recorded hydrophone section is short,
+            say only a couple seconds before animal made the decision, so there
+            is minumum matched clicks to use for triangulation.
+        """
+
+        # Select clicks before initializing HydroLocalizer
+        # this way we'll always have matching number of ch0 and ch1 clicks
+        df_hydro_ch0 = hl.select_clicks(
+            self.df_hydro_ch0,
+            time_cut="before_touch",
+            threshold={"ICI": th_ICI, "SNR": th_SNR},
+        ).copy()
+        df_hydro_ch1 = hl.select_clicks(
+            self.df_hydro_ch1,
+            time_cut="before_touch",
+            threshold={"ICI": th_ICI, "SNR": th_SNR},
+        ).copy()
+
+        # Match clicks
+        df_click_all = hc.match_clicks(df_hydro_ch0, df_hydro_ch1)
+        df_click_all = df_click_all.dropna(subset=["the_other_ch_index"])
+
+        # Get hydrophone file name
+        hydro_wav_file = list(hydro_wav_path.glob("t%03d_*.wav" % self.trial_idx))
+        if len(hydro_wav_file) != 1:
+            if self.trial_idx == 81:
+                hydro_wav_file = hydro_wav_path / "t081_combine.wav"
+            else:  # only happen for trial_idx=100
+                hydro_wav_file = hydro_wav_file[0]
+        else:
+            hydro_wav_file = hydro_wav_file[0]
+
+        # Load hand-marked animal range and interpolate
+        marks_fname = list(marks_path.glob(f"t{self.trial_idx:03d}_*_animal_range.npy"))[0]
+        marks = np.load(marks_fname)
+        f = interpolate.interp1d(
+            marks[:, 0], marks[:, 1], kind="slinear", fill_value="extrapolate"
+        )
+
+        # Estimate angle
+        localizer = hl.HydroLocalizer(
+            df_click_all=df_click_all,
+            wav_file_path=hydro_wav_file,
+            scenario=self.trial_series["TARGET_ANGLE"],
+        )
+        range_marked = f(localizer.df_ch0["time_corrected"])
+        localizer.get_xy_angle(range_marked)
+
+        # Get angle range
+        def filter_ch(df):
+            return df[df["range_marked"] > th_range].copy()
+
+        df_ch0 = filter_ch(localizer.df_ch0)
+        df_ch1 = filter_ch(localizer.df_ch1)
+
+        return df_ch0, df_ch1
 
     def get_timing_last_scan_of_nonselect(self):
         """
