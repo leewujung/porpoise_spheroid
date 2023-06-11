@@ -1,0 +1,182 @@
+---
+title: "All spheroids comparison: time decision to touch"
+output: html_document
+date: "`r Sys.Date()`"
+editor_options:
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+This notebook uses data summary file `data_processed/data_summary/data_summary_all.csv`. The comparison is across the 3 spheroids with different aspect ratios nested under the TC/CT scenarios.
+
+
+
+## Load libraries
+```{r}
+library(lme4)
+library(lmerTest)
+library(emmeans)
+library(DHARMa)
+library(tidyr)
+library(dplyr)
+```
+
+
+## Set up path
+```{r}
+main_path = "~/code_git/porpoise_spheroid"
+data_path = file.path(main_path, "data_processed/data_summary")
+stat_path = file.path(main_path, "stat")
+```
+
+Create `stat` folder if it does not already exist:
+```{r}
+if (!dir.exists(stat_path)){
+  dir.create(stat_path)
+}
+```
+
+
+## Load data
+```{r}
+df = read.csv(
+  file=paste(data_path, "data_summary_all.csv", sep="/")
+)
+
+# Get TC/CT position
+df = df %>%
+  separate(TARGET_ANGLE,  c("position"), sep=2, extra="drop", remove=FALSE) %>%
+  filter(position=="TC" | position=="CT") %>%
+  mutate(position=factor(position))
+```
+
+
+## Linear models
+
+### Scan on sphere (ch0)
+```{r}
+lm_ch0 = lm(scan_ch0 ~ position + position:SPHEROID, data=df)
+summary(lm_ch0)
+
+glm_ch0_poisson = glm(scan_ch0 ~ position + position:SPHEROID, data=df, family=poisson)
+summary(glm_ch0_poisson)
+
+glm_ch0 = glm(scan_ch0 ~ position + position:SPHEROID, data=df, family=Gamma(link="log"))
+summary(glm_ch0)
+```
+
+### Scan on sphere (ch1)
+```{r}
+lm_ch1 = lm(scan_ch1 ~ position + position:SPHEROID, data=df)
+summary(lm_ch1)
+
+glm_ch1_poisson = glm(scan_ch1 ~ position + position:SPHEROID, data=df, family=poisson)
+summary(glm_ch1_poisson)
+
+glm_ch1 = glm(scan_ch1 ~ position + position:SPHEROID, data=df, family=Gamma(link="log"))
+summary(glm_ch1)
+```
+
+
+
+## Check the models
+
+### Scan on sphere (ch0)
+
+#### `lm`
+```{r}
+sim_ch0 = simulateResiduals(fittedModel=lm_ch0, n=250)
+plot(sim_ch0, asFactor=FALSE)
+sim_ch0_refit = simulateResiduals(fittedModel=lm_ch0, n=250, refit=TRUE)
+lm_ch0_test_dispersion = testDispersion(sim_ch0_refit)
+```
+
+#### `glm` Poisson
+```{r}
+sim_ch0_poisson = simulateResiduals(fittedModel=glm_ch0_poisson, n=250)
+plot(sim_ch0_poisson, asFactor=FALSE)
+sim_ch0_poisson_refit = simulateResiduals(fittedModel=glm_ch0_poisson, n=250, refit=TRUE)
+lm_ch0_test_dispersion = testDispersion(sim_ch0_poisson_refit)
+```
+
+#### `glm` Gamma
+```{r}
+sim_ch0_gamma = simulateResiduals(fittedModel=glm_ch0, n=250)
+plot(sim_ch0_gamma, asFactor=FALSE)
+sim_ch0_gamma_refit = simulateResiduals(fittedModel=glm_ch0, n=250, refit=TRUE)
+glm_ch0_test_dispersion = testDispersion(sim_ch0_gamma_refit)
+```
+
+We can see that both the `lm` and `glm-Gamma` model fits the data well, so let’s use the simpler (`lm`) model going forward.
+
+
+### Scan on spheroid (ch1)
+
+#### `lm`
+```{r}
+sim_ch1 = simulateResiduals(fittedModel=lm_ch1, n=250)
+plot(sim_ch1, asFactor=FALSE)
+sim_ch1_refit = simulateResiduals(fittedModel=lm_ch1, n=250, refit=TRUE)
+lm_ch1_test_dispersion = testDispersion(sim_ch1_refit)
+```
+
+#### `glm` Poisson
+```{r}
+sim_ch1_poisson = simulateResiduals(fittedModel=glm_ch1_poisson, n=250)
+plot(sim_ch1_poisson, asFactor=FALSE)
+sim_ch1_poisson_refit = simulateResiduals(fittedModel=glm_ch1_poisson, n=250, refit=TRUE)
+lm_ch1_test_dispersion = testDispersion(sim_ch1_poisson_refit)
+```
+
+#### `glm` Gamma
+```{r}
+sim_ch1_gamma = simulateResiduals(fittedModel=glm_ch1, n=250)
+plot(sim_ch1_gamma, asFactor=FALSE)
+sim_ch1_gamma_refit = simulateResiduals(fittedModel=glm_ch1, n=250, refit=TRUE)
+glm_ch1_test_dispersion = testDispersion(sim_ch1_gamma_refit)
+```
+
+Similar to the ch0 case, we can see that both the `lm` and `glm-Gamma` model fits the data well, so let’s use the simpler (`lm`) model going forward.
+
+
+
+
+## Post hoc analysis
+
+We can examine this more carefully with post-hoc analysis using `emmeans`.
+
+### Scan on sphere (ch0)
+```{r}
+emm_lm_ch0 = emmeans(lm_ch0, ~position, type="response")
+emm_lm_ch0
+
+contrast(emm_lm_ch0, type="response")
+
+emm_lm_ch0_2level = emmeans(lm_ch0, ~SPHEROID|position, type="response")
+emm_lm_ch0_2level
+
+contrast(emm_lm_ch0_2level, method="pairwise", type="response")
+```
+
+### Scan on sphere (ch1)
+```{r}
+emm_lm_ch1 = emmeans(lm_ch1, ~position, type="response")
+emm_lm_ch1
+
+contrast(emm_lm_ch1, type="response")
+
+emm_lm_ch1_2level = emmeans(lm_ch1, ~SPHEROID|position, type="response")
+emm_lm_ch1_2level
+
+contrast(emm_lm_ch1_2level, method="pairwise", type="response")
+```
+
+
+
+## Session info
+```{r}
+sessionInfo()
+```
