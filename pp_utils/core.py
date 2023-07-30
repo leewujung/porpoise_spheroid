@@ -60,6 +60,7 @@ MISC_PARAMS = {
     "hydro_angle_th_SNR": 25,  # SNR threshold for computing inspection angle from clicks
     "hydro_angle_th_range": 6,  # minimum range (hand-marked range to target from Dtag) to be
                                 # considered outside of camera view, in meters
+    "dtag_sens": -179,  # dtag sensitivity combining hydrophone and preamp
 }
 
 # Hydrophone click processing params
