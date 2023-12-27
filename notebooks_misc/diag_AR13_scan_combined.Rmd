@@ -1,5 +1,5 @@
 ---
-title: "All spheroids comparison: Combined number of scans"
+title: "AR=1.3 cluster comparison: Combined number of scans"
 output: html_document
 date: "`r Sys.Date()`"
 editor_options:
@@ -10,7 +10,7 @@ editor_options:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-This notebook uses data summary file `data_processed/data_summary/data_summary_all.csv`. The comparison is across the 3 spheroids with different aspect ratios nested under the TC/CT scenarios.
+This notebook uses data summary file `data_processed/data_summary/data_summary_cluster_only.csv`. The comparison is across 3 clusters (Straight, Curved-1, Curved-2) with each nested under the TC/CT scenarios.
 
 
 
@@ -42,31 +42,36 @@ if (!dir.exists(stat_path)){
 
 ## Load data
 ```{r}
-df = read.csv(
-  file=paste(data_path, "data_summary_all.csv", sep="/")
+df_cluster = read.csv(
+  file=paste(data_path, "data_summary_cluster_only.csv", sep="/")
 )
 
-# Get TC/CT position
-df = df %>%
-  separate(TARGET_ANGLE,  c("position"), sep=2, extra="drop", remove=FALSE) %>%
-  filter(position=="TC" | position=="CT") %>%
-  mutate(position=factor(position)) %>%
-  filter(TRIAL_TO_INCLUDE=="Y") %>%
-  filter(CHOICE == 1)
+# Separate out fname_prefix into 3 columns DATE-SESSION-TRIAL
+df_cluster = df_cluster %>%
+  separate(fname_prefix, c("DATE","SESSION","TRIAL"), sep="_") %>%
+  unite("DATE_SESSION", DATE:SESSION, remove=FALSE)
+
+# Get cluster (Straight vs Curved) factor
+df_cluster = df_cluster %>%
+  separate(cluster, c("position","cluster"), sep="_", remove=FALSE) %>%
+  mutate(SPHEROID = factor(SPHEROID)) %>%
+  mutate(position = factor(position, levels = c("TC", "CT"))) %>%
+  mutate(cluster = factor(cluster, levels = c("Straight", "Curved-1", "Curved-2")))
 ```
+
 
 
 ## Linear models
 
 ### Combined number of scans
 ```{r}
-lm = lm(scan_combined ~ position + position:SPHEROID, data=df)
+lm = lm(scan_combined ~ position + position:cluster, data=df_cluster)
 summary(lm)
 
-glm_poisson = glm(scan_combined ~ position + position:SPHEROID, data=df, family=poisson)
+glm_poisson = glm(scan_combined ~ position + position:cluster, data=df_cluster, family=poisson)
 summary(glm_poisson)
 
-glm = glm(scan_combined ~ position + position:SPHEROID, data=df, family=Gamma(link="log"))
+glm = glm(scan_combined ~ position + position:cluster, data=df_cluster, family=Gamma(link="log"))
 summary(glm)
 ```
 
@@ -116,7 +121,7 @@ emm_lm
 
 contrast(emm_lm, type="response")
 
-emm_lm_2level = emmeans(lm, ~SPHEROID|position, type="response")
+emm_lm_2level = emmeans(lm, ~cluster|position, type="response")
 emm_lm_2level
 
 contrast(emm_lm_2level, method="pairwise", type="response")
