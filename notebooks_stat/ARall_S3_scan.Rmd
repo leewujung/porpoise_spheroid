@@ -1,5 +1,5 @@
 ---
-title: "All spheroids comparison: Number of scans to sphere/spheroid"
+title: "All spheroids comparison: Combined number of scans"
 output: html_document
 date: "`r Sys.Date()`"
 editor_options:
