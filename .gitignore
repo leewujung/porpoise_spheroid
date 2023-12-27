@@ -3,3 +3,11 @@
 *__pycache__/
 .DS_Store
 .ipynb_checkpoints
+*.RData
+.Rhistory
+
+# outputs or symbolic links
+data_processed
+data_raw
+figs/
+stat/
