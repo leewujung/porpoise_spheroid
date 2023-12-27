@@ -54,12 +54,12 @@ STAT_CONTRAST_RATIO = [
 ] * 2
 
 STAT_CONTRAST_STR = [
-    "TC-Straight vs TC-Curved-1",
-    "TC-Straight vs TC-Curved-2",
-    "TC-Curved-1 vs TC-Curved-2",
-    "CT-Straight vs CT-Curved-1",
-    "CT-Straight vs CT-Curved-2",
-    "CT-Curved-1 vs CT-Curved-2",
+    "R+/Straight vs R+/Curved-1",
+    "R+/Straight vs R+/Curved-2",
+    "R+/Curved-1 vs R+/Curved-2",
+    "L+/Straight vs L+/Curved-1",
+    "L+/Straight vs L+/Curved-2",
+    "L+/Curved-1 vs L+/Curved-2",
 ]
 
 
@@ -275,8 +275,8 @@ def annotate_p_val_scan(
 
     # TC vs CT
     tcct_str = (
-        f"TC v. CT: {p_val_position}" if star_only
-        else f"TC v. CT: {p_val_position:2.2E}"
+        f"R+ v. L+: {p_val_position}" if star_only
+        else f"R+ v. C+: {p_val_position:2.2E}"
     )
     ax.text(
         horz_text_left, vert_text, tcct_str,
@@ -349,4 +349,3 @@ def plot_jitter(
         vals,
         ls="none", color=color, **kwargs
     )
-

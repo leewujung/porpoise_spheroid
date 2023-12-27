@@ -12,7 +12,7 @@
 
 <meta name="date" content="2023-12-27" />
 
-<title>All spheroids comparison: Combined number of scans</title>
+<title>AR=1.3 spheroid clusters comparison: Combined number of scans</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -349,17 +349,17 @@ display: none;
 
 
 
-<h1 class="title toc-ignore">All spheroids comparison: Combined number
-of scans</h1>
+<h1 class="title toc-ignore">AR=1.3 spheroid clusters comparison:
+Combined number of scans</h1>
 <h4 class="date">2023-12-27</h4>
 
 </div>
 
 
 <p>This notebook uses data summary file
-<code>data_processed/data_summary/data_summary_all.csv</code>. The
-comparison is across the 3 spheroids with different aspect ratios nested
-under the TC/CT scenarios.</p>
+<code>data_processed/data_summary/data_summary_cluster_only.csv</code>.
+The comparison is across 3 clusters (Straight, Curved-1, Curved-2) with
+each nested under the TC/CT scenarios.</p>
 <div id="load-libraries" class="section level2">
 <h2>Load libraries</h2>
 <pre class="r"><code>library(lme4)</code></pre>
@@ -402,55 +402,45 @@ stat_path = file.path(main_path, &quot;stat&quot;)</code></pre>
 </div>
 <div id="load-data" class="section level2">
 <h2>Load data</h2>
-<pre class="r"><code>df = read.csv(
-  file=paste(data_path, &quot;data_summary_all.csv&quot;, sep=&quot;/&quot;)
+<pre class="r"><code>df_cluster = read.csv(
+  file=paste(data_path, &quot;data_summary_cluster_only.csv&quot;, sep=&quot;/&quot;)
 )
 
-# Get TC/CT position
-df = df %&gt;%
-  separate(TARGET_ANGLE,  c(&quot;position&quot;), sep=2, extra=&quot;drop&quot;, remove=FALSE) %&gt;%
-  filter(position==&quot;TC&quot; | position==&quot;CT&quot;) %&gt;%
-  mutate(position=factor(position)) %&gt;%
-  filter(TRIAL_TO_INCLUDE==&quot;Y&quot;) %&gt;%
-  filter(CHOICE == 1)
+# Separate out fname_prefix into 3 columns DATE-SESSION-TRIAL
+df_cluster = df_cluster %&gt;%
+  separate(fname_prefix, c(&quot;DATE&quot;,&quot;SESSION&quot;,&quot;TRIAL&quot;), sep=&quot;_&quot;) %&gt;%
+  unite(&quot;DATE_SESSION&quot;, DATE:SESSION, remove=FALSE)
 
-
-# Change L/M/S to AR=2.9/1.3/1.1
-df = df %&gt;%
-  mutate(
-    SPHEROID=case_when(
-      SPHEROID==&quot;L&quot; ~  &quot;AR=2.9&quot;,
-      SPHEROID==&quot;M&quot; ~ &quot;AR=1.3&quot;,
-      SPHEROID==&quot;S&quot; ~ &quot;AR=1.1&quot;,
-      .default = &quot;&quot;
-    )
-  ) %&gt;%
-  mutate(SPHEROID=factor(SPHEROID, levels = c(&quot;AR=2.9&quot;, &quot;AR=1.3&quot;, &quot;AR=1.1&quot;))) %&gt;%
-  mutate(position = factor(position, levels = c(&quot;TC&quot;, &quot;CT&quot;)))</code></pre>
+# Get cluster (Straight vs Curved) factor
+df_cluster = df_cluster %&gt;%
+  separate(cluster, c(&quot;position&quot;,&quot;cluster&quot;), sep=&quot;_&quot;, remove=FALSE) %&gt;%
+  mutate(SPHEROID = factor(SPHEROID)) %&gt;%
+  mutate(position = factor(position, levels = c(&quot;TC&quot;, &quot;CT&quot;))) %&gt;%
+  mutate(cluster = factor(cluster, levels = c(&quot;Straight&quot;, &quot;Curved-1&quot;, &quot;Curved-2&quot;)))</code></pre>
 </div>
 <div id="linear-models" class="section level2">
 <h2>Linear models</h2>
 <div id="combined-number-of-scans" class="section level3">
 <h3>Combined number of scans</h3>
-<pre class="r"><code>lm = lm(scan_combined ~ position + position:SPHEROID, data=df)
+<pre class="r"><code>lm = lm(scan_combined ~ position + position:cluster, data=df_cluster)
 
 lm_coeff = cbind(coef(summary(lm)), confint(lm))
 lm_coeff</code></pre>
-<pre><code>##                             Estimate Std. Error    t value     Pr(&gt;|t|)
-## (Intercept)               10.0000000  0.4485249 22.2953058 1.168482e-50
-## positionCT                 1.6086957  0.6411676  2.5090095 1.311511e-02
-## positionTC:SPHEROIDAR=1.3  0.3400000  0.5456541  0.6231054 5.341137e-01
-## positionCT:SPHEROIDAR=1.3 -0.4130435  0.5611435 -0.7360747 4.627766e-01
-## positionTC:SPHEROIDAR=1.1 -2.4166667  0.7768679 -3.1107819 2.214499e-03
-## positionCT:SPHEROIDAR=1.1 -2.2753623  0.8639369 -2.6337137 9.285202e-03
-##                                2.5 %     97.5 %
-## (Intercept)                9.1141220 10.8858780
-## positionCT                 0.3423306  2.8750607
-## positionTC:SPHEROIDAR=1.3 -0.7377171  1.4177171
-## positionCT:SPHEROIDAR=1.3 -1.5213535  0.6952665
-## positionTC:SPHEROIDAR=1.1 -3.9510524 -0.8822810
-## positionCT:SPHEROIDAR=1.1 -3.9817172 -0.5690075</code></pre>
-<pre class="r"><code>write.csv(lm_coeff, file.path(stat_path, &quot;ARall_S3_scan_coeff.csv&quot;))</code></pre>
+<pre><code>##                              Estimate Std. Error    t value     Pr(&gt;|t|)
+## (Intercept)                 9.3750000  0.5435254 17.2485041 2.797743e-27
+## positionCT                  1.8858696  0.7077636  2.6645473 9.508640e-03
+## positionTC:clusterCurved-1  1.5000000  0.7686610  1.9514455 5.489480e-02
+## positionCT:clusterCurved-1 -0.2608696  0.8923840 -0.2923288 7.708759e-01
+## positionTC:clusterCurved-2  0.7361111  0.9058757  0.8125962 4.191284e-01
+## positionCT:clusterCurved-2  1.2391304  0.9966422  1.2433052 2.177887e-01
+##                                  2.5 %    97.5 %
+## (Intercept)                 8.29150193 10.458498
+## positionCT                  0.47496861  3.296771
+## positionTC:clusterCurved-1 -0.03229767  3.032298
+## positionCT:clusterCurved-1 -2.03980452  1.518065
+## positionTC:clusterCurved-2 -1.06971901  2.541941
+## positionCT:clusterCurved-2 -0.74763955  3.225900</code></pre>
+<pre class="r"><code>write.csv(lm_coeff, file.path(stat_path, &quot;AR13_scan_combined_coeff.csv&quot;))</code></pre>
 </div>
 </div>
 <div id="post-hoc-analysis" class="section level2">
@@ -462,65 +452,65 @@ lm_coeff</code></pre>
 <pre class="r"><code># emmeans table
 emm = emmeans(lm, ~position, type=&quot;response&quot;)</code></pre>
 <pre><code>## NOTE: A nesting structure was detected in the fitted model:
-##     SPHEROID %in% position</code></pre>
+##     cluster %in% position</code></pre>
 <pre><code>## NOTE: Results may be misleading due to involvement in interactions</code></pre>
 <pre class="r"><code>emm</code></pre>
-<pre><code>##  position emmean    SE  df lower.CL upper.CL
-##  TC         9.31 0.279 158     8.76     9.86
-##  CT        10.71 0.308 158    10.11    11.32
+<pre><code>##  position emmean    SE df lower.CL upper.CL
+##  TC         10.1 0.352 72     9.42     10.8
+##  CT         11.6 0.420 72    10.75     12.4
 ## 
-## Results are averaged over the levels of: SPHEROID 
+## Results are averaged over the levels of: cluster 
 ## Confidence level used: 0.95</code></pre>
-<pre class="r"><code>write.csv(emm, file=file.path(stat_path, &quot;ARall_S3_scan_position_emmeans.csv&quot;), row.names=FALSE)</code></pre>
+<pre class="r"><code>write.csv(emm, file=file.path(stat_path, &quot;AR13_scan_combined_position_emmeans.csv&quot;), row.names=FALSE)</code></pre>
 <pre class="r"><code># contrast table with confidence level
 s = summary(contrast(emm, method=&quot;revpairwise&quot;, type=&quot;response&quot;, level=0.95), infer=TRUE)
 s</code></pre>
-<pre><code>##  contrast estimate    SE  df lower.CL upper.CL t.ratio p.value
-##  CT - TC       1.4 0.415 158    0.585     2.22   3.383  0.0009
+<pre><code>##  contrast estimate    SE df lower.CL upper.CL t.ratio p.value
+##  CT - TC      1.47 0.548 72    0.375     2.56   2.678  0.0092
 ## 
-## Results are averaged over the levels of: SPHEROID 
+## Results are averaged over the levels of: cluster 
 ## Confidence level used: 0.95</code></pre>
-<pre class="r"><code>write.csv(s, file=file.path(stat_path, &quot;ARall_S3_scan_position_contrast.csv&quot;), row.names=FALSE)</code></pre>
+<pre class="r"><code>write.csv(s, file=file.path(stat_path, &quot;AR13_scan_combined_position_contrast.csv&quot;), row.names=FALSE)</code></pre>
 </div>
-<div id="spheroid" class="section level4">
-<h4>Spheroid</h4>
-<pre class="r"><code>emm_2level = emmeans(lm, ~SPHEROID|position, type=&quot;response&quot;)</code></pre>
+<div id="cluster" class="section level4">
+<h4>Cluster</h4>
+<pre class="r"><code>emm_2level = emmeans(lm, ~cluster|position, type=&quot;response&quot;)</code></pre>
 <pre><code>## NOTE: A nesting structure was detected in the fitted model:
-##     SPHEROID %in% position</code></pre>
+##     cluster %in% position</code></pre>
 <pre class="r"><code>emm_2level</code></pre>
 <pre><code>## position = TC:
-##  SPHEROID emmean    SE  df lower.CL upper.CL
-##  AR=2.9    10.00 0.449 158     9.11    10.89
-##  AR=1.3    10.34 0.311 158     9.73    10.95
-##  AR=1.1     7.58 0.634 158     6.33     8.84
+##  cluster  emmean    SE df lower.CL upper.CL
+##  Straight   9.38 0.544 72     8.29     10.5
+##  Curved-1  10.88 0.544 72     9.79     12.0
+##  Curved-2  10.11 0.725 72     8.67     11.6
 ## 
 ## position = CT:
-##  SPHEROID emmean    SE  df lower.CL upper.CL
-##  AR=2.9    11.61 0.458 158    10.70    12.51
-##  AR=1.3    11.20 0.324 158    10.56    11.84
-##  AR=1.1     9.33 0.732 158     7.89    10.78
+##  cluster  emmean    SE df lower.CL upper.CL
+##  Straight  11.26 0.453 72    10.36     12.2
+##  Curved-1  11.00 0.769 72     9.47     12.5
+##  Curved-2  12.50 0.888 72    10.73     14.3
 ## 
 ## Confidence level used: 0.95</code></pre>
-<pre class="r"><code>write.csv(emm_2level, file=file.path(stat_path, &quot;ARall_S3_scan_spheroid_emmeans.csv&quot;), row.names=FALSE)</code></pre>
+<pre class="r"><code>write.csv(emm_2level, file=file.path(stat_path, &quot;AR13_scan_combined_cluster_emmeans.csv&quot;), row.names=FALSE)</code></pre>
 <pre class="r"><code># contrast table with confidence level
 s = summary(contrast(emm_2level, method=&quot;pairwise&quot;, type=&quot;response&quot;, level=0.95), infer=TRUE)
 s</code></pre>
 <pre><code>## position = CT:
-##  contrast        estimate    SE  df lower.CL upper.CL t.ratio p.value
-##  AR=2.9 - AR=1.3    0.413 0.561 158   -1.206     2.03   0.736  0.9771
-##  AR=2.9 - AR=1.1    2.275 0.864 158   -0.217     4.77   2.634  0.0952
-##  AR=1.3 - AR=1.1    1.862 0.801 158   -0.448     4.17   2.325  0.1902
+##  contrast                estimate    SE df lower.CL upper.CL t.ratio p.value
+##  Straight - (Curved-1)      0.261 0.892 72    -2.35    2.874   0.292  0.9997
+##  Straight - (Curved-2)     -1.239 0.997 72    -4.16    1.679  -1.243  0.8140
+##  (Curved-1) - (Curved-2)   -1.500 1.174 72    -4.94    1.938  -1.278  0.7962
 ## 
 ## position = TC:
-##  contrast        estimate    SE  df lower.CL upper.CL t.ratio p.value
-##  AR=2.9 - AR=1.3   -0.340 0.546 158   -1.914     1.23  -0.623  0.9892
-##  AR=2.9 - AR=1.1    2.417 0.777 158    0.175     4.66   3.111  0.0264
-##  AR=1.3 - AR=1.1    2.757 0.706 158    0.719     4.79   3.903  0.0019
+##  contrast                estimate    SE df lower.CL upper.CL t.ratio p.value
+##  Straight - (Curved-1)     -1.500 0.769 72    -3.75    0.751  -1.951  0.3802
+##  Straight - (Curved-2)     -0.736 0.906 72    -3.39    1.916  -0.813  0.9643
+##  (Curved-1) - (Curved-2)    0.764 0.906 72    -1.89    3.416   0.843  0.9583
 ## 
 ## Confidence level used: 0.95 
 ## Conf-level adjustment: tukey method for comparing a family of 6 estimates 
 ## P value adjustment: tukey method for comparing a family of 6 estimates</code></pre>
-<pre class="r"><code>write.csv(s, file=file.path(stat_path, &quot;ARall_S3_scan_spheroid_contrast.csv&quot;), row.names=FALSE)</code></pre>
+<pre class="r"><code>write.csv(s, file=file.path(stat_path, &quot;AR13_scan_combined_cluster_contrast.csv&quot;), row.names=FALSE)</code></pre>
 </div>
 </div>
 </div>
