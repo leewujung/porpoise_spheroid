@@ -10,7 +10,7 @@
 
 
 
-<meta name="date" content="2023-12-27" />
+<meta name="date" content="2023-12-30" />
 
 <title>AR=1.3 spheroid clusters comparison: Combined number of scans</title>
 
@@ -351,7 +351,7 @@ display: none;
 
 <h1 class="title toc-ignore">AR=1.3 spheroid clusters comparison:
 Combined number of scans</h1>
-<h4 class="date">2023-12-27</h4>
+<h4 class="date">2023-12-30</h4>
 
 </div>
 
@@ -416,7 +416,13 @@ df_cluster = df_cluster %&gt;%
   separate(cluster, c(&quot;position&quot;,&quot;cluster&quot;), sep=&quot;_&quot;, remove=FALSE) %&gt;%
   mutate(SPHEROID = factor(SPHEROID)) %&gt;%
   mutate(position = factor(position, levels = c(&quot;TC&quot;, &quot;CT&quot;))) %&gt;%
-  mutate(cluster = factor(cluster, levels = c(&quot;Straight&quot;, &quot;Curved-1&quot;, &quot;Curved-2&quot;)))</code></pre>
+  mutate(cluster = factor(cluster, levels = c(&quot;Straight&quot;, &quot;Curved-1&quot;, &quot;Curved-2&quot;))) %&gt;%
+  mutate(
+    position = case_when(
+      position == &quot;TC&quot; ~ &quot;R+&quot;,
+      .default = &quot;L+&quot;
+    )
+  )</code></pre>
 </div>
 <div id="linear-models" class="section level2">
 <h2>Linear models</h2>
@@ -427,19 +433,19 @@ df_cluster = df_cluster %&gt;%
 lm_coeff = cbind(coef(summary(lm)), confint(lm))
 lm_coeff</code></pre>
 <pre><code>##                              Estimate Std. Error    t value     Pr(&gt;|t|)
-## (Intercept)                 9.3750000  0.5435254 17.2485041 2.797743e-27
-## positionCT                  1.8858696  0.7077636  2.6645473 9.508640e-03
-## positionTC:clusterCurved-1  1.5000000  0.7686610  1.9514455 5.489480e-02
-## positionCT:clusterCurved-1 -0.2608696  0.8923840 -0.2923288 7.708759e-01
-## positionTC:clusterCurved-2  0.7361111  0.9058757  0.8125962 4.191284e-01
-## positionCT:clusterCurved-2  1.2391304  0.9966422  1.2433052 2.177887e-01
-##                                  2.5 %    97.5 %
-## (Intercept)                 8.29150193 10.458498
-## positionCT                  0.47496861  3.296771
-## positionTC:clusterCurved-1 -0.03229767  3.032298
-## positionCT:clusterCurved-1 -2.03980452  1.518065
-## positionTC:clusterCurved-2 -1.06971901  2.541941
-## positionCT:clusterCurved-2 -0.74763955  3.225900</code></pre>
+## (Intercept)                11.2608696  0.4533315 24.8402530 4.811285e-37
+## positionR+                 -1.8858696  0.7077636 -2.6645473 9.508640e-03
+## positionL+:clusterCurved-1 -0.2608696  0.8923840 -0.2923288 7.708759e-01
+## positionR+:clusterCurved-1  1.5000000  0.7686610  1.9514455 5.489480e-02
+## positionL+:clusterCurved-2  1.2391304  0.9966422  1.2433052 2.177887e-01
+## positionR+:clusterCurved-2  0.7361111  0.9058757  0.8125962 4.191284e-01
+##                                  2.5 %     97.5 %
+## (Intercept)                10.35716970 12.1645694
+## positionR+                 -3.29677052 -0.4749686
+## positionL+:clusterCurved-1 -2.03980452  1.5180654
+## positionR+:clusterCurved-1 -0.03229767  3.0322977
+## positionL+:clusterCurved-2 -0.74763955  3.2259004
+## positionR+:clusterCurved-2 -1.06971901  2.5419412</code></pre>
 <pre class="r"><code>write.csv(lm_coeff, file.path(stat_path, &quot;AR13_scan_combined_coeff.csv&quot;))</code></pre>
 </div>
 </div>
@@ -456,8 +462,8 @@ emm = emmeans(lm, ~position, type=&quot;response&quot;)</code></pre>
 <pre><code>## NOTE: Results may be misleading due to involvement in interactions</code></pre>
 <pre class="r"><code>emm</code></pre>
 <pre><code>##  position emmean    SE df lower.CL upper.CL
-##  TC         10.1 0.352 72     9.42     10.8
-##  CT         11.6 0.420 72    10.75     12.4
+##  L+         11.6 0.420 72    10.75     12.4
+##  R+         10.1 0.352 72     9.42     10.8
 ## 
 ## Results are averaged over the levels of: cluster 
 ## Confidence level used: 0.95</code></pre>
@@ -465,8 +471,8 @@ emm = emmeans(lm, ~position, type=&quot;response&quot;)</code></pre>
 <pre class="r"><code># contrast table with confidence level
 s = summary(contrast(emm, method=&quot;revpairwise&quot;, type=&quot;response&quot;, level=0.95), infer=TRUE)
 s</code></pre>
-<pre><code>##  contrast estimate    SE df lower.CL upper.CL t.ratio p.value
-##  CT - TC      1.47 0.548 72    0.375     2.56   2.678  0.0092
+<pre><code>##  contrast    estimate    SE df lower.CL upper.CL t.ratio p.value
+##  (R+) - (L+)    -1.47 0.548 72    -2.56   -0.375  -2.678  0.0092
 ## 
 ## Results are averaged over the levels of: cluster 
 ## Confidence level used: 0.95</code></pre>
@@ -478,34 +484,34 @@ s</code></pre>
 <pre><code>## NOTE: A nesting structure was detected in the fitted model:
 ##     cluster %in% position</code></pre>
 <pre class="r"><code>emm_2level</code></pre>
-<pre><code>## position = TC:
-##  cluster  emmean    SE df lower.CL upper.CL
-##  Straight   9.38 0.544 72     8.29     10.5
-##  Curved-1  10.88 0.544 72     9.79     12.0
-##  Curved-2  10.11 0.725 72     8.67     11.6
-## 
-## position = CT:
+<pre><code>## position = L+:
 ##  cluster  emmean    SE df lower.CL upper.CL
 ##  Straight  11.26 0.453 72    10.36     12.2
 ##  Curved-1  11.00 0.769 72     9.47     12.5
 ##  Curved-2  12.50 0.888 72    10.73     14.3
 ## 
+## position = R+:
+##  cluster  emmean    SE df lower.CL upper.CL
+##  Straight   9.38 0.544 72     8.29     10.5
+##  Curved-1  10.88 0.544 72     9.79     12.0
+##  Curved-2  10.11 0.725 72     8.67     11.6
+## 
 ## Confidence level used: 0.95</code></pre>
 <pre class="r"><code>write.csv(emm_2level, file=file.path(stat_path, &quot;AR13_scan_combined_cluster_emmeans.csv&quot;), row.names=FALSE)</code></pre>
 <pre class="r"><code># contrast table with confidence level
-s = summary(contrast(emm_2level, method=&quot;pairwise&quot;, type=&quot;response&quot;, level=0.95), infer=TRUE)
+s = summary(contrast(emm_2level, method=&quot;revpairwise&quot;, type=&quot;response&quot;, level=0.95), infer=TRUE)
 s</code></pre>
-<pre><code>## position = CT:
+<pre><code>## position = L+:
 ##  contrast                estimate    SE df lower.CL upper.CL t.ratio p.value
-##  Straight - (Curved-1)      0.261 0.892 72    -2.35    2.874   0.292  0.9997
-##  Straight - (Curved-2)     -1.239 0.997 72    -4.16    1.679  -1.243  0.8140
-##  (Curved-1) - (Curved-2)   -1.500 1.174 72    -4.94    1.938  -1.278  0.7962
+##  (Curved-1) - Straight     -0.261 0.892 72   -2.874     2.35  -0.292  0.9997
+##  (Curved-2) - Straight      1.239 0.997 72   -1.679     4.16   1.243  0.8140
+##  (Curved-2) - (Curved-1)    1.500 1.174 72   -1.938     4.94   1.278  0.7962
 ## 
-## position = TC:
+## position = R+:
 ##  contrast                estimate    SE df lower.CL upper.CL t.ratio p.value
-##  Straight - (Curved-1)     -1.500 0.769 72    -3.75    0.751  -1.951  0.3802
-##  Straight - (Curved-2)     -0.736 0.906 72    -3.39    1.916  -0.813  0.9643
-##  (Curved-1) - (Curved-2)    0.764 0.906 72    -1.89    3.416   0.843  0.9583
+##  (Curved-1) - Straight      1.500 0.769 72   -0.751     3.75   1.951  0.3802
+##  (Curved-2) - Straight      0.736 0.906 72   -1.916     3.39   0.813  0.9643
+##  (Curved-2) - (Curved-1)   -0.764 0.906 72   -3.416     1.89  -0.843  0.9583
 ## 
 ## Confidence level used: 0.95 
 ## Conf-level adjustment: tukey method for comparing a family of 6 estimates 
@@ -519,7 +525,7 @@ s</code></pre>
 <pre class="r"><code>sessionInfo()</code></pre>
 <pre><code>## R version 4.3.0 (2023-04-21)
 ## Platform: aarch64-apple-darwin20 (64-bit)
-## Running under: macOS Ventura 13.6.2
+## Running under: macOS Ventura 13.6.3
 ## 
 ## Matrix products: default
 ## BLAS:   /Library/Frameworks/R.framework/Versions/4.3-arm64/Resources/lib/libRblas.0.dylib 
