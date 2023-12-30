@@ -10,9 +10,9 @@
 
 
 
-<meta name="date" content="2023-06-10" />
+<meta name="date" content="2023-12-30" />
 
-<title>All spheroids comparison: time and range at buzz onset</title>
+<title>All spheroids comparison: Buzz onset time and range</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -349,9 +349,9 @@ display: none;
 
 
 
-<h1 class="title toc-ignore">All spheroids comparison: time and range at
-buzz onset</h1>
-<h4 class="date">2023-06-10</h4>
+<h1 class="title toc-ignore">All spheroids comparison: Buzz onset time
+and range</h1>
+<h4 class="date">2023-12-30</h4>
 
 </div>
 
@@ -359,7 +359,7 @@ buzz onset</h1>
 <p>This notebook uses data summary file
 <code>data_processed/data_summary/data_summary_all.csv</code>. The
 comparison is across the 3 spheroids with different aspect ratios nested
-under the TC/CT scenarios.</p>
+under the R+/L+ scenarios.</p>
 <div id="load-libraries" class="section level2">
 <h2>Load libraries</h2>
 <pre class="r"><code>library(lme4)</code></pre>
@@ -406,7 +406,7 @@ stat_path = file.path(main_path, &quot;stat&quot;)</code></pre>
   file=paste(data_path, &quot;data_summary_all.csv&quot;, sep=&quot;/&quot;)
 )
 
-# Get TC/CT position
+# Get R+/L+ position
 df = df %&gt;%
   separate(TARGET_ANGLE,  c(&quot;position&quot;), sep=2, extra=&quot;drop&quot;, remove=FALSE) %&gt;%
   filter(position==&quot;TC&quot; | position==&quot;CT&quot;) %&gt;%
@@ -426,7 +426,13 @@ df = df %&gt;%
     )
   ) %&gt;%
   mutate(SPHEROID=factor(SPHEROID, levels = c(&quot;AR=2.9&quot;, &quot;AR=1.3&quot;, &quot;AR=1.1&quot;))) %&gt;%
-  mutate(position = factor(position, levels = c(&quot;TC&quot;, &quot;CT&quot;)))</code></pre>
+  mutate(position = factor(position, levels = c(&quot;TC&quot;, &quot;CT&quot;))) %&gt;%
+  mutate(
+    position = case_when(
+      position == &quot;TC&quot; ~ &quot;R+&quot;,
+      .default = &quot;L+&quot;
+    )
+  )</code></pre>
 </div>
 <div id="linear-models" class="section level2">
 <h2>Linear models</h2>
@@ -436,20 +442,20 @@ df = df %&gt;%
 
 glm_time_coeff = cbind(coef(summary(glm_time)), confint(glm_time))
 glm_time_coeff</code></pre>
-<pre><code>##                              Estimate Std. Error    t value     Pr(&gt;|t|)
-## (Intercept)                1.75914797  0.1384872 12.7026041 6.363744e-26
-## positionCT                -0.06462602  0.1979678 -0.3264471 7.445181e-01
-## positionTC:SPHEROIDAR=1.3  0.49089862  0.1684769  2.9137437 4.089488e-03
-## positionCT:SPHEROIDAR=1.3  0.57519245  0.1732595  3.3198330 1.118460e-03
-## positionTC:SPHEROIDAR=1.1  0.50048470  0.2398669  2.0865105 3.853865e-02
-## positionCT:SPHEROIDAR=1.1  0.97558241  0.2667504  3.6572859 3.467437e-04
+<pre><code>##                             Estimate Std. Error    t value     Pr(&gt;|t|)
+## (Intercept)               1.69452195  0.1414658 11.9783193 6.204267e-24
+## positionR+                0.06462602  0.1979678  0.3264471 7.445181e-01
+## positionL+:SPHEROIDAR=1.3 0.57519245  0.1732595  3.3198330 1.118460e-03
+## positionR+:SPHEROIDAR=1.3 0.49089862  0.1684769  2.9137437 4.089488e-03
+## positionL+:SPHEROIDAR=1.1 0.97558241  0.2667504  3.6572859 3.467437e-04
+## positionR+:SPHEROIDAR=1.1 0.50048470  0.2398669  2.0865105 3.853865e-02
 ##                                 2.5 %    97.5 %
-## (Intercept)                1.48562301 2.0326729
-## positionCT                -0.45563071 0.3263787
-## positionTC:SPHEROIDAR=1.3  0.15814115 0.8236561
-## positionCT:SPHEROIDAR=1.3  0.23298907 0.9173958
-## positionTC:SPHEROIDAR=1.1  0.02672558 0.9742438
-## positionCT:SPHEROIDAR=1.1  0.44872585 1.5024390</code></pre>
+## (Intercept)                1.41511407 1.9739298
+## positionR+                -0.32637867 0.4556307
+## positionL+:SPHEROIDAR=1.3  0.23298907 0.9173958
+## positionR+:SPHEROIDAR=1.3  0.15814115 0.8236561
+## positionL+:SPHEROIDAR=1.1  0.44872585 1.5024390
+## positionR+:SPHEROIDAR=1.1  0.02672558 0.9742438</code></pre>
 <pre class="r"><code>write.csv(glm_time_coeff, file.path(stat_path, &quot;ARall_C_buzz_time_coeff.csv&quot;))</code></pre>
 </div>
 <div id="range-to-sphere-target-at-buzz-onset" class="section level3">
@@ -458,20 +464,20 @@ glm_time_coeff</code></pre>
 
 lm_range_coeff = cbind(coef(summary(lm_range)), confint(lm_range))
 lm_range_coeff</code></pre>
-<pre><code>##                              Estimate Std. Error   t value     Pr(&gt;|t|)
-## (Intercept)                1.00514160 0.03562061 28.217979 1.384003e-63
-## positionCT                -0.07482462 0.05091976 -1.469461 1.436961e-01
-## positionTC:SPHEROIDAR=1.3  0.14578209 0.04333434  3.364124 9.636997e-04
-## positionCT:SPHEROIDAR=1.3  0.11374259 0.04456446  2.552316 1.164913e-02
-## positionTC:SPHEROIDAR=1.1  0.21622360 0.06169671  3.504621 5.951069e-04
-## positionCT:SPHEROIDAR=1.1  0.18572988 0.06861148  2.706980 7.536857e-03
+<pre><code>##                             Estimate Std. Error   t value     Pr(&gt;|t|)
+## (Intercept)               0.93031698 0.03638673 25.567478 5.013170e-58
+## positionR+                0.07482462 0.05091976  1.469461 1.436961e-01
+## positionL+:SPHEROIDAR=1.3 0.11374259 0.04456446  2.552316 1.164913e-02
+## positionR+:SPHEROIDAR=1.3 0.14578209 0.04333434  3.364124 9.636997e-04
+## positionL+:SPHEROIDAR=1.1 0.18572988 0.06861148  2.706980 7.536857e-03
+## positionR+:SPHEROIDAR=1.1 0.21622360 0.06169671  3.504621 5.951069e-04
 ##                                 2.5 %    97.5 %
-## (Intercept)                0.93478762 1.0754956
-## positionCT                -0.17539584 0.0257466
-## positionTC:SPHEROIDAR=1.3  0.06019277 0.2313714
-## positionCT:SPHEROIDAR=1.3  0.02572367 0.2017615
-## positionTC:SPHEROIDAR=1.1  0.09436693 0.3380803
-## positionCT:SPHEROIDAR=1.1  0.05021589 0.3212439</code></pre>
+## (Intercept)                0.85844984 1.0021841
+## positionR+                -0.02574660 0.1753958
+## positionL+:SPHEROIDAR=1.3  0.02572367 0.2017615
+## positionR+:SPHEROIDAR=1.3  0.06019277 0.2313714
+## positionL+:SPHEROIDAR=1.1  0.05021589 0.3212439
+## positionR+:SPHEROIDAR=1.1  0.09436693 0.3380803</code></pre>
 <pre class="r"><code>write.csv(lm_range_coeff, file.path(stat_path, &quot;ARall_D_buzz_range_coeff.csv&quot;))</code></pre>
 </div>
 </div>
@@ -479,8 +485,8 @@ lm_range_coeff</code></pre>
 <h2>Post hoc analysis</h2>
 <div id="time-at-buzz-onset-to-touch-1" class="section level3">
 <h3>Time at buzz onset to touch</h3>
-<div id="position-tc-vs-ct" class="section level4">
-<h4>Position (TC vs CT)</h4>
+<div id="position-r-vs-l" class="section level4">
+<h4>Position (R+ vs L+)</h4>
 <pre class="r"><code># emmeans table
 emm_time = emmeans(glm_time, ~position, type=&quot;response&quot;)</code></pre>
 <pre><code>## NOTE: A nesting structure was detected in the fitted model:
@@ -488,8 +494,8 @@ emm_time = emmeans(glm_time, ~position, type=&quot;response&quot;)</code></pre>
 <pre><code>## NOTE: Results may be misleading due to involvement in interactions</code></pre>
 <pre class="r"><code>emm_time</code></pre>
 <pre><code>##  position emmean     SE  df lower.CL upper.CL
-##  TC         2.09 0.0861 158     1.92     2.26
-##  CT         2.21 0.0950 158     2.02     2.40
+##  L+         2.21 0.0950 158     2.02     2.40
+##  R+         2.09 0.0861 158     1.92     2.26
 ## 
 ## Results are averaged over the levels of: SPHEROID 
 ## Confidence level used: 0.95</code></pre>
@@ -497,8 +503,8 @@ emm_time = emmeans(glm_time, ~position, type=&quot;response&quot;)</code></pre>
 <pre class="r"><code># contrast table with confidence level
 s = summary(contrast(emm_time, method=&quot;revpairwise&quot;, type=&quot;response&quot;, level=0.95), infer=TRUE)
 s</code></pre>
-<pre><code>##  contrast estimate    SE  df lower.CL upper.CL t.ratio p.value
-##  CT - TC     0.122 0.128 158   -0.131    0.375   0.950  0.3434
+<pre><code>##  contrast    estimate    SE  df lower.CL upper.CL t.ratio p.value
+##  (R+) - (L+)   -0.122 0.128 158   -0.375    0.131  -0.950  0.3434
 ## 
 ## Results are averaged over the levels of: SPHEROID 
 ## Confidence level used: 0.95</code></pre>
@@ -510,30 +516,30 @@ s</code></pre>
 <pre><code>## NOTE: A nesting structure was detected in the fitted model:
 ##     SPHEROID %in% position</code></pre>
 <pre class="r"><code>emm_time_2level</code></pre>
-<pre><code>## position = TC:
-##  SPHEROID emmean     SE  df lower.CL upper.CL
-##  AR=2.9     1.76 0.1385 158     1.49     2.03
-##  AR=1.3     2.25 0.0959 158     2.06     2.44
-##  AR=1.1     2.26 0.1959 158     1.87     2.65
-## 
-## position = CT:
+<pre><code>## position = L+:
 ##  SPHEROID emmean     SE  df lower.CL upper.CL
 ##  AR=2.9     1.69 0.1415 158     1.42     1.97
 ##  AR=1.3     2.27 0.1000 158     2.07     2.47
 ##  AR=1.1     2.67 0.2261 158     2.22     3.12
+## 
+## position = R+:
+##  SPHEROID emmean     SE  df lower.CL upper.CL
+##  AR=2.9     1.76 0.1385 158     1.49     2.03
+##  AR=1.3     2.25 0.0959 158     2.06     2.44
+##  AR=1.1     2.26 0.1959 158     1.87     2.65
 ## 
 ## Confidence level used: 0.95</code></pre>
 <pre class="r"><code>write.csv(emm_time_2level, file=file.path(stat_path, &quot;ARall_C_buzz_time_spheroid_emmeans.csv&quot;), row.names=FALSE)</code></pre>
 <pre class="r"><code># contrast table with confidence level
 s = summary(contrast(emm_time_2level, method=&quot;pairwise&quot;, type=&quot;response&quot;, level=0.95), infer=TRUE)
 s</code></pre>
-<pre><code>## position = CT:
+<pre><code>## position = L+:
 ##  contrast        estimate    SE  df lower.CL upper.CL t.ratio p.value
 ##  AR=2.9 - AR=1.3 -0.57519 0.173 158   -1.075 -0.07534  -3.320  0.0140
 ##  AR=2.9 - AR=1.1 -0.97558 0.267 158   -1.745 -0.20600  -3.657  0.0046
 ##  AR=1.3 - AR=1.1 -0.40039 0.247 158   -1.114  0.31303  -1.619  0.5872
 ## 
-## position = TC:
+## position = R+:
 ##  contrast        estimate    SE  df lower.CL upper.CL t.ratio p.value
 ##  AR=2.9 - AR=1.3 -0.49090 0.168 158   -0.977 -0.00484  -2.914  0.0462
 ##  AR=2.9 - AR=1.1 -0.50048 0.240 158   -1.193  0.19153  -2.087  0.2997
@@ -547,8 +553,8 @@ s</code></pre>
 </div>
 <div id="range-to-closest-object" class="section level3">
 <h3>Range to closest object</h3>
-<div id="position-tc-vs-ct-1" class="section level4">
-<h4>Position (TC vs CT)</h4>
+<div id="position-r-vs-l-1" class="section level4">
+<h4>Position (R+ vs L+)</h4>
 <pre class="r"><code># emmeans table
 emm_range = emmeans(lm_range, ~position, type=&quot;response&quot;)</code></pre>
 <pre><code>## NOTE: A nesting structure was detected in the fitted model:
@@ -556,8 +562,8 @@ emm_range = emmeans(lm_range, ~position, type=&quot;response&quot;)</code></pre>
 <pre><code>## NOTE: Results may be misleading due to involvement in interactions</code></pre>
 <pre class="r"><code>emm_range</code></pre>
 <pre><code>##  position emmean     SE  df lower.CL upper.CL
-##  TC         1.13 0.0221 158    1.082     1.17
-##  CT         1.03 0.0244 158    0.982     1.08
+##  L+         1.03 0.0244 158    0.982     1.08
+##  R+         1.13 0.0221 158    1.082     1.17
 ## 
 ## Results are averaged over the levels of: SPHEROID 
 ## Confidence level used: 0.95</code></pre>
@@ -565,8 +571,8 @@ emm_range = emmeans(lm_range, ~position, type=&quot;response&quot;)</code></pre>
 <pre class="r"><code># contrast table with confidence level
 s = summary(contrast(emm_range, method=&quot;revpairwise&quot;, type=&quot;response&quot;, level=0.95), infer=TRUE)
 s</code></pre>
-<pre><code>##  contrast estimate    SE  df lower.CL upper.CL t.ratio p.value
-##  CT - TC   -0.0957 0.033 158   -0.161  -0.0305  -2.901  0.0042
+<pre><code>##  contrast    estimate    SE  df lower.CL upper.CL t.ratio p.value
+##  (R+) - (L+)   0.0957 0.033 158   0.0305    0.161   2.901  0.0042
 ## 
 ## Results are averaged over the levels of: SPHEROID 
 ## Confidence level used: 0.95</code></pre>
@@ -578,30 +584,30 @@ s</code></pre>
 <pre><code>## NOTE: A nesting structure was detected in the fitted model:
 ##     SPHEROID %in% position</code></pre>
 <pre class="r"><code>emm_range_2level</code></pre>
-<pre><code>## position = TC:
-##  SPHEROID emmean     SE  df lower.CL upper.CL
-##  AR=2.9     1.01 0.0356 158    0.935     1.08
-##  AR=1.3     1.15 0.0247 158    1.102     1.20
-##  AR=1.1     1.22 0.0504 158    1.122     1.32
-## 
-## position = CT:
+<pre><code>## position = L+:
 ##  SPHEROID emmean     SE  df lower.CL upper.CL
 ##  AR=2.9     0.93 0.0364 158    0.858     1.00
 ##  AR=1.3     1.04 0.0257 158    0.993     1.09
 ##  AR=1.1     1.12 0.0582 158    1.001     1.23
+## 
+## position = R+:
+##  SPHEROID emmean     SE  df lower.CL upper.CL
+##  AR=2.9     1.01 0.0356 158    0.935     1.08
+##  AR=1.3     1.15 0.0247 158    1.102     1.20
+##  AR=1.1     1.22 0.0504 158    1.122     1.32
 ## 
 ## Confidence level used: 0.95</code></pre>
 <pre class="r"><code>write.csv(emm_range_2level, file=file.path(stat_path, &quot;ARall_D_buzz_range_spheroid_emmeans.csv&quot;), row.names=FALSE)</code></pre>
 <pre class="r"><code># contrast table with confidence level
 s = summary(contrast(emm_range_2level, method=&quot;pairwise&quot;, type=&quot;response&quot;, level=0.95), infer=TRUE)
 s</code></pre>
-<pre><code>## position = CT:
+<pre><code>## position = L+:
 ##  contrast        estimate     SE  df lower.CL upper.CL t.ratio p.value
 ##  AR=2.9 - AR=1.3  -0.1137 0.0446 158   -0.242   0.0148  -2.552  0.1156
 ##  AR=2.9 - AR=1.1  -0.1857 0.0686 158   -0.384   0.0122  -2.707  0.0795
 ##  AR=1.3 - AR=1.1  -0.0720 0.0636 158   -0.255   0.1115  -1.132  0.8675
 ## 
-## position = TC:
+## position = R+:
 ##  contrast        estimate     SE  df lower.CL upper.CL t.ratio p.value
 ##  AR=2.9 - AR=1.3  -0.1458 0.0433 158   -0.271  -0.0208  -3.364  0.0122
 ##  AR=2.9 - AR=1.1  -0.2162 0.0617 158   -0.394  -0.0382  -3.505  0.0077
@@ -619,7 +625,7 @@ s</code></pre>
 <pre class="r"><code>sessionInfo()</code></pre>
 <pre><code>## R version 4.3.0 (2023-04-21)
 ## Platform: aarch64-apple-darwin20 (64-bit)
-## Running under: macOS Ventura 13.3
+## Running under: macOS Ventura 13.6.3
 ## 
 ## Matrix products: default
 ## BLAS:   /Library/Frameworks/R.framework/Versions/4.3-arm64/Resources/lib/libRblas.0.dylib 
@@ -628,7 +634,7 @@ s</code></pre>
 ## locale:
 ## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
 ## 
-## time zone: America/Los_Angeles
+## time zone: America/Vancouver
 ## tzcode source: internal
 ## 
 ## attached base packages:

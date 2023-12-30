@@ -1,5 +1,5 @@
 ---
-title: "All spheroids comparison: time and range at decision"
+title: "All spheroids comparison: Decision time and range"
 output: html_document
 date: "`r Sys.Date()`"
 editor_options:
@@ -10,7 +10,7 @@ editor_options:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-This notebook uses data summary file `data_processed/data_summary/data_summary_all.csv`. The comparison is across the 3 spheroids with different aspect ratios nested under the TC/CT scenarios.
+This notebook uses data summary file `data_processed/data_summary/data_summary_all.csv`. The comparison is across the 3 spheroids with different aspect ratios nested under the R+/L+ scenarios.
 
 
 
@@ -45,7 +45,7 @@ df = read.csv(
   file=paste(data_path, "data_summary_all.csv", sep="/")
 )
 
-# Get TC/CT position
+# Get R+/L+ position
 df = df %>%
   separate(TARGET_ANGLE,  c("position"), sep=2, extra="drop", remove=FALSE) %>%
   filter(position=="TC" | position=="CT") %>%
@@ -64,7 +64,13 @@ df = df %>%
     )
   ) %>%
   mutate(SPHEROID=factor(SPHEROID, levels = c("AR=2.9", "AR=1.3", "AR=1.1"))) %>%
-  mutate(position = factor(position, levels = c("TC", "CT")))
+  mutate(position = factor(position, levels = c("TC", "CT"))) %>%
+  mutate(
+    position = case_when(
+      position == "TC" ~ "R+",
+      .default = "L+"
+    )
+  )
 ```
 
 
@@ -106,7 +112,7 @@ write.csv(lm_range_clutter_coeff, file.path(stat_path, "ARall_B1_decision_range_
 
 ### Time at decision to touch
 
-#### Position (TC vs CT)
+#### Position (R+ vs L+)
 ```{r}
 # emmeans table
 emm_time = emmeans(lm_time, ~position, type="response")
@@ -140,7 +146,7 @@ write.csv(s, file=file.path(stat_path, "ARall_A_decision_time_spheroid_contrast.
 
 ### Range to sphere (target) at decision
 
-#### Position (TC vs CT)
+#### Position (R+ vs L+)
 ```{r}
 # emmeans table
 emm_range_target = emmeans(lm_range_target, ~position, type="response")
@@ -174,7 +180,7 @@ write.csv(s, file=file.path(stat_path, "ARall_B1_decision_range_target_spheroid_
 
 ### Range to spheroid (clutter) at decision
 
-#### Position (TC vs CT)
+#### Position (R+ vs L+)
 ```{r}
 # emmeans table
 emm_range_clutter = emmeans(lm_range_clutter, ~position, type="response")

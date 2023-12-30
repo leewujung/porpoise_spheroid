@@ -10,9 +10,9 @@
 
 
 
-<meta name="date" content="2023-06-10" />
+<meta name="date" content="2023-12-30" />
 
-<title>All spheroids comparison: time and range at decision</title>
+<title>All spheroids comparison: Decision time and range</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -349,9 +349,9 @@ display: none;
 
 
 
-<h1 class="title toc-ignore">All spheroids comparison: time and range at
-decision</h1>
-<h4 class="date">2023-06-10</h4>
+<h1 class="title toc-ignore">All spheroids comparison: Decision time and
+range</h1>
+<h4 class="date">2023-12-30</h4>
 
 </div>
 
@@ -359,7 +359,7 @@ decision</h1>
 <p>This notebook uses data summary file
 <code>data_processed/data_summary/data_summary_all.csv</code>. The
 comparison is across the 3 spheroids with different aspect ratios nested
-under the TC/CT scenarios.</p>
+under the R+/L+ scenarios.</p>
 <div id="load-libraries" class="section level2">
 <h2>Load libraries</h2>
 <pre class="r"><code>library(lme4)</code></pre>
@@ -406,7 +406,7 @@ stat_path = file.path(main_path, &quot;stat&quot;)</code></pre>
   file=paste(data_path, &quot;data_summary_all.csv&quot;, sep=&quot;/&quot;)
 )
 
-# Get TC/CT position
+# Get R+/L+ position
 df = df %&gt;%
   separate(TARGET_ANGLE,  c(&quot;position&quot;), sep=2, extra=&quot;drop&quot;, remove=FALSE) %&gt;%
   filter(position==&quot;TC&quot; | position==&quot;CT&quot;) %&gt;%
@@ -425,7 +425,13 @@ df = df %&gt;%
     )
   ) %&gt;%
   mutate(SPHEROID=factor(SPHEROID, levels = c(&quot;AR=2.9&quot;, &quot;AR=1.3&quot;, &quot;AR=1.1&quot;))) %&gt;%
-  mutate(position = factor(position, levels = c(&quot;TC&quot;, &quot;CT&quot;)))</code></pre>
+  mutate(position = factor(position, levels = c(&quot;TC&quot;, &quot;CT&quot;))) %&gt;%
+  mutate(
+    position = case_when(
+      position == &quot;TC&quot; ~ &quot;R+&quot;,
+      .default = &quot;L+&quot;
+    )
+  )</code></pre>
 </div>
 <div id="linear-models" class="section level2">
 <h2>Linear models</h2>
@@ -436,19 +442,19 @@ df = df %&gt;%
 lm_time_coeff = cbind(coef(summary(lm_time)), confint(lm_time))
 lm_time_coeff</code></pre>
 <pre><code>##                               Estimate Std. Error     t value     Pr(&gt;|t|)
-## (Intercept)                3.298853961  0.1411124 23.37749230 3.691908e-53
-## positionCT                -0.922067865  0.2017206 -4.57101565 9.737923e-06
-## positionTC:SPHEROIDAR=1.3 -0.128610138  0.1716706 -0.74916793 4.548699e-01
-## positionCT:SPHEROIDAR=1.3  0.509287422  0.1765438  2.88476507 4.464293e-03
-## positionTC:SPHEROIDAR=1.1 -0.003212549  0.2444138 -0.01314389 9.895296e-01
-## positionCT:SPHEROIDAR=1.1  0.274303010  0.2718070  1.00918310 3.144298e-01
-##                                2.5 %     97.5 %
-## (Intercept)                3.0201440  3.5775639
-## positionCT                -1.3204846 -0.5236512
-## positionTC:SPHEROIDAR=1.3 -0.4676755  0.2104552
-## positionCT:SPHEROIDAR=1.3  0.1605971  0.8579777
-## positionTC:SPHEROIDAR=1.1 -0.4859524  0.4795273
-## positionCT:SPHEROIDAR=1.1 -0.2625408  0.8111468</code></pre>
+## (Intercept)                2.376786096  0.1441474 16.48857895 3.629656e-36
+## positionR+                 0.922067865  0.2017206  4.57101565 9.737923e-06
+## positionL+:SPHEROIDAR=1.3  0.509287422  0.1765438  2.88476507 4.464293e-03
+## positionR+:SPHEROIDAR=1.3 -0.128610138  0.1716706 -0.74916793 4.548699e-01
+## positionL+:SPHEROIDAR=1.1  0.274303010  0.2718070  1.00918310 3.144298e-01
+## positionR+:SPHEROIDAR=1.1 -0.003212549  0.2444138 -0.01314389 9.895296e-01
+##                                2.5 %    97.5 %
+## (Intercept)                2.0920817 2.6614905
+## positionR+                 0.5236512 1.3204846
+## positionL+:SPHEROIDAR=1.3  0.1605971 0.8579777
+## positionR+:SPHEROIDAR=1.3 -0.4676755 0.2104552
+## positionL+:SPHEROIDAR=1.1 -0.2625408 0.8111468
+## positionR+:SPHEROIDAR=1.1 -0.4859524 0.4795273</code></pre>
 <pre class="r"><code>write.csv(lm_time_coeff, file.path(stat_path, &quot;ARall_A_decision_time_coeff.csv&quot;))</code></pre>
 </div>
 <div id="range-to-sphere-target" class="section level3">
@@ -458,19 +464,19 @@ lm_time_coeff</code></pre>
 lm_range_target_coeff = cbind(coef(summary(lm_range_target)), confint(lm_range_target))
 lm_range_target_coeff</code></pre>
 <pre><code>##                             Estimate Std. Error    t value     Pr(&gt;|t|)
-## (Intercept)                2.1495258  0.1104638 19.4590978 8.402720e-44
-## positionCT                -0.7963280  0.1579083 -5.0429776 1.244317e-06
-## positionTC:SPHEROIDAR=1.3 -0.1180419  0.1343850 -0.8783862 3.810680e-01
-## positionCT:SPHEROIDAR=1.3  0.2228083  0.1381998  1.6122193 1.089099e-01
-## positionTC:SPHEROIDAR=1.1  0.1185041  0.1913289  0.6193735 5.365624e-01
-## positionCT:SPHEROIDAR=1.1  0.1049722  0.2127725  0.4933544 6.224472e-01
-##                                 2.5 %     97.5 %
-## (Intercept)                1.93134963  2.3677020
-## positionCT                -1.10821149 -0.4844446
-## positionTC:SPHEROIDAR=1.3 -0.38346470  0.1473808
-## positionCT:SPHEROIDAR=1.3 -0.05014893  0.4957656
-## positionTC:SPHEROIDAR=1.1 -0.25938815  0.4963963
-## positionCT:SPHEROIDAR=1.1 -0.31527295  0.5252174</code></pre>
+## (Intercept)                1.3531977  0.1128396 11.9922205 5.682418e-24
+## positionR+                 0.7963280  0.1579083  5.0429776 1.244317e-06
+## positionL+:SPHEROIDAR=1.3  0.2228083  0.1381998  1.6122193 1.089099e-01
+## positionR+:SPHEROIDAR=1.3 -0.1180419  0.1343850 -0.8783862 3.810680e-01
+## positionL+:SPHEROIDAR=1.1  0.1049722  0.2127725  0.4933544 6.224472e-01
+## positionR+:SPHEROIDAR=1.1  0.1185041  0.1913289  0.6193735 5.365624e-01
+##                                 2.5 %    97.5 %
+## (Intercept)                1.13032909 1.5760664
+## positionR+                 0.48444461 1.1082115
+## positionL+:SPHEROIDAR=1.3 -0.05014893 0.4957656
+## positionR+:SPHEROIDAR=1.3 -0.38346470 0.1473808
+## positionL+:SPHEROIDAR=1.1 -0.31527295 0.5252174
+## positionR+:SPHEROIDAR=1.1 -0.25938815 0.4963963</code></pre>
 <pre class="r"><code>write.csv(lm_range_target_coeff, file.path(stat_path, &quot;ARall_B1_decision_range_target_coeff.csv&quot;))</code></pre>
 </div>
 <div id="range-to-spheroid-clutter" class="section level3">
@@ -480,19 +486,19 @@ lm_range_target_coeff</code></pre>
 lm_range_clutter_coeff = cbind(coef(summary(lm_range_clutter)), confint(lm_range_clutter))
 lm_range_clutter_coeff</code></pre>
 <pre><code>##                              Estimate Std. Error    t value     Pr(&gt;|t|)
-## (Intercept)                2.18289064  0.1210198 18.0374657 3.340359e-40
-## positionCT                -0.54924266  0.1729982 -3.1748469 1.802544e-03
-## positionTC:SPHEROIDAR=1.3 -0.38612424  0.1472270 -2.6226465 9.578944e-03
-## positionCT:SPHEROIDAR=1.3  0.02525311  0.1514062  0.1667904 8.677482e-01
-## positionTC:SPHEROIDAR=1.1  0.01707285  0.2096125  0.0814496 9.351875e-01
-## positionCT:SPHEROIDAR=1.1 -0.26579735  0.2331052 -1.1402465 2.559091e-01
+## (Intercept)                1.63364798  0.1236227 13.2147915 2.502114e-27
+## positionR+                 0.54924266  0.1729982  3.1748469 1.802544e-03
+## positionL+:SPHEROIDAR=1.3  0.02525311  0.1514062  0.1667904 8.677482e-01
+## positionR+:SPHEROIDAR=1.3 -0.38612424  0.1472270 -2.6226465 9.578944e-03
+## positionL+:SPHEROIDAR=1.1 -0.26579735  0.2331052 -1.1402465 2.559091e-01
+## positionR+:SPHEROIDAR=1.1  0.01707285  0.2096125  0.0814496 9.351875e-01
 ##                                2.5 %      97.5 %
-## (Intercept)                1.9438654  2.42191590
-## positionCT                -0.8909299 -0.20755538
-## positionTC:SPHEROIDAR=1.3 -0.6769110 -0.09533746
-## positionCT:SPHEROIDAR=1.3 -0.2737882  0.32429439
-## positionTC:SPHEROIDAR=1.1 -0.3969311  0.43107675
-## positionCT:SPHEROIDAR=1.1 -0.7262015  0.19460681</code></pre>
+## (Intercept)                1.3894818  1.87781416
+## positionR+                 0.2075554  0.89092995
+## positionL+:SPHEROIDAR=1.3 -0.2737882  0.32429439
+## positionR+:SPHEROIDAR=1.3 -0.6769110 -0.09533746
+## positionL+:SPHEROIDAR=1.1 -0.7262015  0.19460681
+## positionR+:SPHEROIDAR=1.1 -0.3969311  0.43107675</code></pre>
 <pre class="r"><code>write.csv(lm_range_clutter_coeff, file.path(stat_path, &quot;ARall_B1_decision_range_clutter_coeff.csv&quot;))</code></pre>
 </div>
 </div>
@@ -500,8 +506,8 @@ lm_range_clutter_coeff</code></pre>
 <h2>Post hoc analysis</h2>
 <div id="time-at-decision-to-touch-1" class="section level3">
 <h3>Time at decision to touch</h3>
-<div id="position-tc-vs-ct" class="section level4">
-<h4>Position (TC vs CT)</h4>
+<div id="position-r-vs-l" class="section level4">
+<h4>Position (R+ vs L+)</h4>
 <pre class="r"><code># emmeans table
 emm_time = emmeans(lm_time, ~position, type=&quot;response&quot;)</code></pre>
 <pre><code>## NOTE: A nesting structure was detected in the fitted model:
@@ -509,8 +515,8 @@ emm_time = emmeans(lm_time, ~position, type=&quot;response&quot;)</code></pre>
 <pre><code>## NOTE: Results may be misleading due to involvement in interactions</code></pre>
 <pre class="r"><code>emm_time</code></pre>
 <pre><code>##  position emmean     SE  df lower.CL upper.CL
-##  TC         3.25 0.0877 158     3.08     3.43
-##  CT         2.64 0.0968 158     2.45     2.83
+##  L+         2.64 0.0968 158     2.45     2.83
+##  R+         3.25 0.0877 158     3.08     3.43
 ## 
 ## Results are averaged over the levels of: SPHEROID 
 ## Confidence level used: 0.95</code></pre>
@@ -518,8 +524,8 @@ emm_time = emmeans(lm_time, ~position, type=&quot;response&quot;)</code></pre>
 <pre class="r"><code># contrast table with confidence level
 s = summary(contrast(emm_time, method=&quot;revpairwise&quot;, type=&quot;response&quot;, level=0.95), infer=TRUE)
 s</code></pre>
-<pre><code>##  contrast estimate    SE  df lower.CL upper.CL t.ratio p.value
-##  CT - TC    -0.617 0.131 158   -0.875   -0.359  -4.723  &lt;.0001
+<pre><code>##  contrast    estimate    SE  df lower.CL upper.CL t.ratio p.value
+##  (R+) - (L+)    0.617 0.131 158    0.359    0.875   4.723  &lt;.0001
 ## 
 ## Results are averaged over the levels of: SPHEROID 
 ## Confidence level used: 0.95</code></pre>
@@ -531,30 +537,30 @@ s</code></pre>
 <pre><code>## NOTE: A nesting structure was detected in the fitted model:
 ##     SPHEROID %in% position</code></pre>
 <pre class="r"><code>emm_time_2level</code></pre>
-<pre><code>## position = TC:
-##  SPHEROID emmean     SE  df lower.CL upper.CL
-##  AR=2.9     3.30 0.1411 158     3.02     3.58
-##  AR=1.3     3.17 0.0978 158     2.98     3.36
-##  AR=1.1     3.30 0.1996 158     2.90     3.69
-## 
-## position = CT:
+<pre><code>## position = L+:
 ##  SPHEROID emmean     SE  df lower.CL upper.CL
 ##  AR=2.9     2.38 0.1441 158     2.09     2.66
 ##  AR=1.3     2.89 0.1019 158     2.68     3.09
 ##  AR=1.1     2.65 0.2304 158     2.20     3.11
+## 
+## position = R+:
+##  SPHEROID emmean     SE  df lower.CL upper.CL
+##  AR=2.9     3.30 0.1411 158     3.02     3.58
+##  AR=1.3     3.17 0.0978 158     2.98     3.36
+##  AR=1.1     3.30 0.1996 158     2.90     3.69
 ## 
 ## Confidence level used: 0.95</code></pre>
 <pre class="r"><code>write.csv(emm_time_2level, file=file.path(stat_path, &quot;ARall_A_decision_time_spheroid_emmeans.csv&quot;), row.names=FALSE)</code></pre>
 <pre class="r"><code># contrast table with confidence level
 s = summary(contrast(emm_time_2level, method=&quot;pairwise&quot;, type=&quot;response&quot;, level=0.95), infer=TRUE)
 s</code></pre>
-<pre><code>## position = CT:
+<pre><code>## position = L+:
 ##  contrast        estimate    SE  df lower.CL upper.CL t.ratio p.value
 ##  AR=2.9 - AR=1.3 -0.50929 0.177 158   -1.019 4.35e-05  -2.885  0.0500
 ##  AR=2.9 - AR=1.1 -0.27430 0.272 158   -1.058 5.10e-01  -1.009  0.9143
 ##  AR=1.3 - AR=1.1  0.23498 0.252 158   -0.492 9.62e-01   0.933  0.9375
 ## 
-## position = TC:
+## position = R+:
 ##  contrast        estimate    SE  df lower.CL upper.CL t.ratio p.value
 ##  AR=2.9 - AR=1.3  0.12861 0.172 158   -0.367 6.24e-01   0.749  0.9753
 ##  AR=2.9 - AR=1.1  0.00321 0.244 158   -0.702 7.08e-01   0.013  1.0000
@@ -568,8 +574,8 @@ s</code></pre>
 </div>
 <div id="range-to-sphere-target-at-decision" class="section level3">
 <h3>Range to sphere (target) at decision</h3>
-<div id="position-tc-vs-ct-1" class="section level4">
-<h4>Position (TC vs CT)</h4>
+<div id="position-r-vs-l-1" class="section level4">
+<h4>Position (R+ vs L+)</h4>
 <pre class="r"><code># emmeans table
 emm_range_target = emmeans(lm_range_target, ~position, type=&quot;response&quot;)</code></pre>
 <pre><code>## NOTE: A nesting structure was detected in the fitted model:
@@ -577,8 +583,8 @@ emm_range_target = emmeans(lm_range_target, ~position, type=&quot;response&quot;
 <pre><code>## NOTE: Results may be misleading due to involvement in interactions</code></pre>
 <pre class="r"><code>emm_range_target</code></pre>
 <pre><code>##  position emmean     SE  df lower.CL upper.CL
-##  TC         2.15 0.0687 158     2.01     2.29
-##  CT         1.46 0.0757 158     1.31     1.61
+##  L+         1.46 0.0757 158     1.31     1.61
+##  R+         2.15 0.0687 158     2.01     2.29
 ## 
 ## Results are averaged over the levels of: SPHEROID 
 ## Confidence level used: 0.95</code></pre>
@@ -586,8 +592,8 @@ emm_range_target = emmeans(lm_range_target, ~position, type=&quot;response&quot;
 <pre class="r"><code># contrast table with confidence level
 s = summary(contrast(emm_range_target, method=&quot;revpairwise&quot;, type=&quot;response&quot;, level=0.95), infer=TRUE)
 s</code></pre>
-<pre><code>##  contrast estimate    SE  df lower.CL upper.CL t.ratio p.value
-##  CT - TC    -0.687 0.102 158   -0.889   -0.485  -6.721  &lt;.0001
+<pre><code>##  contrast    estimate    SE  df lower.CL upper.CL t.ratio p.value
+##  (R+) - (L+)    0.687 0.102 158    0.485    0.889   6.721  &lt;.0001
 ## 
 ## Results are averaged over the levels of: SPHEROID 
 ## Confidence level used: 0.95</code></pre>
@@ -599,30 +605,30 @@ s</code></pre>
 <pre><code>## NOTE: A nesting structure was detected in the fitted model:
 ##     SPHEROID %in% position</code></pre>
 <pre class="r"><code>emm_range_target_2level</code></pre>
-<pre><code>## position = TC:
-##  SPHEROID emmean     SE  df lower.CL upper.CL
-##  AR=2.9     2.15 0.1105 158     1.93     2.37
-##  AR=1.3     2.03 0.0765 158     1.88     2.18
-##  AR=1.1     2.27 0.1562 158     1.96     2.58
-## 
-## position = CT:
+<pre><code>## position = L+:
 ##  SPHEROID emmean     SE  df lower.CL upper.CL
 ##  AR=2.9     1.35 0.1128 158     1.13     1.58
 ##  AR=1.3     1.58 0.0798 158     1.42     1.73
 ##  AR=1.1     1.46 0.1804 158     1.10     1.81
+## 
+## position = R+:
+##  SPHEROID emmean     SE  df lower.CL upper.CL
+##  AR=2.9     2.15 0.1105 158     1.93     2.37
+##  AR=1.3     2.03 0.0765 158     1.88     2.18
+##  AR=1.1     2.27 0.1562 158     1.96     2.58
 ## 
 ## Confidence level used: 0.95</code></pre>
 <pre class="r"><code>write.csv(emm_range_target_2level, file=file.path(stat_path, &quot;ARall_B1_decision_range_target_spheroid_emmeans.csv&quot;), row.names=FALSE)</code></pre>
 <pre class="r"><code># contrast table with confidence level
 s = summary(contrast(emm_range_target_2level, method=&quot;pairwise&quot;, type=&quot;response&quot;, level=0.95), infer=TRUE)
 s</code></pre>
-<pre><code>## position = CT:
+<pre><code>## position = L+:
 ##  contrast        estimate    SE  df lower.CL upper.CL t.ratio p.value
 ##  AR=2.9 - AR=1.3   -0.223 0.138 158   -0.622    0.176  -1.612  0.5917
 ##  AR=2.9 - AR=1.1   -0.105 0.213 158   -0.719    0.509  -0.493  0.9964
 ##  AR=1.3 - AR=1.1    0.118 0.197 158   -0.451    0.687   0.597  0.9911
 ## 
-## position = TC:
+## position = R+:
 ##  contrast        estimate    SE  df lower.CL upper.CL t.ratio p.value
 ##  AR=2.9 - AR=1.3    0.118 0.134 158   -0.270    0.506   0.878  0.9512
 ##  AR=2.9 - AR=1.1   -0.119 0.191 158   -0.670    0.433  -0.619  0.9895
@@ -636,8 +642,8 @@ s</code></pre>
 </div>
 <div id="range-to-spheroid-clutter-at-decision" class="section level3">
 <h3>Range to spheroid (clutter) at decision</h3>
-<div id="position-tc-vs-ct-2" class="section level4">
-<h4>Position (TC vs CT)</h4>
+<div id="position-r-vs-l-2" class="section level4">
+<h4>Position (R+ vs L+)</h4>
 <pre class="r"><code># emmeans table
 emm_range_clutter = emmeans(lm_range_clutter, ~position, type=&quot;response&quot;)</code></pre>
 <pre><code>## NOTE: A nesting structure was detected in the fitted model:
@@ -645,8 +651,8 @@ emm_range_clutter = emmeans(lm_range_clutter, ~position, type=&quot;response&quo
 <pre><code>## NOTE: Results may be misleading due to involvement in interactions</code></pre>
 <pre class="r"><code>emm_range_clutter</code></pre>
 <pre><code>##  position emmean     SE  df lower.CL upper.CL
-##  TC         2.06 0.0753 158     1.91     2.21
-##  CT         1.55 0.0830 158     1.39     1.72
+##  L+         1.55 0.0830 158     1.39     1.72
+##  R+         2.06 0.0753 158     1.91     2.21
 ## 
 ## Results are averaged over the levels of: SPHEROID 
 ## Confidence level used: 0.95</code></pre>
@@ -654,8 +660,8 @@ emm_range_clutter = emmeans(lm_range_clutter, ~position, type=&quot;response&quo
 <pre class="r"><code># contrast table with confidence level
 s = summary(contrast(emm_range_clutter, method=&quot;revpairwise&quot;, type=&quot;response&quot;, level=0.95), infer=TRUE)
 s</code></pre>
-<pre><code>##  contrast estimate    SE  df lower.CL upper.CL t.ratio p.value
-##  CT - TC    -0.506 0.112 158   -0.728   -0.285  -4.520  &lt;.0001
+<pre><code>##  contrast    estimate    SE  df lower.CL upper.CL t.ratio p.value
+##  (R+) - (L+)    0.506 0.112 158    0.285    0.728   4.520  &lt;.0001
 ## 
 ## Results are averaged over the levels of: SPHEROID 
 ## Confidence level used: 0.95</code></pre>
@@ -667,30 +673,30 @@ s</code></pre>
 <pre><code>## NOTE: A nesting structure was detected in the fitted model:
 ##     SPHEROID %in% position</code></pre>
 <pre class="r"><code>emm_range_clutter_2level</code></pre>
-<pre><code>## position = TC:
-##  SPHEROID emmean     SE  df lower.CL upper.CL
-##  AR=2.9     2.18 0.1210 158    1.944     2.42
-##  AR=1.3     1.80 0.0838 158    1.631     1.96
-##  AR=1.1     2.20 0.1711 158    1.862     2.54
-## 
-## position = CT:
+<pre><code>## position = L+:
 ##  SPHEROID emmean     SE  df lower.CL upper.CL
 ##  AR=2.9     1.63 0.1236 158    1.389     1.88
 ##  AR=1.3     1.66 0.0874 158    1.486     1.83
 ##  AR=1.1     1.37 0.1976 158    0.978     1.76
+## 
+## position = R+:
+##  SPHEROID emmean     SE  df lower.CL upper.CL
+##  AR=2.9     2.18 0.1210 158    1.944     2.42
+##  AR=1.3     1.80 0.0838 158    1.631     1.96
+##  AR=1.1     2.20 0.1711 158    1.862     2.54
 ## 
 ## Confidence level used: 0.95</code></pre>
 <pre class="r"><code>write.csv(emm_range_clutter_2level, file=file.path(stat_path, &quot;ARall_B2_decision_range_clutter_spheroid_emmeans.csv&quot;), row.names=FALSE)</code></pre>
 <pre class="r"><code># contrast table with confidence level
 s = summary(contrast(emm_range_clutter_2level, method=&quot;pairwise&quot;, type=&quot;response&quot;, level=0.95), infer=TRUE)
 s</code></pre>
-<pre><code>## position = CT:
+<pre><code>## position = L+:
 ##  contrast        estimate    SE  df lower.CL upper.CL t.ratio p.value
 ##  AR=2.9 - AR=1.3  -0.0253 0.151 158  -0.4621    0.412  -0.167  1.0000
 ##  AR=2.9 - AR=1.1   0.2658 0.233 158  -0.4067    0.938   1.140  0.8638
 ##  AR=1.3 - AR=1.1   0.2911 0.216 158  -0.3324    0.914   1.347  0.7583
 ## 
-## position = TC:
+## position = R+:
 ##  contrast        estimate    SE  df lower.CL upper.CL t.ratio p.value
 ##  AR=2.9 - AR=1.3   0.3861 0.147 158  -0.0386    0.811   2.623  0.0978
 ##  AR=2.9 - AR=1.1  -0.0171 0.210 158  -0.6218    0.588  -0.081  1.0000
@@ -708,7 +714,7 @@ s</code></pre>
 <pre class="r"><code>sessionInfo()</code></pre>
 <pre><code>## R version 4.3.0 (2023-04-21)
 ## Platform: aarch64-apple-darwin20 (64-bit)
-## Running under: macOS Ventura 13.3
+## Running under: macOS Ventura 13.6.3
 ## 
 ## Matrix products: default
 ## BLAS:   /Library/Frameworks/R.framework/Versions/4.3-arm64/Resources/lib/libRblas.0.dylib 
@@ -717,7 +723,7 @@ s</code></pre>
 ## locale:
 ## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
 ## 
-## time zone: America/Los_Angeles
+## time zone: America/Vancouver
 ## tzcode source: internal
 ## 
 ## attached base packages:

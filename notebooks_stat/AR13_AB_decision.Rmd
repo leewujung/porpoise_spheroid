@@ -1,5 +1,5 @@
 ---
-title: "AR=1.3 spheroid clusters comparison: time and range at decision"
+title: "AR=1.3 spheroid clusters comparison: Decision time and range to targets"
 output: html_document
 date: "`r Sys.Date()`"
 editor_options:
@@ -10,7 +10,7 @@ editor_options:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-This notebook uses data summary file `data_processed/data_summary/data_summary_cluster_only.csv`. The comparison is across 3 clusters (Straight, Curved-1, Curved-2) with each nested under the TC/CT scenarios.
+This notebook uses data summary file `data_processed/data_summary/data_summary_cluster_only.csv`. The comparison is across 3 clusters (Straight, Curved-1, Curved-2) with each nested under the R+/L+ scenarios.
 
 
 
@@ -55,7 +55,13 @@ df_cluster = df_cluster %>%
   separate(cluster, c("position","cluster"), sep="_", remove=FALSE) %>%
   mutate(SPHEROID = factor(SPHEROID)) %>%
   mutate(position = factor(position, levels = c("TC", "CT"))) %>%
-  mutate(cluster = factor(cluster, levels = c("Straight", "Curved-1", "Curved-2")))
+  mutate(cluster = factor(cluster, levels = c("Straight", "Curved-1", "Curved-2"))) %>%
+  mutate(
+    position = case_when(
+      position == "TC" ~ "R+",
+      .default = "L+"
+    )
+  )
 ```
 
 
@@ -99,7 +105,7 @@ write.csv(lm_range_clutter_coeff, file.path(stat_path, "AR13_B2_decision_range_c
 
 ### Time at decision to touch
 
-#### Position (TC vs CT)
+#### Position (R+ vs L+)
 ```{r}
 # emmeans table
 emm_time = emmeans(lm_time, ~position, type="response")
@@ -125,7 +131,7 @@ write.csv(emm_time_2level, file=file.path(stat_path, "AR13_A_decision_time_clust
 
 ```{r}
 # contrast table with confidence level
-s = summary(contrast(emm_time_2level, method="pairwise", type="response", level=0.95), infer=TRUE)
+s = summary(contrast(emm_time_2level, method="revpairwise", type="response", level=0.95), infer=TRUE)
 s
 write.csv(s, file=file.path(stat_path, "AR13_A_decision_time_cluster_contrast.csv"), row.names=FALSE)
 ```
@@ -133,7 +139,7 @@ write.csv(s, file=file.path(stat_path, "AR13_A_decision_time_cluster_contrast.cs
 
 ### Range to sphere (target) at decision
 
-#### Position (TC vs CT)
+#### Position (R+ vs L+)
 ```{r}
 # emmeans table
 emm_range_target = emmeans(lm_range_target, ~position, type="response")
@@ -163,7 +169,7 @@ write.csv(
 
 ```{r}
 # contrast table with confidence level
-s = summary(contrast(emm_range_target_2level, method="pairwise", type="response", level=0.95), infer=TRUE)
+s = summary(contrast(emm_range_target_2level, method="revpairwise", type="response", level=0.95), infer=TRUE)
 s
 write.csv(s, file=file.path(stat_path, "AR13_B1_decision_range_target_cluster_contrast.csv"), row.names=FALSE)
 ```
@@ -171,7 +177,7 @@ write.csv(s, file=file.path(stat_path, "AR13_B1_decision_range_target_cluster_co
 
 ### Range to spheroid (clutter) at decision
 
-#### Position (TC vs CT)
+#### Position (R+ vs L+)
 ```{r}
 # emmeans table
 emm_range_clutter = emmeans(lm_range_clutter, ~position, type="response")
@@ -201,7 +207,7 @@ write.csv(
 
 ```{r}
 # contrast table with confidence level
-s = summary(contrast(emm_range_clutter_2level, method="pairwise", type="response", level=0.95), infer=TRUE)
+s = summary(contrast(emm_range_clutter_2level, method="revpairwise", type="response", level=0.95), infer=TRUE)
 s
 write.csv(s, file=file.path(stat_path, "AR13_B2_decision_range_clutter_cluster_contrast.csv"), row.names=FALSE)
 ```
