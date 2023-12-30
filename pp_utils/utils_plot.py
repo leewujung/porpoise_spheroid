@@ -32,12 +32,12 @@ STAT_CONTRAST_RATIO_AR = [
 ] * 2
 
 STAT_CONTRAST_STR_AR = [
-    "TC: AR=2.9 vs AR=1.3",
-    "TC: AR=2.9 vs AR=1.1",
-    "TC: AR=1.3 vs AR=1.1",
-    "CT: AR=2.9 vs AR=1.3",
-    "CT: AR=2.9 vs AR=1.1",
-    "CT: AR=1.3 vs AR=1.1",
+    "R+: AR=2.9 vs AR=1.3",
+    "R+: AR=2.9 vs AR=1.1",
+    "R+: AR=1.3 vs AR=1.1",
+    "L+: AR=2.9 vs AR=1.3",
+    "L+: AR=2.9 vs AR=1.1",
+    "L+: AR=1.3 vs AR=1.1",
 ]
 
 # Between AR=1.3 clusters
@@ -112,8 +112,8 @@ def get_p_star(p_val, p_range=[0.05, 0.01, 0.001, 0.0001]):
 
 def add_TCCT_text(ax: plt.Axes, y_height: float=1.02):
     ylim = ax.get_ylim()
-    ax.text(1, ylim[1]*y_height, "TC", fontsize=14, ha="center", fontweight="bold")
-    ax.text(4, ylim[1]*y_height, "CT", fontsize=14, ha="center", fontweight="bold")
+    ax.text(1, ylim[1]*y_height, "R+", fontsize=14, ha="center", fontweight="bold")
+    ax.text(4, ylim[1]*y_height, "L+", fontsize=14, ha="center", fontweight="bold")
 
 
 def annotate_p_val_cluster(
@@ -275,8 +275,8 @@ def annotate_p_val_scan(
 
     # TC vs CT
     tcct_str = (
-        f"R+ v. L+: {p_val_position}" if star_only
-        else f"R+ v. C+: {p_val_position:2.2E}"
+        f"R+ vs L+: {p_val_position}" if star_only
+        else f"R+ vs L+: {p_val_position:2.2E}"
     )
     ax.text(
         horz_text_left, vert_text, tcct_str,
