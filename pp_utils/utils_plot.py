@@ -15,7 +15,7 @@ STAT_FILENAME_MIDDLE = {
 
 STAT_PLOT_XPOS = [[0, 1], [0, 2], [1, 2], [3, 4], [3, 5], [4, 5]]
 
-STAT_POSITION = ["TC"] * 3 + ["CT"] * 3
+STAT_POSITION = ["R+"] * 3 + ["L+"] * 3
 
 
 # Between spheroids
@@ -42,24 +42,24 @@ STAT_CONTRAST_STR_AR = [
 
 # Between AR=1.3 clusters
 STAT_CONTRAST_DIFF = [
-    "Straight - (Curved-1)",
-    "Straight - (Curved-2)",
-    "(Curved-1) - (Curved-2)",
+    "(Curved-1) - Straight",
+    "(Curved-2) - Straight",
+    "(Curved-2) - (Curved-1)",
 ] * 2
 
 STAT_CONTRAST_RATIO = [
-    "Straight / (Curved-1)",
-    "Straight / (Curved-2)",
-    "(Curved-1) / (Curved-2)",
+    "(Curved-1) / Straight",
+    "(Curved-2) / Straight",
+    "(Curved-2) / (Curved-1)",
 ] * 2
 
 STAT_CONTRAST_STR = [
-    "R+/Straight vs R+/Curved-1",
-    "R+/Straight vs R+/Curved-2",
-    "R+/Curved-1 vs R+/Curved-2",
-    "L+/Straight vs L+/Curved-1",
-    "L+/Straight vs L+/Curved-2",
-    "L+/Curved-1 vs L+/Curved-2",
+    "R+/Curved-1 vs R+/Straight",
+    "R+/Curved-2 vs R+/Straight",
+    "R+/Curved-2 vs R+/Curved-1",
+    "L+/Curved-1 vs L+/Straight",
+    "L+/Curved-2 vs L+/Straight",
+    "L+/Curved-2 vs L+/Curved-1",
 ]
 
 

@@ -438,24 +438,25 @@ df = df %&gt;%
 <h2>Linear models</h2>
 <div id="time-at-buzz-onset-to-touch" class="section level3">
 <h3>Time at buzz onset to touch</h3>
-<pre class="r"><code>glm_time = lm(time_buzz2touch ~ position + position:SPHEROID, data=df)
+<pre class="r"><code>glm_time = glm(time_buzz2touch ~ position + position:SPHEROID, data=df, family=Gamma(link=&quot;log&quot;))
 
-glm_time_coeff = cbind(coef(summary(glm_time)), confint(glm_time))
-glm_time_coeff</code></pre>
-<pre><code>##                             Estimate Std. Error    t value     Pr(&gt;|t|)
-## (Intercept)               1.69452195  0.1414658 11.9783193 6.204267e-24
-## positionR+                0.06462602  0.1979678  0.3264471 7.445181e-01
-## positionL+:SPHEROIDAR=1.3 0.57519245  0.1732595  3.3198330 1.118460e-03
-## positionR+:SPHEROIDAR=1.3 0.49089862  0.1684769  2.9137437 4.089488e-03
-## positionL+:SPHEROIDAR=1.1 0.97558241  0.2667504  3.6572859 3.467437e-04
-## positionR+:SPHEROIDAR=1.1 0.50048470  0.2398669  2.0865105 3.853865e-02
+glm_time_coeff = cbind(coef(summary(glm_time)), confint(glm_time))</code></pre>
+<pre><code>## Waiting for profiling to be done...</code></pre>
+<pre class="r"><code>glm_time_coeff</code></pre>
+<pre><code>##                             Estimate Std. Error   t value     Pr(&gt;|t|)
+## (Intercept)               0.52740067 0.06333433 8.3272476 3.713976e-14
+## positionR+                0.03742892 0.08863036 0.4223036 6.733776e-01
+## positionL+:SPHEROIDAR=1.3 0.29225334 0.07756840 3.7676856 2.321782e-04
+## positionR+:SPHEROIDAR=1.3 0.24612134 0.07542726 3.2630288 1.350959e-03
+## positionL+:SPHEROIDAR=1.1 0.45471689 0.11942436 3.8075723 2.004295e-04
+## positionR+:SPHEROIDAR=1.1 0.25037268 0.10738859 2.3314646 2.099176e-02
 ##                                 2.5 %    97.5 %
-## (Intercept)                1.41511407 1.9739298
-## positionR+                -0.32637867 0.4556307
-## positionL+:SPHEROIDAR=1.3  0.23298907 0.9173958
-## positionR+:SPHEROIDAR=1.3  0.15814115 0.8236561
-## positionL+:SPHEROIDAR=1.1  0.44872585 1.5024390
-## positionR+:SPHEROIDAR=1.1  0.02672558 0.9742438</code></pre>
+## (Intercept)                0.40578612 0.6541600
+## positionR+                -0.13650033 0.2111437
+## positionL+:SPHEROIDAR=1.3  0.13885911 0.4430741
+## positionR+:SPHEROIDAR=1.3  0.09693385 0.3927440
+## positionL+:SPHEROIDAR=1.1  0.22436940 0.6930764
+## positionR+:SPHEROIDAR=1.1  0.04215995 0.4635204</code></pre>
 <pre class="r"><code>write.csv(glm_time_coeff, file.path(stat_path, &quot;ARall_C_buzz_time_coeff.csv&quot;))</code></pre>
 </div>
 <div id="range-to-sphere-target-at-buzz-onset" class="section level3">
@@ -493,21 +494,24 @@ emm_time = emmeans(glm_time, ~position, type=&quot;response&quot;)</code></pre>
 ##     SPHEROID %in% position</code></pre>
 <pre><code>## NOTE: Results may be misleading due to involvement in interactions</code></pre>
 <pre class="r"><code>emm_time</code></pre>
-<pre><code>##  position emmean     SE  df lower.CL upper.CL
-##  L+         2.21 0.0950 158     2.02     2.40
-##  R+         2.09 0.0861 158     1.92     2.26
+<pre><code>##  position response     SE  df lower.CL upper.CL
+##  L+           2.17 0.0924 158     2.00     2.36
+##  R+           2.08 0.0800 158     1.92     2.24
 ## 
 ## Results are averaged over the levels of: SPHEROID 
-## Confidence level used: 0.95</code></pre>
+## Confidence level used: 0.95 
+## Intervals are back-transformed from the log scale</code></pre>
 <pre class="r"><code>write.csv(emm_time, file=file.path(stat_path, &quot;ARall_C_buzz_time_position_emmeans.csv&quot;), row.names=FALSE)</code></pre>
 <pre class="r"><code># contrast table with confidence level
 s = summary(contrast(emm_time, method=&quot;revpairwise&quot;, type=&quot;response&quot;, level=0.95), infer=TRUE)
 s</code></pre>
-<pre><code>##  contrast    estimate    SE  df lower.CL upper.CL t.ratio p.value
-##  (R+) - (L+)   -0.122 0.128 158   -0.375    0.131  -0.950  0.3434
+<pre><code>##  contrast    ratio     SE  df lower.CL upper.CL null t.ratio p.value
+##  (R+) / (L+) 0.955 0.0548 158    0.853     1.07    1  -0.803  0.4234
 ## 
 ## Results are averaged over the levels of: SPHEROID 
-## Confidence level used: 0.95</code></pre>
+## Confidence level used: 0.95 
+## Intervals are back-transformed from the log scale 
+## Tests are performed on the log scale</code></pre>
 <pre class="r"><code>write.csv(s, file=file.path(stat_path, &quot;ARall_C_buzz_time_position_contrast.csv&quot;), row.names=FALSE)</code></pre>
 </div>
 <div id="spheroid" class="section level4">
@@ -517,37 +521,40 @@ s</code></pre>
 ##     SPHEROID %in% position</code></pre>
 <pre class="r"><code>emm_time_2level</code></pre>
 <pre><code>## position = L+:
-##  SPHEROID emmean     SE  df lower.CL upper.CL
-##  AR=2.9     1.69 0.1415 158     1.42     1.97
-##  AR=1.3     2.27 0.1000 158     2.07     2.47
-##  AR=1.1     2.67 0.2261 158     2.22     3.12
+##  SPHEROID response     SE  df lower.CL upper.CL
+##  AR=2.9       1.69 0.1073 158     1.50     1.92
+##  AR=1.3       2.27 0.1016 158     2.08     2.48
+##  AR=1.1       2.67 0.2703 158     2.19     3.26
 ## 
 ## position = R+:
-##  SPHEROID emmean     SE  df lower.CL upper.CL
-##  AR=2.9     1.76 0.1385 158     1.49     2.03
-##  AR=1.3     2.25 0.0959 158     2.06     2.44
-##  AR=1.1     2.26 0.1959 158     1.87     2.65
+##  SPHEROID response     SE  df lower.CL upper.CL
+##  AR=2.9       1.76 0.1091 158     1.56     1.99
+##  AR=1.3       2.25 0.0967 158     2.07     2.45
+##  AR=1.1       2.26 0.1981 158     1.90     2.69
 ## 
-## Confidence level used: 0.95</code></pre>
+## Confidence level used: 0.95 
+## Intervals are back-transformed from the log scale</code></pre>
 <pre class="r"><code>write.csv(emm_time_2level, file=file.path(stat_path, &quot;ARall_C_buzz_time_spheroid_emmeans.csv&quot;), row.names=FALSE)</code></pre>
 <pre class="r"><code># contrast table with confidence level
 s = summary(contrast(emm_time_2level, method=&quot;pairwise&quot;, type=&quot;response&quot;, level=0.95), infer=TRUE)
 s</code></pre>
 <pre><code>## position = L+:
-##  contrast        estimate    SE  df lower.CL upper.CL t.ratio p.value
-##  AR=2.9 - AR=1.3 -0.57519 0.173 158   -1.075 -0.07534  -3.320  0.0140
-##  AR=2.9 - AR=1.1 -0.97558 0.267 158   -1.745 -0.20600  -3.657  0.0046
-##  AR=1.3 - AR=1.1 -0.40039 0.247 158   -1.114  0.31303  -1.619  0.5872
+##  contrast        ratio     SE  df lower.CL upper.CL null t.ratio p.value
+##  AR=2.9 / AR=1.3 0.747 0.0579 158    0.597    0.934    1  -3.768  0.0031
+##  AR=2.9 / AR=1.1 0.635 0.0758 158    0.450    0.896    1  -3.808  0.0027
+##  AR=1.3 / AR=1.1 0.850 0.0941 158    0.618    1.170    1  -1.467  0.6854
 ## 
 ## position = R+:
-##  contrast        estimate    SE  df lower.CL upper.CL t.ratio p.value
-##  AR=2.9 - AR=1.3 -0.49090 0.168 158   -0.977 -0.00484  -2.914  0.0462
-##  AR=2.9 - AR=1.1 -0.50048 0.240 158   -1.193  0.19153  -2.087  0.2997
-##  AR=1.3 - AR=1.1 -0.00959 0.218 158   -0.639  0.61961  -0.044  1.0000
+##  contrast        ratio     SE  df lower.CL upper.CL null t.ratio p.value
+##  AR=2.9 / AR=1.3 0.782 0.0590 158    0.629    0.972    1  -3.263  0.0167
+##  AR=2.9 / AR=1.1 0.779 0.0836 158    0.571    1.061    1  -2.331  0.1878
+##  AR=1.3 / AR=1.1 0.996 0.0972 158    0.751    1.320    1  -0.044  1.0000
 ## 
 ## Confidence level used: 0.95 
 ## Conf-level adjustment: tukey method for comparing a family of 6 estimates 
-## P value adjustment: tukey method for comparing a family of 6 estimates</code></pre>
+## Intervals are back-transformed from the log scale 
+## P value adjustment: tukey method for comparing a family of 6 estimates 
+## Tests are performed on the log scale</code></pre>
 <pre class="r"><code>write.csv(s, file=file.path(stat_path, &quot;ARall_C_buzz_time_spheroid_contrast.csv&quot;), row.names=FALSE)</code></pre>
 </div>
 </div>

@@ -79,7 +79,7 @@ df = df %>%
 
 ### Time at buzz onset to touch
 ```{r}
-glm_time = lm(time_buzz2touch ~ position + position:SPHEROID, data=df)
+glm_time = glm(time_buzz2touch ~ position + position:SPHEROID, data=df, family=Gamma(link="log"))
 
 glm_time_coeff = cbind(coef(summary(glm_time)), confint(glm_time))
 glm_time_coeff
