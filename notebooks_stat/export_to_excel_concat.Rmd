@@ -1,5 +1,5 @@
 ---
-title: "AR=1.3 spheroid clusters comparison: time and range at buzz onset"
+title: "Concatenate and export statistics to excel"
 output: html_document
 date: "`r Sys.Date()`"
 editor_options:
@@ -11,7 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 This notebook concatenate statistical results into a big table for:
-- the comparisons across trials involving different spheroids
+- the comparisons across trials with different spheroids
 - the comparisons across AR=1.3 clusters.
 
 
@@ -71,8 +71,7 @@ spheroid_position_list = list(
   "B_pos_decision_dist_spheroid" =    "ARall_B2_decision_range_clutter_position_contrast.csv",
   "C_pos_buzz_time" =                 "ARall_C_buzz_time_position_contrast.csv",
   "D_pos_buzz_range" =                "ARall_D_buzz_range_position_contrast.csv",
-  "E_pos_scan_to_sphere" =            "ARall_E_scan_ch0_position_contrast.csv",
-  "F_pos_scan_to_spheroid" =          "ARall_F_scan_ch1_position_contrast.csv"
+  "pos_scan_combind" =                "ARall_scan_combined_position_contrast.csv"
 )
 ```
 
@@ -89,8 +88,8 @@ for (f in names(spheroid_position_list)) {
 df_all = bind_rows(spheroid_position_list) %>%
   add_column(
     fig.panel = c(
-      "Fig. 9A", "Fig. 9B left", "Fig. 9B right",
-      "Fig. 9C", "Fig. 9D", "Fig. 9E", "Fig. 9F"
+      "Fig. S5A", "Fig. S5B left", "Fig. S5B right",
+      "Fig. S5C", "Fig. S5D", "Fig. S4"
     ), .before = "contrast"
   ) %>%
   rename("Fig panel" = "fig.panel",
@@ -116,20 +115,18 @@ spheroid_AR_list = list(
   "B_sph_decision_dist_to_spheroid" = "ARall_B2_decision_range_clutter_spheroid_contrast.csv",
   "C_sph_buzz_time" =                 "ARall_C_buzz_time_spheroid_contrast.csv",
   "D_sph_buzz_range" =                "ARall_D_buzz_range_spheroid_contrast.csv",
-  "E_sph_scan_sphere" =               "ARall_E_scan_ch0_spheroid_contrast.csv",
-  "F_sph_scan_spheroid" =             "ARall_F_scan_ch1_spheroid_contrast.csv"
+  "sph_scan_combined" =               "ARall_scan_combined_spheroid_contrast.csv"
 )
 ```
 
 ```{r}
 stat_spheroid_panel = list(
-  "A_sph_decision_time" =             "Fig. 9A",
-  "B_sph_decision_dist_to_sphere" =   "Fig. 9B left",
-  "B_sph_decision_dist_to_spheroid" = "Fig. 9B right",
-  "C_sph_buzz_time" =                 "Fig. 9C",
-  "D_sph_buzz_range" =                "Fig. 9D",
-  "E_sph_scan_sphere" =               "Fig. 9E",
-  "F_sph_scan_spheroid" =             "Fig. 9F"
+  "A_sph_decision_time" =             "Fig. S5A",
+  "B_sph_decision_dist_to_sphere" =   "Fig. S5B left",
+  "B_sph_decision_dist_to_spheroid" = "Fig. S5B right",
+  "C_sph_buzz_time" =                 "Fig. S5C",
+  "D_sph_buzz_range" =                "Fig. S5D",
+  "sph_scan_combined" =               "Fig. S4"
 )
 ```
 
@@ -174,8 +171,7 @@ ar13_position_list = list(
   "B_pos_decision_dist_spheroid" =    "AR13_B2_decision_range_clutter_position_contrast.csv",
   "C_pos_buzz_time" =                 "AR13_C_buzz_time_position_contrast.csv",
   "D_pos_buzz_range" =                "AR13_D_buzz_range_position_contrast.csv",
-  "E_pos_scan_to_sphere" =            "AR13_E_scan_ch0_position_contrast.csv",
-  "F_pos_scan_to_spheroid" =          "AR13_F_scan_ch1_position_contrast.csv"
+  "pos_scan_combined" =               "AR13_scan_combined_position_contrast.csv"
 )
 ```
 
@@ -192,8 +188,8 @@ for (f in names(ar13_position_list)) {
 df_all = bind_rows(ar13_position_list) %>%
   add_column(
     fig.panel = c(
-      "Fig. 8B", "Fig. 10A", "Fig. 10B left", "Fig. 10B right",
-      "Fig. 10C", "Fig. 10D", "Fig. 10E", "Fig. 10F"
+      "Fig. 6A", "Fig. S6A", "Fig. S6B left", "Fig. S6B right",
+      "Fig. S6C", "Fig. S6D", "Fig. 6B"
     ),
     .before = "contrast"
   ) %>%
@@ -222,21 +218,19 @@ ar13_cluster_list = list(
   "B_clu_decision_dist_to_spheroid" = "AR13_B2_decision_range_clutter_cluster_contrast.csv",
   "C_clu_buzz_time" =                 "AR13_C_buzz_time_cluster_contrast.csv",
   "D_clu_buzz_range" =                "AR13_D_buzz_range_cluster_contrast.csv",
-  "E_clu_scan_sphere" =               "AR13_E_scan_ch0_cluster_contrast.csv",
-  "F_clu_scan_spheroid" =             "AR13_F_scan_ch1_cluster_contrast.csv"
+  "clu_scan_combined" =               "AR13_scan_combined_cluster_contrast.csv"
 )
 ```
 
 ```{r}
 ar13_cluster_panel = list(
-  "last_scan_duration" =              "Fig. 8B",
-  "A_clu_decision_time" =             "Fig. 10A",
-  "B_clu_decision_dist_to_sphere" =   "Fig. 10B left",
-  "B_clu_decision_dist_to_spheroid" = "Fig. 10B right",
-  "C_clu_buzz_time" =                 "Fig. 10C",
-  "D_clu_buzz_range" =                "Fig. 10D",
-  "E_clu_scan_sphere" =               "Fig. 10E",
-  "F_clu_scan_spheroid" =             "Fig. 10F"
+  "last_scan_duration" =              "Fig. 6A",
+  "A_clu_decision_time" =             "Fig. S6A",
+  "B_clu_decision_dist_to_sphere" =   "Fig. S6B left",
+  "B_clu_decision_dist_to_spheroid" = "Fig. S6B right",
+  "C_clu_buzz_time" =                 "Fig. S6C",
+  "D_clu_buzz_range" =                "Fig. S6D",
+  "clu_scan_combined" =               "Fig. 6B"
 )
 ```
 
@@ -265,57 +259,6 @@ out_file = file.path(stat_path, "cmp_AR13_cluster.xlsx")
 write.xlsx(df_all, file = out_file)
 print(sprintf("Outputs written to %s", out_file))
 ```
-
-
-
-
-
-## Combined number of scans
-
-### TC vs CT comparisons
-```{r}
-df = read.csv(file=paste(stat_path, "ARall_S3_scan_position_contrast.csv", sep="/"))
-
-df = rename_estimate_ratio(df) %>%
-    add_column("p.annotation" = apply(df["p.value"], MARGIN = 1, FUN = get_p_star)) %>%
-  add_column(fig.panel = c("Fig. S3A"), .before = "contrast"
-  ) %>%
-  rename("Fig panel" = "fig.panel",
-         "Contrast" = "contrast",
-         "Estimate or ratio" = "estimate.or.ratio",
-         "Lower CL" = "lower.CL",
-         "Upper CL" = "upper.CL",
-         "T ratio" = "t.ratio",
-         "P value" = "p.value",
-         "Fig annotation" = "p.annotation")
-
-out_file = file.path(stat_path, "cmp_ARall_S3_position.xlsx")
-write.xlsx(df, file = out_file)
-print(sprintf("Outputs written to %s", out_file))
-```
-
-### AR comparisons
-```{r}
-df = read.csv(file=paste(stat_path, "ARall_S3_scan_spheroid_contrast.csv", sep="/"))
-
-df = rename_estimate_ratio(df) %>%
-    add_column("p.annotation" = apply(df["p.value"], MARGIN = 1, FUN = get_p_star)) %>%
-  add_column(fig.panel = c("Fig. S3A"), .before = "contrast"
-  ) %>%
-  rename("Fig panel" = "fig.panel",
-         "Contrast" = "contrast",
-         "Estimate or ratio" = "estimate.or.ratio",
-         "Lower CL" = "lower.CL",
-         "Upper CL" = "upper.CL",
-         "T ratio" = "t.ratio",
-         "P value" = "p.value",
-         "Fig annotation" = "p.annotation")
-
-out_file = file.path(stat_path, "cmp_ARall_S3_spheroid.xlsx")
-write.xlsx(df, file = out_file)
-print(sprintf("Outputs written to %s", out_file))
-```
-
 
 
 
