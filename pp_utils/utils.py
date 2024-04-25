@@ -71,6 +71,48 @@ def filter_clicks_close_before_last_scan(
     ]
 
 
+def filter_clicks_before_decision(
+    df_h: pd.DataFrame, th_RL: float, time_far_start: float, time_decision: float, **kwargs
+):
+    """
+    Select all clicks BEFORE the decision.
+    """
+    df_h = df_h[(df_h["RL"] > th_RL) & (df_h["before_touch"])]
+    
+    return df_h[
+        (df_h["time_corrected"] > time_far_start)
+        & (df_h["time_corrected"] < time_decision)  # before decision
+    ]
+
+
+def filter_clicks_before_last_scan(
+    df_h: pd.DataFrame, th_RL: float, time_far_start: float, time_last_scan_start: float, **kwargs
+):
+    """
+    Select all clicks BEFORE the decision.
+    """
+    df_h = df_h[(df_h["RL"] > th_RL) & (df_h["before_touch"])]
+    
+    return df_h[
+        (df_h["time_corrected"] > time_far_start)
+        & (df_h["time_corrected"] < time_last_scan_start)  # before last scan
+    ]
+
+
+def filter_clicks_during_last_scan(
+    df_h: pd.DataFrame, th_RL: float, time_last_scan_start: float, time_last_scan_end: float, **kwargs
+):
+    """
+    Select only clicks AFTER the animal reached a certain range but BEFORE the last scan.
+    """
+    df_h = df_h[(df_h["RL"] > th_RL) & (df_h["before_touch"])]
+    
+    return df_h[
+        (df_h["time_corrected"] > time_last_scan_start)  # start of last scan
+        & (df_h["time_corrected"] < time_last_scan_end)  # end of last scan
+    ]
+
+
 def sort_df_in_cluster(cluster_fp, df_all):
     """
     Consolidate entries in 1 cluster and
