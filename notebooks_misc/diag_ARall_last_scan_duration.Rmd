@@ -1,0 +1,115 @@
+---
+title: "All spheroids comparison: duration of last scan"
+output: html_document
+date: "`r Sys.Date()`"
+editor_options:
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+This notebook uses data summary file `data_processed/data_summary/data_summary_all.csv`. The comparison is across the 3 spheroids with different aspect ratios nested under the TC/CT scenarios.
+
+
+
+## Load libraries
+```{r}
+library(lme4)
+library(lmerTest)
+library(emmeans)
+library(DHARMa)
+library(tidyr)
+library(dplyr)
+```
+
+
+## Set up path
+```{r}
+main_path = "~/code_git/porpoise_spheroid"
+data_path = file.path(main_path, "data_processed/data_summary")
+stat_path = file.path(main_path, "stat")
+```
+
+Create `stat` folder if it does not already exist:
+```{r}
+if (!dir.exists(stat_path)){
+  dir.create(stat_path)
+}
+```
+
+
+## Load data
+```{r}
+df = read.csv(
+  file=paste(data_path, "data_summary_all.csv", sep="/")
+)
+
+# Get TC/CT position
+df = df %>%
+  separate(TARGET_ANGLE,  c("position"), sep=2, extra="drop", remove=FALSE) %>%
+  filter(position=="TC" | position=="CT") %>%
+  mutate(position=factor(position))
+```
+
+
+## Linear models
+
+### Duration of last scan
+```{r}
+lm_dura = lm(time_last_nonchosen ~ position + position:SPHEROID, data=df)
+summary(lm_dura)
+
+glm_dura = glm(time_last_nonchosen ~ position + position:SPHEROID, data=df, family=Gamma(link="log"))
+summary(glm_dura)
+```
+
+
+
+## Check the models
+
+### `lm` model
+```{r}
+sim_dura = simulateResiduals(fittedModel=lm_dura, n=250)
+plot(sim_dura, asFactor=FALSE)
+sim_dura_refit = simulateResiduals(fittedModel=lm_dura, n=250, refit=TRUE)
+lm_dura_test_dispersion = testDispersion(sim_dura_refit)
+```
+
+
+### `glm` model
+```{r}
+sim_dura_gamma = simulateResiduals(fittedModel=glm_dura, n=250)
+plot(sim_dura_gamma, asFactor=FALSE)
+sim_dura_gamma_refit = simulateResiduals(fittedModel=glm_dura, n=250, refit=TRUE)
+glm_dura_test_dispersion = testDispersion(sim_dura_gamma_refit)
+```
+
+We can see that the `glm` model fits the data better in terms of the quantile deviation, so let’s use the `glm` model going forward.
+
+
+
+## Post hoc analysis
+
+We can examine this more carefully with post-hoc analysis using `emmeans`.
+
+```{r}
+emm_lm = emmeans(glm_dura, ~position, type="response")
+emm_lm
+
+contrast(emm_lm, type="response")
+
+emm_lm_2level = emmeans(glm_dura, ~SPHEROID|position, type="response")
+emm_lm_2level
+
+contrast(emm_lm_2level, method="pairwise", type="response")
+```
+
+
+
+
+## Session info
+```{r}
+sessionInfo()
+```

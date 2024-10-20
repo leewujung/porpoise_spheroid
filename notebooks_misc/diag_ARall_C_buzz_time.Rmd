@@ -1,0 +1,115 @@
+---
+title: "All spheroids comparison: time at buzz onset"
+output: html_document
+date: "`r Sys.Date()`"
+editor_options:
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+This notebook uses data summary file `data_processed/data_summary/data_summary_all.csv`. The comparison is across the 3 spheroids with different aspect ratios nested under the TC/CT scenarios.
+
+
+
+## Load libraries
+```{r}
+library(lme4)
+library(lmerTest)
+library(emmeans)
+library(DHARMa)
+library(tidyr)
+library(dplyr)
+```
+
+
+## Set up path
+```{r}
+main_path = "~/code_git/porpoise_spheroid"
+data_path = file.path(main_path, "data_processed/data_summary")
+stat_path = file.path(main_path, "stat")
+```
+
+Create `stat` folder if it does not already exist:
+```{r}
+if (!dir.exists(stat_path)){
+  dir.create(stat_path)
+}
+```
+
+
+## Load data
+```{r}
+df = read.csv(
+  file=paste(data_path, "data_summary_all.csv", sep="/")
+)
+
+# Get TC/CT position
+df = df %>%
+  separate(TARGET_ANGLE,  c("position"), sep=2, extra="drop", remove=FALSE) %>%
+  filter(position=="TC" | position=="CT") %>%
+  mutate(position=factor(position))
+```
+
+
+## Linear models
+
+### Time at buzz onset to touch
+```{r}
+lm_buzz = lm(time_buzz2touch ~ position + position:SPHEROID, data=df)
+summary(lm_buzz)
+
+glm_buzz = glm(time_buzz2touch ~ position + position:SPHEROID, data=df, family=Gamma(link="log"))
+summary(glm_buzz)
+```
+
+
+
+## Check the models
+
+### `lm` model
+```{r}
+sim_buzz = simulateResiduals(fittedModel=lm_buzz, n=250)
+plot(sim_buzz, asFactor=FALSE)
+sim_buzz_refit = simulateResiduals(fittedModel=lm_buzz, n=250, refit=TRUE)
+lm_buzz_test_dispersion = testDispersion(sim_buzz_refit)
+```
+
+
+### `glm` model
+```{r}
+sim_buzz_gamma = simulateResiduals(fittedModel=glm_buzz, n=250)
+plot(sim_buzz_gamma, asFactor=FALSE)
+sim_buzz_gamma_refit = simulateResiduals(fittedModel=glm_buzz, n=250, refit=TRUE)
+glm_buzz_test_dispersion = testDispersion(sim_buzz_gamma_refit)
+```
+
+We can see that the `glm` model fits a little better than the `lm` model on the quantile variation, so let’s use the `glm` model going forward.
+
+
+
+## Post hoc analysis
+
+We can examine this more carefully with post-hoc analysis using `emmeans`.
+
+```{r}
+emm_lm = emmeans(glm_buzz, ~position, type="response")
+emm_lm
+
+contrast(emm_lm, type="response")
+
+emm_lm_2level = emmeans(glm_buzz, ~SPHEROID|position, type="response")
+emm_lm_2level
+
+contrast(emm_lm_2level, method="pairwise", type="response")
+```
+
+
+
+
+## Session info
+```{r}
+sessionInfo()
+```
